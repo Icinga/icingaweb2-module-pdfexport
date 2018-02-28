@@ -1,5 +1,18 @@
 {
     "name": "icinga/icingaweb2-module-pdfexport",
     "type": "project",
-    "require": {}
+    "require": {
+        "jakoch/phantomjs-installer": "^2.1"
+    },
+    "config": {
+        "bin-dir": "bin"
+    },
+    "scripts": {
+        "post-install-cmd": [
+            "PhantomInstaller\\Installer::installPhantomJS"
+        ],
+        "post-update-cmd": [
+            "PhantomInstaller\\Installer::installPhantomJS"
+        ]
+    }
 }
