@@ -1,0 +1,5 @@
+{
+    "name": "icinga/icingaweb2-module-pdfexport",
+    "type": "project",
+    "require": {}
+}
