@@ -3,7 +3,3 @@
 
 # Except those related to Git
 !.git*
-
-# Exclude composer related files
-composer.lock
-vendor/
