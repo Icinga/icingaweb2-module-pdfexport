@@ -5,6 +5,5 @@
 !.git*
 
 # Exclude composer related files
-bin/phantomjs
 composer.lock
 vendor/
