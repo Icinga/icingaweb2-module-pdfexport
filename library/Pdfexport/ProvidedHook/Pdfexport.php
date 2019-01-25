@@ -11,7 +11,7 @@ class Pdfexport extends PdfexportHook
 {
     public static function getBinary()
     {
-        return Config::module('pdfexort')->get('chrome', 'binary', '/bin/google-chrome');
+        return Config::module('pdfexport')->get('chrome', 'binary', '/bin/google-chrome');
     }
 
     public function isSupported()
