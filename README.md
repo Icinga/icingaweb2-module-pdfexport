@@ -1,3 +1,7 @@
-# icingaweb2-module-pdfexport
+# Icinga PDF Export
 
-Future place for the PDF export functionality for Icinga Web 2.
+PDF export functionality for Icinga Web 2 using Google Chrome/Chromium for rendering.
+
+## Documentation
+
+* [Installation](doc/02-Installation.md)
