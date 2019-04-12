@@ -1,4 +1,5 @@
 <?php
+// Icinga PDF Export | (c) 2018 Icinga GmbH | GPLv2
 
 namespace Icinga\Module\Pdfexport\ProvidedHook;
 
