@@ -1,17 +1,60 @@
-# <a id="Installation"></a>Installation
+# Installation <a id="installation"></a>
 
-## Requirements
+## Requirements <a id="installation-requirements"></a>
 
 * Icinga Web 2 (&gt;= 2.6)
 * PHP (&gt;= 5.6, preferably 7.x)
 
-## Google Chrome/Chromium Setup
+## Google Chrome/Chromium Setup <a id="installation-chrome-setup"></a>
 
 The module needs Google Chrome or Chromium supporting headless mode.
-For RHEL based systems you'll find `chromium-headless` in the EPEL repositories.
-For debian based systems you may add `https://dl.google.com/linux/chrome/deb/ stable main` to your apt sources.
 
-## Installation
+### RHEL/CentOS <a id="installation-chrome-setup-rhel"></a>
+
+Add the Chrome repository from Google to yum, next to EPEL.
+
+```
+yum -y install epel-release
+
+cat >/etc/yum.repos.d/google-chrome-stable.list <<EOF
+[google-chrome-stable]
+baseurl=http://dl.google.com/linux/chrome/rpm/stable/$basearch
+enabled=1
+gpgcheck=1
+gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
+EOF
+
+yum makecache
+```
+
+Install Chrome and additional dependencies (optional).
+
+```
+yum install google-chrome-stable
+yum install mesa-libOSMesa mesa-libOSMesa-devel gnu-free-sans-fonts ipa-gothic-fonts ipa-pgothic-fonts
+```
+
+### Debian/Ubuntu <a id="installation-chrome-setup-rhel"></a>
+
+Add the Chrome repository from Google to apt.
+
+```
+apt-get -y install apt-transport-https gnupg wget
+
+wget -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+
+echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+
+apt-get update
+```
+
+Install Chrome.
+
+```
+apt-get install google-chrome-stable
+```
+
+## Module Installation <a id="installation-module"></a>
 
 1. Just drop this module to a `pdfexport` subfolder in your Icinga Web 2 module path.
 
