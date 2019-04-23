@@ -196,7 +196,7 @@ class HeadlessChrome
     /**
      * Get the major version number of Chrome or false on failure
      *
-     * @return  int
+     * @return  int|false
      *
      * @throws  \Exception
      */
@@ -213,10 +213,10 @@ class HeadlessChrome
             throw new \Exception($output->stderr);
         }
 
-        $parts = explode(' ', trim($output->stdout));
+        if (preg_match('/\s(\d+)\.[\d\.]+\s/', $output->stdout, $match)) {
+            return (int) $match[1];
+        }
 
-        $version = (int) array_pop($parts);
-
-        return $version;
+        return false;
     }
 }
