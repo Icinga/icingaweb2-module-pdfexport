@@ -16,9 +16,10 @@ Add the Chrome repository from Google to yum, next to EPEL.
 ```
 yum -y install epel-release
 
-cat >/etc/yum.repos.d/google-chrome-stable.list <<EOF
+cat >/etc/yum.repos.d/google-chrome-stable.repo <<EOF
 [google-chrome-stable]
-baseurl=http://dl.google.com/linux/chrome/rpm/stable/$basearch
+name=google-chrome-stable
+baseurl=http://dl.google.com/linux/chrome/rpm/stable/\$basearch
 enabled=1
 gpgcheck=1
 gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
