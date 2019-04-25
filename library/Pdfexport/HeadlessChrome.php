@@ -46,6 +46,30 @@ class HeadlessChrome
     }
 
     /**
+     * Get the target Url
+     *
+     * @return  string
+     */
+    public function getUrl()
+    {
+        return $this->url;
+    }
+
+    /**
+     * Set the target Url
+     *
+     * @param   string  $url
+     *
+     * @return  $this
+     */
+    public function setUrl($url)
+    {
+        $this->url = $url;
+
+        return $this;
+    }
+
+    /**
      * Render the given argument name-value pairs as shell-escaped string
      *
      * @param   array   $arguments
@@ -77,30 +101,6 @@ class HeadlessChrome
         }
 
         return implode(' ', $list);
-    }
-
-    /**
-     * Get the target Url
-     *
-     * @return  string
-     */
-    public function getUrl()
-    {
-        return $this->url;
-    }
-
-    /**
-     * Set the target Url
-     *
-     * @param   string  $url
-     *
-     * @return  $this
-     */
-    public function setUrl($url)
-    {
-        $this->url = $url;
-
-        return $this;
     }
 
     /**
