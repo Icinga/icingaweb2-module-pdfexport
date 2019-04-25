@@ -3,6 +3,7 @@
 
 namespace Icinga\Module\Pdfexport;
 
+use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 
 class HeadlessChrome
@@ -13,13 +14,8 @@ class HeadlessChrome
     /** @var string Target Url */
     protected $url;
 
-    /** @var TemporaryLocalFileStorage */
+    /** @var StorageInterface */
     protected $fileStorage;
-
-    public function __construct()
-    {
-        $this->fileStorage = new TemporaryLocalFileStorage();
-    }
 
     /**
      * Get the path to the Chrome binary
@@ -70,6 +66,34 @@ class HeadlessChrome
     }
 
     /**
+     * Get the file storage
+     *
+     * @return  StorageInterface
+     */
+    public function getFileStorage()
+    {
+        if ($this->fileStorage === null) {
+            $this->fileStorage = new TemporaryLocalFileStorage();
+        }
+
+        return $this->fileStorage;
+    }
+
+    /**
+     * Set the file storage
+     *
+     * @param   StorageInterface  $fileStorage
+     *
+     * @return  $this
+     */
+    public function setFileStorage($fileStorage)
+    {
+        $this->fileStorage = $fileStorage;
+
+        return $this;
+    }
+
+    /**
      * Render the given argument name-value pairs as shell-escaped string
      *
      * @param   array   $arguments
@@ -115,10 +139,11 @@ class HeadlessChrome
     {
         if ($asFile) {
             $path = uniqid('icingaweb2-pdfexport-') . '.html';
+            $storage = $this->getFileStorage();
 
-            $this->fileStorage->create($path, $html);
+            $storage->create($path, $html);
 
-            $path = $this->fileStorage->resolvePath($path, true);
+            $path = $storage->resolvePath($path, true);
 
             $this->setUrl("file://$path");
         } else {
@@ -138,10 +163,11 @@ class HeadlessChrome
     public function toPdf($filename)
     {
         $path = uniqid('icingaweb2-pdfexport-') . $filename;
+        $storage = $this->getFileStorage();
 
-        $this->fileStorage->create($path, '');
+        $storage->create($path, '');
 
-        $path = $this->fileStorage->resolvePath($path, true);
+        $path = $storage->resolvePath($path, true);
 
         $arguments = [
             '--headless',
