@@ -159,6 +159,8 @@ class HeadlessChrome
      * @param   $filename
      *
      * @return  string
+     *
+     * @throws  \Exception
      */
     public function toPdf($filename)
     {
@@ -182,7 +184,11 @@ class HeadlessChrome
             false
         );
 
-        $command->execute();
+        $output = $command->execute();
+
+        if ($command->getExitCode() !== 0) {
+            throw new \Exception($output->stderr);
+        }
 
         return $path;
     }
@@ -190,7 +196,9 @@ class HeadlessChrome
     /**
      * Get the major version number of Chrome or false on failure
      *
-     * @return  bool|int
+     * @return  int
+     *
+     * @throws  \Exception
      */
     public function getVersion()
     {
@@ -202,7 +210,7 @@ class HeadlessChrome
         $output = $command->execute();
 
         if ($command->getExitCode() !== 0) {
-            return false;
+            throw new \Exception($output->stderr);
         }
 
         $parts = explode(' ', trim($output->stdout));

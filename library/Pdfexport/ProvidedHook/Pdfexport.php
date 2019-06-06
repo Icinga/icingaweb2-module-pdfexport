@@ -17,7 +17,11 @@ class Pdfexport extends PdfexportHook
 
     public function isSupported()
     {
-        return (new HeadlessChrome())->setBinary(static::getBinary())->getVersion() >= 59;
+        try {
+            return (new HeadlessChrome())->setBinary(static::getBinary())->getVersion() >= 59;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function htmlToPdf($html)
