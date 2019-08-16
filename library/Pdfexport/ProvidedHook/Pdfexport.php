@@ -105,7 +105,7 @@ CSS;
         $pdf = $chrome
             ->setBinary(static::getBinary())
             ->fromHtml($html)
-            ->toPdf($filename);
+            ->toPdf();
 
         $response = Icinga::app()->getResponse();
 
