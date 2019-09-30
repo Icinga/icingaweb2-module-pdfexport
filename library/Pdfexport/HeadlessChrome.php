@@ -24,6 +24,13 @@ class HeadlessChrome
     /** @var string Path to the Chrome binary */
     protected $binary;
 
+    /**
+     * The document to print
+     *
+     * @var PrintableHtmlDocument
+     */
+    protected $document;
+
     /** @var string Target Url */
     protected $url;
 
@@ -141,15 +148,19 @@ class HeadlessChrome
     }
 
     /**
-     * Use the given HTML string as input
+     * Use the given HTML as input
      *
-     * @param   string  $html
-     * @param   bool    $asFile
-     *
-     * @return  $this
+     * @param string|PrintableHtmlDocument $html
+     * @param bool $asFile
+     * @return $this
      */
     public function fromHtml($html, $asFile = true)
     {
+        if ($html instanceof PrintableHtmlDocument) {
+            $this->document = $html;
+            $html = $this->document->render();
+        }
+
         if ($asFile) {
             $path = uniqid('icingaweb2-pdfexport-') . '.html';
             $storage = $this->getFileStorage();
@@ -199,7 +210,9 @@ class HeadlessChrome
                 return;
             }
 
-            file_put_contents($path, $this->printToPDF($matches[1], $matches[2]));
+            file_put_contents($path, $this->printToPDF($matches[1], $matches[2], isset($this->document)
+                ? $this->document->getPrintParameters()
+                : []));
             $chrome->terminate();
         });
 
@@ -214,7 +227,7 @@ class HeadlessChrome
         return $path;
     }
 
-    private function printToPDF($socket, $browserId)
+    private function printToPDF($socket, $browserId, array $parameters)
     {
         $browser = new Client(sprintf('ws://%s/devtools/browser/%s', $socket, $browserId));
 
@@ -250,9 +263,10 @@ class HeadlessChrome
         $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $frameId]);
 
         // print pdf
-        $result = $this->communicate($page, 'Page.printToPDF', [
-            'transferMode' => 'ReturnAsBase64'
-        ]);
+        $result = $this->communicate($page, 'Page.printToPDF', array_merge(
+            $parameters,
+            ['transferMode' => 'ReturnAsBase64']
+        ));
         if (isset($result['data']) && !empty($result['data'])) {
             $pdf = base64_decode($result['data']);
         } else {
