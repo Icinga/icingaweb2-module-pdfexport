@@ -241,7 +241,7 @@ class HeadlessChrome
             throw new Exception('Expected target id. Got instead: ' . json_encode($result));
         }
 
-        $page = new Client(sprintf('ws://%s/devtools/page/%s', $socket, $targetId));
+        $page = new Client(sprintf('ws://%s/devtools/page/%s', $socket, $targetId), ['timeout' => 60]);
 
         // enable page events
         $result = $this->communicate($page, 'Page.enable');
