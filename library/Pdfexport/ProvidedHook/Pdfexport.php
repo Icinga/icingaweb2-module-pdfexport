@@ -7,6 +7,9 @@ use Icinga\Application\Config;
 use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
 use Icinga\Module\Pdfexport\HeadlessChrome;
+use Icinga\Module\Pdfexport\PrintableHtmlDocument;
+use iio\libmergepdf\Driver\TcpdiDriver;
+use iio\libmergepdf\Merger;
 
 class Pdfexport extends PdfexportHook
 {
@@ -42,6 +45,10 @@ class Pdfexport extends PdfexportHook
     {
         $filename = basename($filename, '.pdf') . '.pdf';
 
+        $response = Icinga::app()->getResponse()
+            ->setHeader('Content-Type', 'application/pdf', true)
+            ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true);
+
         // Keep reference to the chrome object because it is using temp files which are automatically removed when
         // the object is destructed
         $chrome = new HeadlessChrome();
@@ -51,13 +58,26 @@ class Pdfexport extends PdfexportHook
             ->fromHtml($html)
             ->toPdf();
 
-        $response = Icinga::app()->getResponse();
+        if ($html instanceof PrintableHtmlDocument) {
+            $coverPage = $html->getCoverPage();
 
-        $response->setHeader('Content-Type', 'application/pdf', true);
-        $response->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true);
-        $response->sendHeaders();
+            if ($coverPage !== null) {
+                $coverPagePdf = $chrome
+                    ->fromHtml((new PrintableHtmlDocument())->add($coverPage))
+                    ->toPdf();
+            }
 
-        readfile($pdf);
+            $merger = new Merger(new TcpdiDriver());
+            $merger->addFile($coverPagePdf);
+            $merger->addFile($pdf);
+
+            $response->setBody($merger->merge());
+            $response->sendResponse();
+        } else {
+            $response->sendHeaders();
+
+            readfile($pdf);
+        }
 
         exit;
     }
