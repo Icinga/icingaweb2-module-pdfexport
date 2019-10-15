@@ -4,12 +4,12 @@
 namespace Icinga\Module\Pdfexport;
 
 use Icinga\Web\StyleSheet;
+use ipl\Html\BaseHtmlElement;
 use ipl\Html\Html;
-use ipl\Html\HtmlDocument;
 use ipl\Html\HtmlString;
 use ipl\Html\ValidHtml;
 
-class PrintableHtmlDocument extends HtmlDocument
+class PrintableHtmlDocument extends BaseHtmlElement
 {
     /** @var string Document title */
     protected $title;
@@ -152,6 +152,8 @@ class PrintableHtmlDocument extends HtmlDocument
      */
     protected $preferCSSPageSize;
 
+    protected $tag = 'body';
+
     /**
      * Get the document title
      *
@@ -230,7 +232,7 @@ class PrintableHtmlDocument extends HtmlDocument
      */
     protected function assemble()
     {
-        $head = Html::tag('head')
+        $html = Html::tag('html')
             ->add(Html::tag(
                 'style',
                 null,
@@ -242,12 +244,7 @@ class PrintableHtmlDocument extends HtmlDocument
                 $this->title
             ));
 
-        $html = Html::tag('html', null, $head);
-
-        $body = Html::tag('body');
-        $html->wrap($body);
-
-        $this->setWrapper($body);
+        $this->setWrapper($html);
     }
 
     /**
