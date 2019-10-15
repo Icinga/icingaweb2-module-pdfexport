@@ -1,5 +1,6 @@
 {
   "require": {
-    "textalk/websocket": "1.0.*"
+    "textalk/websocket": "1.0.*",
+    "iio/libmergepdf": "^4.0"
   }
 }
