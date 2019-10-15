@@ -176,6 +176,16 @@ class PrintableHtmlDocument extends HtmlDocument
     }
 
     /**
+     * Get the cover page
+     *
+     * @return ValidHtml|null
+     */
+    public function getCoverPage()
+    {
+        return $this->coverPage;
+    }
+
+    /**
      * Set cover page
      *
      * @param ValidHtml $coverPage
