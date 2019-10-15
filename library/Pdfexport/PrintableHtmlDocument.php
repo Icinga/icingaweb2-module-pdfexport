@@ -11,6 +11,9 @@ use ipl\Html\ValidHtml;
 
 class PrintableHtmlDocument extends HtmlDocument
 {
+    /** @var string Document title */
+    protected $title;
+
     /**
      * Paper orientation
      *
@@ -150,6 +153,30 @@ class PrintableHtmlDocument extends HtmlDocument
     protected $preferCSSPageSize;
 
     /**
+     * Get the document title
+     *
+     * @return string
+     */
+    public function getTitle()
+    {
+        return $this->title;
+    }
+
+    /**
+     * Set the document title
+     *
+     * @param string $title
+     *
+     * @return $this
+     */
+    public function setTitle($title)
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
      * Set page header
      *
      * @param ValidHtml $header
@@ -203,12 +230,17 @@ class PrintableHtmlDocument extends HtmlDocument
      */
     protected function assemble()
     {
-        $head = Html::tag('head');
-        $head->add(Html::tag(
-            'style',
-            null,
-            new HtmlString(new StyleSheet())
-        ));
+        $head = Html::tag('head')
+            ->add(Html::tag(
+                'style',
+                null,
+                new HtmlString(new StyleSheet())
+            ))
+            ->add(Html::tag(
+                'title',
+                null,
+                $this->title
+            ));
 
         $html = Html::tag('html', null, $head);
 
