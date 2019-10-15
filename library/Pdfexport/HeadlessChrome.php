@@ -265,7 +265,7 @@ class HeadlessChrome
         // print pdf
         $result = $this->communicate($page, 'Page.printToPDF', array_merge(
             $parameters,
-            ['transferMode' => 'ReturnAsBase64']
+            ['transferMode' => 'ReturnAsBase64', 'printBackground' => true]
         ));
         if (isset($result['data']) && !empty($result['data'])) {
             $pdf = base64_decode($result['data']);
