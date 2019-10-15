@@ -228,6 +228,21 @@ class PrintableHtmlDocument extends BaseHtmlElement
     }
 
     /**
+     * Remove page margins
+     *
+     * @return $this
+     */
+    public function removeMargins()
+    {
+        $this->marginBottom = 0;
+        $this->marginLeft = 0;
+        $this->marginRight = 0;
+        $this->marginTop = 0;
+
+        return $this;
+    }
+
+    /**
      * Finalize document to be printed
      */
     protected function assemble()
