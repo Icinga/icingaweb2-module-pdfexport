@@ -193,19 +193,16 @@ class PrintableHtmlDocument extends HtmlDocument
      */
     protected function assemble()
     {
-        $html = Html::tag('html', null, [
-            Html::tag(
-                'head',
-                null,
-                Html::tag(
-                    'style',
-                    null,
-                    new HtmlString(StyleSheet::forPdf())
-                )
-            )
-        ]);
+        $head = Html::tag('head');
+        $head->add(Html::tag(
+            'style',
+            null,
+            new HtmlString(new StyleSheet())
+        ));
 
-        $body = Html::tag('body', ['style' => 'margin: 0;']);
+        $html = Html::tag('html', null, $head);
+
+        $body = Html::tag('body');
         $html->wrap($body);
 
         $this->setWrapper($body);
