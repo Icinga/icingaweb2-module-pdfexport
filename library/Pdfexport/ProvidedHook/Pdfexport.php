@@ -3,7 +3,9 @@
 
 namespace Icinga\Module\Pdfexport\ProvidedHook;
 
+use Exception;
 use Icinga\Application\Config;
+use Icinga\Application\Hook;
 use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
 use Icinga\Module\Pdfexport\HeadlessChrome;
@@ -13,6 +15,27 @@ use iio\libmergepdf\Merger;
 
 class Pdfexport extends PdfexportHook
 {
+    public static function first()
+    {
+        $pdfexport = null;
+
+        if (Hook::has('Pdfexport')) {
+            $pdfexport = Hook::first('Pdfexport');
+
+            if (! $pdfexport->isSupported()) {
+                throw new Exception(
+                    sprintf("Can't export: %s does not support exporting PDFs", get_class($pdfexport))
+                );
+            }
+        }
+
+        if (! $pdfexport) {
+            throw new Exception("Can't export: No module found which provides PDF export");
+        }
+
+        return $pdfexport;
+    }
+
     public static function getBinary()
     {
         return Config::module('pdfexport')->get('chrome', 'binary', '/bin/google-chrome');
