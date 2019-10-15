@@ -216,10 +216,6 @@ class PrintableHtmlDocument extends HtmlDocument
         $html->wrap($body);
 
         $this->setWrapper($body);
-
-        if (isset($this->coverPage)) {
-            $this->prepend(Html::tag('div', ['style' => 'page-break-after: always;'], $this->coverPage));
-        }
     }
 
     /**
