@@ -86,7 +86,11 @@ class Pdfexport extends PdfexportHook
 
             if ($coverPage !== null) {
                 $coverPagePdf = $chrome
-                    ->fromHtml((new PrintableHtmlDocument())->add($coverPage))
+                    ->fromHtml((new PrintableHtmlDocument())
+                        ->add($coverPage)
+                        ->addAttributes($html->getAttributes())
+                        ->removeMargins()
+                    )
                     ->toPdf();
             }
 
@@ -94,8 +98,9 @@ class Pdfexport extends PdfexportHook
             $merger->addFile($coverPagePdf);
             $merger->addFile($pdf);
 
-            $response->setBody($merger->merge());
-            $response->sendResponse();
+            $response
+                ->setBody($merger->merge())
+                ->sendResponse();
         } else {
             $response->sendHeaders();
 
