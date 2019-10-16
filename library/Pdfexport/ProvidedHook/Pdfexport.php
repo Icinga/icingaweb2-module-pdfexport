@@ -3,13 +3,39 @@
 
 namespace Icinga\Module\Pdfexport\ProvidedHook;
 
+use Exception;
 use Icinga\Application\Config;
+use Icinga\Application\Hook;
 use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
 use Icinga\Module\Pdfexport\HeadlessChrome;
+use Icinga\Module\Pdfexport\PrintableHtmlDocument;
+use iio\libmergepdf\Driver\TcpdiDriver;
+use iio\libmergepdf\Merger;
 
 class Pdfexport extends PdfexportHook
 {
+    public static function first()
+    {
+        $pdfexport = null;
+
+        if (Hook::has('Pdfexport')) {
+            $pdfexport = Hook::first('Pdfexport');
+
+            if (! $pdfexport->isSupported()) {
+                throw new Exception(
+                    sprintf("Can't export: %s does not support exporting PDFs", get_class($pdfexport))
+                );
+            }
+        }
+
+        if (! $pdfexport) {
+            throw new Exception("Can't export: No module found which provides PDF export");
+        }
+
+        return $pdfexport;
+    }
+
     public static function getBinary()
     {
         return Config::module('pdfexport')->get('chrome', 'binary', '/bin/google-chrome');
@@ -26,34 +52,6 @@ class Pdfexport extends PdfexportHook
 
     public function htmlToPdf($html)
     {
-        $style = strpos($html, '</style>');
-        if ($style !== false) {
-            // Inject custom CSS
-            $css = <<<'CSS'
-@page {
-  margin: 1.6cm;
-}
-
-body {
-  margin: 0;
-}
-
-body > img {
-  margin-top: -1em;
-}
-</style>
-CSS;
-            $html = substr($html, 0, $style) . $css . substr($html, $style + 8);
-        }
-
-        $footer = strrpos($html, '<div id="page-footer">');
-        if ($footer !== false) {
-            // Hide page footer
-            $html = substr($html, 0, $footer)
-                . '<div id="page-footer" style="display: none !important;">'
-                . substr($html, $footer + 22);
-        }
-
         // Keep reference to the chrome object because it is using temp files which are automatically removed when
         // the object is destructed
         $chrome = new HeadlessChrome();
@@ -61,42 +59,18 @@ CSS;
         $pdf = $chrome
             ->setBinary(static::getBinary())
             ->fromHtml($html)
-            ->toPdf('direct');
+            ->toPdf();
 
-        return file_get_contents($pdf);
+        return $pdf;
     }
 
     public function streamPdfFromHtml($html, $filename)
     {
         $filename = basename($filename, '.pdf') . '.pdf';
 
-        $style = strpos($html, '</style>');
-        if ($style !== false) {
-            // Inject custom CSS
-            $css = <<<'CSS'
-@page {
-  margin: 1.6cm;
-}
-
-body {
-  margin: 0;
-}
-
-body > img {
-  margin-top: -1em;
-}
-</style>
-CSS;
-            $html = substr($html, 0, $style) . $css . substr($html, $style + 8);
-        }
-
-        $footer = strrpos($html, '<div id="page-footer">');
-        if ($footer !== false) {
-            // Hide page footer
-            $html = substr($html, 0, $footer)
-                . '<div id="page-footer" style="display: none !important;">'
-                . substr($html, $footer + 22);
-        }
+        $response = Icinga::app()->getResponse()
+            ->setHeader('Content-Type', 'application/pdf', true)
+            ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true);
 
         // Keep reference to the chrome object because it is using temp files which are automatically removed when
         // the object is destructed
@@ -105,15 +79,33 @@ CSS;
         $pdf = $chrome
             ->setBinary(static::getBinary())
             ->fromHtml($html)
-            ->toPdf($filename);
+            ->toPdf();
 
-        $response = Icinga::app()->getResponse();
+        if ($html instanceof PrintableHtmlDocument) {
+            $coverPage = $html->getCoverPage();
 
-        $response->setHeader('Content-Type', 'application/pdf', true);
-        $response->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true);
-        $response->sendHeaders();
+            if ($coverPage !== null) {
+                $coverPagePdf = $chrome
+                    ->fromHtml((new PrintableHtmlDocument())
+                        ->add($coverPage)
+                        ->addAttributes($html->getAttributes())
+                        ->removeMargins()
+                    )
+                    ->toPdf();
+            }
 
-        readfile($pdf);
+            $merger = new Merger(new TcpdiDriver());
+            $merger->addFile($coverPagePdf);
+            $merger->addFile($pdf);
+
+            $response
+                ->setBody($merger->merge())
+                ->sendResponse();
+        } else {
+            $response->sendHeaders();
+
+            readfile($pdf);
+        }
 
         exit;
     }

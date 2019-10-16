@@ -4,3 +4,5 @@
 /** @var \Icinga\Application\Modules\Module $this */
 
 $this->provideHook('Pdfexport');
+
+require_once 'vendor/autoload.php';

@@ -1,0 +1,31 @@
+{
+    "name": "iio/libmergepdf",
+    "description": "Library for merging multiple PDFs",
+    "keywords": ["pdf", "merge"],
+    "homepage": "https://github.com/hanneskod/libmergepdf",
+    "type": "library",
+    "license": "WTFPL",
+    "authors": [
+        {
+            "name": "Hannes Forsgård",
+            "email": "hannes.forsgard@fripost.org"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "iio\\libmergepdf\\": "src/"
+        }
+    },
+    "require": {
+        "php": "^7.1",
+        "tecnickcom/tcpdf": "^6.2.22",
+        "setasign/fpdi-tcpdf": "^2.0",
+        "rafikhaceb/tcpdi": "^1"
+    },
+    "conflict": {
+        "setasign/fpdf": "*"
+    },
+    "require-dev": {
+        "smalot/pdfparser": "~0.13"
+    }
+}
