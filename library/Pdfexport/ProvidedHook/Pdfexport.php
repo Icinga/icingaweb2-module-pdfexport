@@ -81,30 +81,35 @@ class Pdfexport extends PdfexportHook
             ->fromHtml($html)
             ->toPdf();
 
-        if ($html instanceof PrintableHtmlDocument) {
-            $coverPage = $html->getCoverPage();
+        switch (true) {
+            /** @noinspection PhpMissingBreakStatementInspection */
+            case $html instanceof PrintableHtmlDocument:
+                $coverPage = $html->getCoverPage();
 
-            if ($coverPage !== null) {
-                $coverPagePdf = $chrome
-                    ->fromHtml((new PrintableHtmlDocument())
-                        ->add($coverPage)
-                        ->addAttributes($html->getAttributes())
-                        ->removeMargins()
-                    )
-                    ->toPdf();
-            }
+                if ($coverPage !== null) {
+                    $coverPagePdf = $chrome
+                        ->fromHtml((new PrintableHtmlDocument())
+                            ->add($coverPage)
+                            ->addAttributes($html->getAttributes())
+                            ->removeMargins()
+                        )
+                        ->toPdf();
 
-            $merger = new Merger(new TcpdiDriver());
-            $merger->addFile($coverPagePdf);
-            $merger->addFile($pdf);
+                    $merger = new Merger(new TcpdiDriver());
+                    $merger->addFile($coverPagePdf);
+                    $merger->addFile($pdf);
 
-            $response
-                ->setBody($merger->merge())
-                ->sendResponse();
-        } else {
-            $response->sendHeaders();
+                    $response
+                        ->setBody($merger->merge())
+                        ->sendResponse();
 
-            readfile($pdf);
+                    break;
+                }
+                // Fallthrough
+            default:
+                $response->sendHeaders();
+
+                readfile($pdf);
         }
 
         exit;
