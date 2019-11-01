@@ -62,4 +62,8 @@ apt-get install google-chrome-stable
 2. Log in with a privileged user in Icinga Web 2 and enable the module in `Configuration -> Modules -> pdfexport`.
 Or use the `icingacli` and run `icingacli module enable pdfexport`.
 
+3. You might need to set the absolute path to the Google Chrome / Chromium
+binary, depending on your system. This can be done in
+`Configuration -> Modules -> pdfexport -> Binary`
+
 This concludes the installation. PDF exports now use Google Chrome/Chromium for rendering.
