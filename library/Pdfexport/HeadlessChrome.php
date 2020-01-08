@@ -185,13 +185,6 @@ class HeadlessChrome
      */
     public function toPdf()
     {
-        $path = uniqid('icingaweb2-pdfexport-') . '.pdf';
-        $storage = $this->getFileStorage();
-
-        $storage->create($path, '');
-
-        $path = $storage->resolvePath($path, true);
-
         $chrome = new Process(join(' ', [
             escapeshellarg($this->getBinary()),
             static::renderArgumentList([
@@ -205,14 +198,16 @@ class HeadlessChrome
         $loop = Factory::create();
         $chrome->start($loop);
 
-        $chrome->stderr->once('data', function ($chunk) use ($path, $chrome) {
-            if (! preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
-                return;
+        $pdf = null;
+        $chrome->stderr->once('data', function ($chunk) use (&$pdf, $chrome) {
+            if (preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
+                $pdf = $this->printToPDF($matches[1], $matches[2], isset($this->document)
+                    ? $this->document->getPrintParameters()
+                    : []);
+            } else {
+                Logger::error('Failed to start browser: %s', $chunk);
             }
 
-            file_put_contents($path, $this->printToPDF($matches[1], $matches[2], isset($this->document)
-                ? $this->document->getPrintParameters()
-                : []));
             $chrome->terminate();
         });
 
@@ -223,6 +218,24 @@ class HeadlessChrome
         });
 
         $loop->run();
+
+        return $pdf;
+    }
+
+    /**
+     * Export to PDF and save as file on disk
+     *
+     * @return string The path to the file on disk
+     */
+    public function savePdf()
+    {
+        $path = uniqid('icingaweb2-pdfexport-') . '.pdf';
+
+        $storage = $this->getFileStorage();
+        $storage->create($path, '');
+
+        $path = $storage->resolvePath($path, true);
+        file_put_contents($path, $this->toPdf());
 
         return $path;
     }
