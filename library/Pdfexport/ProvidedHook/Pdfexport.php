@@ -41,11 +41,21 @@ class Pdfexport extends PdfexportHook
         return Config::module('pdfexport')->get('chrome', 'binary', '/bin/google-chrome');
     }
 
+    public static function getHost()
+    {
+        return Config::module('pdfexport')->get('chrome', 'host');
+    }
+
+    public static function getPort()
+    {
+        return Config::module('pdfexport')->get('chrome', 'port', 9222);
+    }
+
     public function isSupported()
     {
         try {
-            return (new HeadlessChrome())->setBinary(static::getBinary())->getVersion() >= 59;
-        } catch (\Exception $e) {
+            return $this->Chrome()->getVersion() >= 59;
+        } catch (Exception $e) {
             return false;
         }
     }
@@ -54,14 +64,9 @@ class Pdfexport extends PdfexportHook
     {
         // Keep reference to the chrome object because it is using temp files which are automatically removed when
         // the object is destructed
-        $chrome = new HeadlessChrome();
+        $chrome = $this->Chrome();
 
-        $pdf = $chrome
-            ->setBinary(static::getBinary())
-            ->fromHtml($html)
-            ->toPdf();
-
-        return $pdf;
+        return $chrome->fromHtml($html)->toPdf();
     }
 
     public function streamPdfFromHtml($html, $filename)
@@ -70,12 +75,9 @@ class Pdfexport extends PdfexportHook
 
         // Keep reference to the chrome object because it is using temp files which are automatically removed when
         // the object is destructed
-        $chrome = new HeadlessChrome();
+        $chrome = $this->Chrome();
 
-        $pdf = $chrome
-            ->setBinary(static::getBinary())
-            ->fromHtml($html)
-            ->toPdf();
+        $pdf = $chrome->fromHtml($html)->toPdf();
 
         if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
             $coverPagePdf = $chrome
@@ -100,5 +102,19 @@ class Pdfexport extends PdfexportHook
             ->sendResponse();
 
         exit;
+    }
+
+    /**
+     * Create an instance of HeadlessChrome from configuration
+     *
+     * @return HeadlessChrome
+     */
+    protected function Chrome()
+    {
+        if (($host = static::getHost()) !== null) {
+            return (new HeadlessChrome())->setRemote($host, static::getPort());
+        }
+
+        return (new HeadlessChrome())->setBinary(static::getBinary());
     }
 }
