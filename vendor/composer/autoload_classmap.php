@@ -7,8 +7,8 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'Datamatrix' => $vendorDir . '/tecnickcom/tcpdf/include/barcodes/datamatrix.php',
-    'FPDF' => $vendorDir . '/rafikhaceb/tcpdi/tcpdi.php',
-    'FPDF_TPL' => $vendorDir . '/rafikhaceb/tcpdi/fpdf_tpl.php',
+    'FPDF' => $vendorDir . '/iio/libmergepdf/tcpdi/tcpdi.php',
+    'FPDF_TPL' => $vendorDir . '/iio/libmergepdf/tcpdi/fpdf_tpl.php',
     'PDF417' => $vendorDir . '/tecnickcom/tcpdf/include/barcodes/pdf417.php',
     'QRcode' => $vendorDir . '/tecnickcom/tcpdf/include/barcodes/qrcode.php',
     'TCPDF' => $vendorDir . '/tecnickcom/tcpdf/tcpdf.php',
@@ -22,6 +22,6 @@ return array(
     'TCPDF_IMPORT' => $vendorDir . '/tecnickcom/tcpdf/tcpdf_import.php',
     'TCPDF_PARSER' => $vendorDir . '/tecnickcom/tcpdf/tcpdf_parser.php',
     'TCPDF_STATIC' => $vendorDir . '/tecnickcom/tcpdf/include/tcpdf_static.php',
-    'TCPDI' => $vendorDir . '/rafikhaceb/tcpdi/tcpdi.php',
-    'tcpdi_parser' => $vendorDir . '/rafikhaceb/tcpdi/tcpdi_parser.php',
+    'TCPDI' => $vendorDir . '/iio/libmergepdf/tcpdi/tcpdi.php',
+    'tcpdi_parser' => $vendorDir . '/iio/libmergepdf/tcpdi/tcpdi_parser.php',
 );
