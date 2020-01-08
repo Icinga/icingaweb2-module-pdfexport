@@ -5,6 +5,7 @@ namespace Icinga\Module\Pdfexport;
 
 use Exception;
 use Icinga\Application\Logger;
+use Icinga\Application\Platform;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use React\ChildProcess\Process;
@@ -185,15 +186,23 @@ class HeadlessChrome
      */
     public function toPdf()
     {
-        $chrome = new Process(join(' ', [
+        $commandLine = join(' ', [
             escapeshellarg($this->getBinary()),
             static::renderArgumentList([
                 '--headless',
                 '--disable-gpu',
                 '--no-sandbox',
+                '--disable-dev-shm-usage',
                 '--remote-debugging-port=0'
             ])
-        ]));
+        ]);
+
+        if (Platform::isLinux()) {
+            $browserHome = $this->getFileStorage()->resolvePath('HOME');
+            $chrome = new Process('exec ' . $commandLine, null, ['HOME' => $browserHome]);
+        } else {
+            $chrome = new Process($commandLine);
+        }
 
         $loop = Factory::create();
         $chrome->start($loop);
