@@ -16,14 +16,14 @@ class ConfigController extends Controller
         parent::init();
     }
 
-    public function binaryAction()
+    public function chromeAction()
     {
         $form = (new ChromeBinaryForm())
             ->setIniConfig(Config::module('pdfexport'));
 
         $form->handleRequest();
 
-        $this->view->tabs = $this->Module()->getConfigTabs()->activate('binary');
+        $this->view->tabs = $this->Module()->getConfigTabs()->activate('chrome');
         $this->view->form = $form;
     }
 }
