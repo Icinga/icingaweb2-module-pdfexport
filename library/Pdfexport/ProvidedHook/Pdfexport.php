@@ -68,10 +68,6 @@ class Pdfexport extends PdfexportHook
     {
         $filename = basename($filename, '.pdf') . '.pdf';
 
-        $response = Icinga::app()->getResponse()
-            ->setHeader('Content-Type', 'application/pdf', true)
-            ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true);
-
         // Keep reference to the chrome object because it is using temp files which are automatically removed when
         // the object is destructed
         $chrome = new HeadlessChrome();
@@ -81,36 +77,27 @@ class Pdfexport extends PdfexportHook
             ->fromHtml($html)
             ->toPdf();
 
-        switch (true) {
-            /** @noinspection PhpMissingBreakStatementInspection */
-            case $html instanceof PrintableHtmlDocument:
-                $coverPage = $html->getCoverPage();
+        if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
+            $coverPagePdf = $chrome
+                ->fromHtml((new PrintableHtmlDocument())
+                    ->add($coverPage)
+                    ->addAttributes($html->getAttributes())
+                    ->removeMargins()
+                )
+                ->toPdf();
 
-                if ($coverPage !== null) {
-                    $coverPagePdf = $chrome
-                        ->fromHtml((new PrintableHtmlDocument())
-                            ->add($coverPage)
-                            ->addAttributes($html->getAttributes())
-                            ->removeMargins()
-                        )
-                        ->toPdf();
+            $merger = new Merger(new TcpdiDriver());
+            $merger->addRaw($coverPagePdf);
+            $merger->addRaw($pdf);
 
-                    $merger = new Merger(new TcpdiDriver());
-                    $merger->addFile($coverPagePdf);
-                    $merger->addFile($pdf);
-
-                    $response
-                        ->setBody($merger->merge())
-                        ->sendResponse();
-
-                    break;
-                }
-                // Fallthrough
-            default:
-                $response->sendHeaders();
-
-                readfile($pdf);
+            $pdf = $merger->merge();
         }
+
+        Icinga::app()->getResponse()
+            ->setHeader('Content-Type', 'application/pdf', true)
+            ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true)
+            ->setBody($pdf)
+            ->sendResponse();
 
         exit;
     }
