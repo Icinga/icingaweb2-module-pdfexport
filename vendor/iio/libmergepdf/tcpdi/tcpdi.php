@@ -1,5 +1,5 @@
 <?php
-//  
+//
 //  TCPDI - Version 1.1
 //  Based on FPDI - Version 1.4.4
 //
@@ -245,7 +245,7 @@ class TCPDI extends FPDF_TPL {
         $parser->setPageno($pageno);
         $boxes = $parser->getPageBoxes($pageno, $this->k);
         foreach ($boxes as $name => $box) {
-            if ($name{0} == '/') {
+            if ($name[0] == '/') {
                 $boxes[substr($name, 1)] = $box;
                 unset($boxes[$name]);
             }
@@ -623,9 +623,7 @@ class TCPDI extends FPDF_TPL {
                 // A dictionary.
                 $this->_straightOut('<<');
 
-                reset ($value[1]);
-
-                while (list($k, $v) = each($value[1])) {
+                foreach ($value[1] as $k => $v) {
                     $this->_straightOut($k . ' ');
                     $this->pdf_write_value($v);
                 }

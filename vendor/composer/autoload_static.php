@@ -38,8 +38,8 @@ class ComposerStaticInit18fe711322d44f3b75bdbc73e1af63a8
 
     public static $classMap = array (
         'Datamatrix' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/datamatrix.php',
-        'FPDF' => __DIR__ . '/..' . '/rafikhaceb/tcpdi/tcpdi.php',
-        'FPDF_TPL' => __DIR__ . '/..' . '/rafikhaceb/tcpdi/fpdf_tpl.php',
+        'FPDF' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/tcpdi.php',
+        'FPDF_TPL' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/fpdf_tpl.php',
         'PDF417' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/pdf417.php',
         'QRcode' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/qrcode.php',
         'TCPDF' => __DIR__ . '/..' . '/tecnickcom/tcpdf/tcpdf.php',
@@ -53,8 +53,8 @@ class ComposerStaticInit18fe711322d44f3b75bdbc73e1af63a8
         'TCPDF_IMPORT' => __DIR__ . '/..' . '/tecnickcom/tcpdf/tcpdf_import.php',
         'TCPDF_PARSER' => __DIR__ . '/..' . '/tecnickcom/tcpdf/tcpdf_parser.php',
         'TCPDF_STATIC' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/tcpdf_static.php',
-        'TCPDI' => __DIR__ . '/..' . '/rafikhaceb/tcpdi/tcpdi.php',
-        'tcpdi_parser' => __DIR__ . '/..' . '/rafikhaceb/tcpdi/tcpdi_parser.php',
+        'TCPDI' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/tcpdi.php',
+        'tcpdi_parser' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/tcpdi_parser.php',
     );
 
     public static function getInitializer(ClassLoader $loader)

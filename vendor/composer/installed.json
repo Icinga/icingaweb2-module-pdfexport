@@ -1,38 +1,42 @@
 [
     {
         "name": "iio/libmergepdf",
-        "version": "4.0.2",
-        "version_normalized": "4.0.2.0",
+        "version": "4.0.3",
+        "version_normalized": "4.0.3.0",
         "source": {
             "type": "git",
             "url": "https://github.com/hanneskod/libmergepdf.git",
-            "reference": "338cb450328514cc7340fb029fe416ac0b891dd2"
+            "reference": "7c5c4fb7e00df42760345d9c973030e64ee555f8"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/hanneskod/libmergepdf/zipball/338cb450328514cc7340fb029fe416ac0b891dd2",
-            "reference": "338cb450328514cc7340fb029fe416ac0b891dd2",
+            "url": "https://api.github.com/repos/hanneskod/libmergepdf/zipball/7c5c4fb7e00df42760345d9c973030e64ee555f8",
+            "reference": "7c5c4fb7e00df42760345d9c973030e64ee555f8",
             "shasum": ""
         },
         "require": {
             "php": "^7.1",
-            "rafikhaceb/tcpdi": "^1",
-            "setasign/fpdi-tcpdf": "^2.0",
+            "setasign/fpdi": "^2",
             "tecnickcom/tcpdf": "^6.2.22"
         },
         "conflict": {
+            "rafikhaceb/tcpdi": "*",
             "setasign/fpdf": "*"
         },
         "require-dev": {
+            "phpunit/phpunit": "^7",
             "smalot/pdfparser": "~0.13"
         },
-        "time": "2019-04-23T19:50:36+00:00",
+        "time": "2019-12-16T11:01:06+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
             "psr-4": {
                 "iio\\libmergepdf\\": "src/"
-            }
+            },
+            "classmap": [
+                "tcpdi/"
+            ]
         },
         "notification-url": "https://packagist.org/downloads/",
         "license": [
@@ -49,54 +53,6 @@
         "keywords": [
             "merge",
             "pdf"
-        ]
-    },
-    {
-        "name": "rafikhaceb/tcpdi",
-        "version": "1.0.3",
-        "version_normalized": "1.0.3.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/RafikHaceb/tcpdi.git",
-            "reference": "bd3bfef55513149015656a8df00d785145a90e3d"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/RafikHaceb/tcpdi/zipball/bd3bfef55513149015656a8df00d785145a90e3d",
-            "reference": "bd3bfef55513149015656a8df00d785145a90e3d",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.3.0",
-            "tecnickcom/tcpdf": "6.2.*"
-        },
-        "time": "2018-10-25T14:50:27+00:00",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "classmap": [
-                "fpdf_tpl.php",
-                "tcpdi.php",
-                "tcpdi_parser.php"
-            ]
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "Apache-2.0"
-        ],
-        "authors": [
-            {
-                "name": "Nicola Asuni",
-                "email": "info@tecnick.com",
-                "homepage": "http://nicolaasuni.tecnick.com"
-            }
-        ],
-        "description": "TCPDI is a PHP class for importing PDF to use with TCPDF",
-        "keywords": [
-            "TCPDF",
-            "pdf",
-            "tcpdi",
-            "tcpdi_parser"
         ]
     },
     {
@@ -163,65 +119,24 @@
         ]
     },
     {
-        "name": "setasign/fpdi-tcpdf",
-        "version": "v2.2.0",
-        "version_normalized": "2.2.0.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/Setasign/FPDI-TCPDF.git",
-            "reference": "95778baea02e5da76acb9f6dc1c946be380a22d8"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/Setasign/FPDI-TCPDF/zipball/95778baea02e5da76acb9f6dc1c946be380a22d8",
-            "reference": "95778baea02e5da76acb9f6dc1c946be380a22d8",
-            "shasum": ""
-        },
-        "require": {
-            "setasign/fpdi": "^2.2",
-            "tecnickcom/tcpdf": "^6.2"
-        },
-        "time": "2019-01-30T14:39:33+00:00",
-        "type": "library",
-        "installation-source": "dist",
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Jan Slabon",
-                "email": "jan.slabon@setasign.com",
-                "homepage": "https://www.setasign.com"
-            }
-        ],
-        "description": "Kind of metadata package for dependencies of the latest versions of FPDI and TCPDF.",
-        "homepage": "https://www.setasign.com/fpdi",
-        "keywords": [
-            "TCPDF",
-            "fpdi",
-            "pdf"
-        ]
-    },
-    {
         "name": "tecnickcom/tcpdf",
-        "version": "6.2.26",
-        "version_normalized": "6.2.26.0",
+        "version": "6.3.2",
+        "version_normalized": "6.3.2.0",
         "source": {
             "type": "git",
             "url": "https://github.com/tecnickcom/TCPDF.git",
-            "reference": "367241059ca166e3a76490f4448c284e0a161f15"
+            "reference": "9fde7bb9b404b945e7ea88fb7eccd23d9a4e324b"
         },
         "dist": {
             "type": "zip",
-            "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/367241059ca166e3a76490f4448c284e0a161f15",
-            "reference": "367241059ca166e3a76490f4448c284e0a161f15",
+            "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/9fde7bb9b404b945e7ea88fb7eccd23d9a4e324b",
+            "reference": "9fde7bb9b404b945e7ea88fb7eccd23d9a4e324b",
             "shasum": ""
         },
         "require": {
             "php": ">=5.3.0"
         },
-        "time": "2018-10-16T17:24:05+00:00",
+        "time": "2019-09-20T09:35:01+00:00",
         "type": "library",
         "installation-source": "dist",
         "autoload": {
