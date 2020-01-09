@@ -8,6 +8,7 @@ use Icinga\Application\Logger;
 use Icinga\Application\Platform;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
+use ipl\Html\HtmlString;
 use LogicException;
 use React\ChildProcess\Process;
 use React\EventLoop\Factory;
@@ -185,24 +186,24 @@ class HeadlessChrome
      * @param bool $asFile
      * @return $this
      */
-    public function fromHtml($html, $asFile = true)
+    public function fromHtml($html, $asFile = false)
     {
         if ($html instanceof PrintableHtmlDocument) {
             $this->document = $html;
-            $html = $this->document->render();
+        } else {
+            $this->document = (new PrintableHtmlDocument())
+                ->setContent(HtmlString::create($html));
         }
 
-        if ($asFile && $this->remote === null) {
+        if ($asFile) {
             $path = uniqid('icingaweb2-pdfexport-') . '.html';
             $storage = $this->getFileStorage();
 
-            $storage->create($path, $html);
+            $storage->create($path, $this->document->render());
 
             $path = $storage->resolvePath($path, true);
 
             $this->setUrl("file://$path");
-        } else {
-            $this->setUrl('data:text/html,' . rawurlencode($html));
         }
 
         return $this;
@@ -325,7 +326,7 @@ class HeadlessChrome
             throw new Exception('Expected target id. Got instead: ' . json_encode($result));
         }
 
-        $page = new Client(sprintf('ws://%s/devtools/page/%s', $socket, $targetId), ['timeout' => 60]);
+        $page = new Client(sprintf('ws://%s/devtools/page/%s', $socket, $targetId), ['timeout' => 300]);
 
         // enable page events
         $result = $this->communicate($page, 'Page.enable');
@@ -333,18 +334,28 @@ class HeadlessChrome
             throw new Exception('Expected empty result. Got instead: ' . json_encode($result));
         }
 
-        // Navigate to target
-        $result = $this->communicate($page, 'Page.navigate', [
-            'url'   => $this->getUrl()
-        ]);
-        if (isset($result['frameId'])) {
-            $frameId = $result['frameId'];
-        } else {
-            throw new Exception('Expected navigation frame. Got instead: ' . json_encode($result));
-        }
+        if (($url = $this->getUrl()) !== null) {
+            // Navigate to target
+            $result = $this->communicate($page, 'Page.navigate', [
+                'url'   => $url
+            ]);
+            if (isset($result['frameId'])) {
+                $frameId = $result['frameId'];
+            } else {
+                throw new Exception('Expected navigation frame. Got instead: ' . json_encode($result));
+            }
 
-        // wait for page to fully load
-        $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $frameId]);
+            // wait for page to fully load
+            $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $frameId]);
+        } elseif (isset($this->document)) {
+            // If there's no url to load transfer the document's content directly
+            $this->communicate($page, 'Page.setDocumentContent', [
+                'frameId'   => $targetId,
+                'html'      => $this->document->render()
+            ]);
+        } else {
+            throw new LogicException('Nothing to print');
+        }
 
         // print pdf
         $result = $this->communicate($page, 'Page.printToPDF', array_merge(
