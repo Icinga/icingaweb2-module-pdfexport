@@ -111,10 +111,13 @@ class Pdfexport extends PdfexportHook
      */
     protected function Chrome()
     {
+        $chrome = new HeadlessChrome();
+        $chrome->setBinary(static::getBinary());
+
         if (($host = static::getHost()) !== null) {
-            return (new HeadlessChrome())->setRemote($host, static::getPort());
+            $chrome->setRemote($host, static::getPort());
         }
 
-        return (new HeadlessChrome())->setBinary(static::getBinary());
+        return $chrome;
     }
 }
