@@ -186,19 +186,23 @@ class HeadlessChrome
      */
     public function toPdf()
     {
+        $browserHome = $this->getFileStorage()->resolvePath('HOME');
         $commandLine = join(' ', [
             escapeshellarg($this->getBinary()),
             static::renderArgumentList([
+                '--bwsi',
                 '--headless',
                 '--disable-gpu',
                 '--no-sandbox',
+                '--no-first-run',
                 '--disable-dev-shm-usage',
-                '--remote-debugging-port=0'
+                '--remote-debugging-port=0',
+                '--homedir=' => $browserHome,
+                '--user-data-dir=' => $browserHome
             ])
         ]);
 
         if (Platform::isLinux()) {
-            $browserHome = $this->getFileStorage()->resolvePath('HOME');
             $chrome = new Process('exec ' . $commandLine, null, ['HOME' => $browserHome]);
         } else {
             $chrome = new Process($commandLine);
