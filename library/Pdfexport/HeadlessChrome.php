@@ -203,8 +203,10 @@ class HeadlessChrome
         ]);
 
         if (Platform::isLinux()) {
+            Logger::debug('Starting browser process: HOME=%s exec %s', $browserHome, $commandLine);
             $chrome = new Process('exec ' . $commandLine, null, ['HOME' => $browserHome]);
         } else {
+            Logger::debug('Starting browser process: %s', $commandLine);
             $chrome = new Process($commandLine);
         }
 
@@ -218,7 +220,7 @@ class HeadlessChrome
                     ? $this->document->getPrintParameters()
                     : []);
             } else {
-                Logger::error('Failed to start browser: %s', $chunk);
+                throw new Exception(sprintf('Failed to start browser: %s', $chunk));
             }
 
             $chrome->terminate();
@@ -348,18 +350,37 @@ class HeadlessChrome
 
     private function communicate(Client $ws, $method, $params = null)
     {
+        Logger::debug('Transmitting CDP call: %s(%s)', $method, $params ? join(',', array_keys($params)) : '');
         $ws->send($this->renderApiCall($method, $params));
 
         do {
             $response = $this->parseApiResponse($ws->receive());
             $gotEvent = isset($response['method']);
+
+            if ($gotEvent) {
+                Logger::debug(
+                    'Received CDP event: %s(%s)',
+                    $response['method'],
+                    join(',', array_keys($response['params']))
+                );
+            }
         } while ($gotEvent);
+
+        Logger::debug('Received CDP result: %s', empty($response['result'])
+            ? 'none'
+            : join(',', array_keys($response['result'])));
 
         return $response['result'];
     }
 
     private function waitFor(Client $ws, $eventName, array $expectedParams = null)
     {
+        Logger::debug(
+            'Awaiting CDP event: %s(%s)',
+            $eventName,
+            $expectedParams ? join(',', array_keys($expectedParams)) : ''
+        );
+
         $wait = true;
 
         do {
@@ -367,6 +388,8 @@ class HeadlessChrome
             if (isset($response['method'])) {
                 $method = $response['method'];
                 $params = $response['params'];
+
+                Logger::debug('Received CDP event: %s(%s)', $method, join(',', array_keys($params)));
 
                 if ($method === $eventName) {
                     if ($expectedParams !== null) {
