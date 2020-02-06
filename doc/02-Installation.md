@@ -4,6 +4,9 @@
 
 * Icinga Web 2 (&gt;= 2.6)
 * PHP (&gt;= 5.6, preferably 7.x)
+* Icinga Web 2 modules:
+  * [reactbundle](https://github.com/Icinga/icingaweb2-module-reactbundle) (>= 0.4)
+  * [Icinga PHP Library (ipl)](https://github.com/Icinga/icingaweb2-module-ipl) (>= 0.2.1)
 
 ## Google Chrome/Chromium Setup <a id="installation-chrome-setup"></a>
 
