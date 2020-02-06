@@ -10,6 +10,7 @@ use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use React\ChildProcess\Process;
 use React\EventLoop\Factory;
+use React\EventLoop\TimerInterface;
 use WebSocket\Client;
 use WebSocket\ConnectionException;
 
@@ -211,28 +212,46 @@ class HeadlessChrome
         }
 
         $loop = Factory::create();
+
+        $killer = $loop->addTimer(10, function (TimerInterface $timer) use ($chrome) {
+            $chrome->terminate(6); // SIGABRT
+            Logger::error(
+                'Terminated browser process after %d seconds elapsed without the expected output',
+                $timer->getInterval()
+            );
+        });
+
         $chrome->start($loop);
 
         $pdf = null;
-        $chrome->stderr->once('data', function ($chunk) use (&$pdf, $chrome) {
+        $chrome->stderr->on('data', function ($chunk) use (&$pdf, $chrome, $loop, $killer) {
+            Logger::debug('Caught browser output: %s', $chunk);
+
             if (preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
+                $loop->cancelTimer($killer);
+
                 $pdf = $this->printToPDF($matches[1], $matches[2], isset($this->document)
                     ? $this->document->getPrintParameters()
                     : []);
-            } else {
-                throw new Exception(sprintf('Failed to start browser: %s', $chunk));
-            }
 
-            $chrome->terminate();
+                $chrome->terminate();
+            }
         });
 
-        $chrome->on('exit', function ($exitCode, $termSignal) {
-            if ($exitCode) {
-                throw new Exception($exitCode);
-            }
+        $chrome->on('exit', function ($exitCode, $termSignal) use ($loop, $killer) {
+            $loop->cancelTimer($killer);
+
+            Logger::debug('Browser terminated by signal %d and exited with code %d', $termSignal, $exitCode);
         });
 
         $loop->run();
+
+        if (empty($pdf)) {
+            throw new Exception(
+                'Received empty response or none at all from browser.'
+                . ' Please check the logs for further details.'
+            );
+        }
 
         return $pdf;
     }
