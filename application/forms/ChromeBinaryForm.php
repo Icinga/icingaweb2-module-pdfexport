@@ -20,7 +20,7 @@ class ChromeBinaryForm extends ConfigForm
     {
         $this->addElement('text', 'chrome_binary', [
             'label'       => $this->translate('Local Binary'),
-            'placeholder' => '/bin/google-chrome',
+            'placeholder' => '/usr/bin/google-chrome',
             'validators'  => [new Zend_Validate_Callback(function ($value) {
                 $chrome = (new HeadlessChrome())
                     ->setBinary($value);
