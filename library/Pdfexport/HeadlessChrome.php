@@ -5,10 +5,12 @@ namespace Icinga\Module\Pdfexport;
 
 use Exception;
 use Icinga\Application\Logger;
+use Icinga\Application\Platform;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use React\ChildProcess\Process;
 use React\EventLoop\Factory;
+use React\EventLoop\TimerInterface;
 use WebSocket\Client;
 use WebSocket\ConnectionException;
 
@@ -185,44 +187,89 @@ class HeadlessChrome
      */
     public function toPdf()
     {
-        $path = uniqid('icingaweb2-pdfexport-') . '.pdf';
-        $storage = $this->getFileStorage();
-
-        $storage->create($path, '');
-
-        $path = $storage->resolvePath($path, true);
-
-        $chrome = new Process(join(' ', [
+        $browserHome = $this->getFileStorage()->resolvePath('HOME');
+        $commandLine = join(' ', [
             escapeshellarg($this->getBinary()),
             static::renderArgumentList([
+                '--bwsi',
                 '--headless',
                 '--disable-gpu',
                 '--no-sandbox',
-                '--remote-debugging-port=0'
+                '--no-first-run',
+                '--disable-dev-shm-usage',
+                '--remote-debugging-port=0',
+                '--homedir=' => $browserHome,
+                '--user-data-dir=' => $browserHome
             ])
-        ]));
+        ]);
+
+        if (Platform::isLinux()) {
+            Logger::debug('Starting browser process: HOME=%s exec %s', $browserHome, $commandLine);
+            $chrome = new Process('exec ' . $commandLine, null, ['HOME' => $browserHome]);
+        } else {
+            Logger::debug('Starting browser process: %s', $commandLine);
+            $chrome = new Process($commandLine);
+        }
 
         $loop = Factory::create();
-        $chrome->start($loop);
 
-        $chrome->stderr->once('data', function ($chunk) use ($path, $chrome) {
-            if (! preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
-                return;
-            }
-
-            file_put_contents($path, $this->printToPDF($matches[1], $matches[2], isset($this->document)
-                ? $this->document->getPrintParameters()
-                : []));
-            $chrome->terminate();
+        $killer = $loop->addTimer(10, function (TimerInterface $timer) use ($chrome) {
+            $chrome->terminate(6); // SIGABRT
+            Logger::error(
+                'Terminated browser process after %d seconds elapsed without the expected output',
+                $timer->getInterval()
+            );
         });
 
-        $chrome->on('exit', function ($exitCode, $termSignal) {
-            if ($exitCode) {
-                throw new Exception($exitCode);
+        $chrome->start($loop);
+
+        $pdf = null;
+        $chrome->stderr->on('data', function ($chunk) use (&$pdf, $chrome, $loop, $killer) {
+            Logger::debug('Caught browser output: %s', $chunk);
+
+            if (preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
+                $loop->cancelTimer($killer);
+
+                $pdf = $this->printToPDF($matches[1], $matches[2], isset($this->document)
+                    ? $this->document->getPrintParameters()
+                    : []);
+
+                $chrome->terminate();
             }
+        });
+
+        $chrome->on('exit', function ($exitCode, $termSignal) use ($loop, $killer) {
+            $loop->cancelTimer($killer);
+
+            Logger::debug('Browser terminated by signal %d and exited with code %d', $termSignal, $exitCode);
         });
 
         $loop->run();
+
+        if (empty($pdf)) {
+            throw new Exception(
+                'Received empty response or none at all from browser.'
+                . ' Please check the logs for further details.'
+            );
+        }
+
+        return $pdf;
+    }
+
+    /**
+     * Export to PDF and save as file on disk
+     *
+     * @return string The path to the file on disk
+     */
+    public function savePdf()
+    {
+        $path = uniqid('icingaweb2-pdfexport-') . '.pdf';
+
+        $storage = $this->getFileStorage();
+        $storage->create($path, '');
+
+        $path = $storage->resolvePath($path, true);
+        file_put_contents($path, $this->toPdf());
 
         return $path;
     }
@@ -273,8 +320,6 @@ class HeadlessChrome
             throw new Exception('Expected base64 data. Got instead: ' . json_encode($result));
         }
 
-        $page->close();  // We're done with the tab, tell this the browser
-
         // close tab
         $result = $this->communicate($browser, 'Target.closeTarget', [
             'targetId' => $targetId
@@ -322,18 +367,37 @@ class HeadlessChrome
 
     private function communicate(Client $ws, $method, $params = null)
     {
+        Logger::debug('Transmitting CDP call: %s(%s)', $method, $params ? join(',', array_keys($params)) : '');
         $ws->send($this->renderApiCall($method, $params));
 
         do {
             $response = $this->parseApiResponse($ws->receive());
             $gotEvent = isset($response['method']);
+
+            if ($gotEvent) {
+                Logger::debug(
+                    'Received CDP event: %s(%s)',
+                    $response['method'],
+                    join(',', array_keys($response['params']))
+                );
+            }
         } while ($gotEvent);
+
+        Logger::debug('Received CDP result: %s', empty($response['result'])
+            ? 'none'
+            : join(',', array_keys($response['result'])));
 
         return $response['result'];
     }
 
     private function waitFor(Client $ws, $eventName, array $expectedParams = null)
     {
+        Logger::debug(
+            'Awaiting CDP event: %s(%s)',
+            $eventName,
+            $expectedParams ? join(',', array_keys($expectedParams)) : ''
+        );
+
         $wait = true;
 
         do {
@@ -341,6 +405,8 @@ class HeadlessChrome
             if (isset($response['method'])) {
                 $method = $response['method'];
                 $params = $response['params'];
+
+                Logger::debug('Received CDP event: %s(%s)', $method, join(',', array_keys($params)));
 
                 if ($method === $eventName) {
                     if ($expectedParams !== null) {
