@@ -320,8 +320,6 @@ class HeadlessChrome
             throw new Exception('Expected base64 data. Got instead: ' . json_encode($result));
         }
 
-        $page->close();  // We're done with the tab, tell this the browser
-
         // close tab
         $result = $this->communicate($browser, 'Target.closeTarget', [
             'targetId' => $targetId
