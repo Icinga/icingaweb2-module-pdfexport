@@ -3,8 +3,8 @@
 
 /** @var \Icinga\Application\Modules\Module $this */
 
-$this->provideConfigTab('binary', array(
-    'title' => $this->translate('Configure the Chrome/Chromium binary'),
-    'label' => $this->translate('Binary'),
-    'url'   => 'config/binary'
+$this->provideConfigTab('chrome', array(
+    'title' => $this->translate('Configure the Chrome/Chromium connection'),
+    'label' => $this->translate('Chrome'),
+    'url'   => 'config/chrome'
 ));

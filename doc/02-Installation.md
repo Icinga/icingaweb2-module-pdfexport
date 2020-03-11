@@ -67,6 +67,22 @@ Or use the `icingacli` and run `icingacli module enable pdfexport`.
 
 3. You might need to set the absolute path to the Google Chrome / Chromium
 binary, depending on your system. This can be done in
-`Configuration -> Modules -> pdfexport -> Binary`
+`Configuration -> Modules -> pdfexport -> Chrome`
 
 This concludes the installation. PDF exports now use Google Chrome/Chromium for rendering.
+
+### Using a Remote Chrome/Chromium
+
+As an alternative to a local installation of Chrome/Chromium it is also possible
+to launch and utilize a remote instance.
+
+Just install it as described above on a different machine and configure its connection
+details in `Configuration -> Modules -> pdfexport -> Chrome`.
+
+To start a remote instance of Chrome/Chromium use the following commandline options:
+
+> google-chrome --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222 --headless --keep-alive-for-test --disable-gpu --disable-dev-shm-usage --no-sandbox --bwsi --no-first-run --user-data-dir=/tmp --homedir=/tmp
+
+Note that the browser does accept any and all connection attempts without any authentication.
+Keep that in mind and let it listen on a public IP (or even on 0.0.0.0) only during tests or
+with a proper firewall in place.
