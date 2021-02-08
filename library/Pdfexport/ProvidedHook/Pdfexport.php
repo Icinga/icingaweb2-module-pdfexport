@@ -67,7 +67,24 @@ class Pdfexport extends PdfexportHook
         // the object is destructed
         $chrome = $this->chrome();
 
-        return $chrome->fromHtml($html)->toPdf();
+	$pdf = $chrome->fromHtml($html)->toPdf();
+
+	if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
+            $coverPagePdf = $chrome
+                ->fromHtml((new PrintableHtmlDocument())
+                    ->add($coverPage)
+                    ->addAttributes($html->getAttributes())
+                    ->removeMargins()
+                )
+                ->toPdf();
+
+            $merger = new Merger(new TcpdiDriver());
+            $merger->addRaw($coverPagePdf);
+            $merger->addRaw($pdf);
+
+	    $pdf = $merger->merge();
+	}
+	return $pdf;
     }
 
     public function streamPdfFromHtml($html, $filename)
