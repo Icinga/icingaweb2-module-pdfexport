@@ -1,5 +1,6 @@
 <?php
-// Icinga PDF Export | (c) 2019 Icinga GmbH | GPLv2
+
+/* Icinga PDF Export | (c) 2019 Icinga GmbH | GPLv2 */
 
 namespace Icinga\Module\Pdfexport;
 

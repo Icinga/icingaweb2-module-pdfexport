@@ -1,5 +1,6 @@
 <?php
-// Icinga PDF Export | (c) 2018 Icinga GmbH | GPLv2
+
+/* Icinga PDF Export | (c) 2018 Icinga GmbH | GPLv2 */
 
 namespace Icinga\Module\Pdfexport;
 
@@ -217,8 +218,7 @@ class HeadlessChrome
      */
     public function toPdf()
     {
-        switch (true)
-        {
+        switch (true) {
             case $this->remote !== null:
                 try {
                     $result = $this->jsonVersion($this->remote[0], $this->remote[1]);
@@ -239,6 +239,8 @@ class HeadlessChrome
                         );
                     }
                 }
+
+                // Fallback to the local binary if a remote chrome is unavailable
             case $this->binary !== null:
                 $browserHome = $this->getFileStorage()->resolvePath('HOME');
                 $commandLine = join(' ', [
@@ -495,8 +497,7 @@ class HeadlessChrome
      */
     public function getVersion()
     {
-        switch (true)
-        {
+        switch (true) {
             case $this->remote !== null:
                 try {
                     $result = $this->jsonVersion($this->remote[0], $this->remote[1]);
@@ -514,6 +515,8 @@ class HeadlessChrome
                         );
                     }
                 }
+
+                // Fallback to the local binary if a remote chrome is unavailable
             case $this->binary !== null:
                 $command = new ShellCommand(
                     escapeshellarg($this->getBinary()) . ' ' . static::renderArgumentList(['--version']),

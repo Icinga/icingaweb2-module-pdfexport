@@ -1,5 +1,6 @@
 <?php
-// Icinga PDF Export | (c) 2018 Icinga GmbH | GPLv2
+
+/* Icinga PDF Export | (c) 2018 Icinga GmbH | GPLv2 */
 
 namespace Icinga\Module\Pdfexport;
 
@@ -45,13 +46,12 @@ class ShellCommand
     public function getStatus()
     {
         $status = (object) proc_get_status($this->resource);
-        if ($status->running === false
-            && $this->exitCode === null
-        ) {
+        if ($status->running === false && $this->exitCode === null) {
             // The exit code is only valid the first time proc_get_status is
             // called in terms of running false, hence we capture it
             $this->exitCode = $status->exitcode;
         }
+
         return $status;
     }
 
