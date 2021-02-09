@@ -82,8 +82,9 @@ class Pdfexport extends PdfexportHook
             $merger->addRaw($coverPagePdf);
             $merger->addRaw($pdf);
 
-	    $pdf = $merger->merge();
+            $pdf = $merger->merge();
 	}
+
 	return $pdf;
     }
 
