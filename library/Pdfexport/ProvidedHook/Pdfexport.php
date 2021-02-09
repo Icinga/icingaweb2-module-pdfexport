@@ -1,5 +1,6 @@
 <?php
-// Icinga PDF Export | (c) 2018 Icinga GmbH | GPLv2
+
+/* Icinga PDF Export | (c) 2018 Icinga GmbH | GPLv2 */
 
 namespace Icinga\Module\Pdfexport\ProvidedHook;
 
@@ -54,7 +55,7 @@ class Pdfexport extends PdfexportHook
     public function isSupported()
     {
         try {
-            return $this->Chrome()->getVersion() >= 59;
+            return $this->chrome()->getVersion() >= 59;
         } catch (Exception $e) {
             return false;
         }
@@ -64,7 +65,7 @@ class Pdfexport extends PdfexportHook
     {
         // Keep reference to the chrome object because it is using temp files which are automatically removed when
         // the object is destructed
-        $chrome = $this->Chrome();
+        $chrome = $this->chrome();
 
         return $chrome->fromHtml($html)->toPdf();
     }
@@ -75,16 +76,17 @@ class Pdfexport extends PdfexportHook
 
         // Keep reference to the chrome object because it is using temp files which are automatically removed when
         // the object is destructed
-        $chrome = $this->Chrome();
+        $chrome = $this->chrome();
 
         $pdf = $chrome->fromHtml($html)->toPdf();
 
         if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
             $coverPagePdf = $chrome
-                ->fromHtml((new PrintableHtmlDocument())
-                    ->add($coverPage)
-                    ->addAttributes($html->getAttributes())
-                    ->removeMargins()
+                ->fromHtml(
+                    (new PrintableHtmlDocument())
+                        ->add($coverPage)
+                        ->addAttributes($html->getAttributes())
+                        ->removeMargins()
                 )
                 ->toPdf();
 
@@ -109,7 +111,7 @@ class Pdfexport extends PdfexportHook
      *
      * @return HeadlessChrome
      */
-    protected function Chrome()
+    protected function chrome()
     {
         $chrome = new HeadlessChrome();
         $chrome->setBinary(static::getBinary());
