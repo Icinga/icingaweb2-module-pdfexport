@@ -67,9 +67,9 @@ class Pdfexport extends PdfexportHook
         // the object is destructed
         $chrome = $this->chrome();
 
-	$pdf = $chrome->fromHtml($html)->toPdf();
+        $pdf = $chrome->fromHtml($html)->toPdf();
 
-	if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
+        if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
             $coverPagePdf = $chrome
                 ->fromHtml((new PrintableHtmlDocument())
                     ->add($coverPage)
@@ -83,9 +83,9 @@ class Pdfexport extends PdfexportHook
             $merger->addRaw($pdf);
 
             $pdf = $merger->merge();
-	}
+        }
 
-	return $pdf;
+        return $pdf;
     }
 
     public function streamPdfFromHtml($html, $filename)
