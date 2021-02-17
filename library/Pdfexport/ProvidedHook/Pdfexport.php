@@ -74,8 +74,7 @@ class Pdfexport extends PdfexportHook
                 ->fromHtml((new PrintableHtmlDocument())
                     ->add($coverPage)
                     ->addAttributes($html->getAttributes())
-                    ->removeMargins()
-                )
+                    ->removeMargins())
                 ->toPdf();
 
             $merger = new Merger(new TcpdiDriver());
