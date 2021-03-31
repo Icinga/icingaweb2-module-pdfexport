@@ -26,6 +26,9 @@ class HeadlessChrome
      */
     const DEBUG_ADDR_PATTERN = '/^DevTools listening on ws:\/\/(127\.0\.0\.1:\d+)\/devtools\/browser\/([\w-]+)$/';
 
+    /** @var string */
+    const WAIT_FOR_NETWORK = 'wait-for-network';
+
     /** @var string Path to the Chrome binary */
     protected $binary;
 
@@ -383,6 +386,9 @@ class HeadlessChrome
             throw new LogicException('Nothing to print');
         }
 
+        // Wait for network activity to finish
+        $this->waitFor($page, self::WAIT_FOR_NETWORK);
+
         // print pdf
         $result = $this->communicate($page, 'Page.printToPDF', array_merge(
             $parameters,
@@ -506,11 +512,15 @@ class HeadlessChrome
 
     private function waitFor(Client $ws, $eventName, array $expectedParams = null)
     {
-        Logger::debug(
-            'Awaiting CDP event: %s(%s)',
-            $eventName,
-            $expectedParams ? join(',', array_keys($expectedParams)) : ''
-        );
+        if ($eventName !== self::WAIT_FOR_NETWORK) {
+            Logger::debug(
+                'Awaiting CDP event: %s(%s)',
+                $eventName,
+                $expectedParams ? join(',', array_keys($expectedParams)) : ''
+            );
+        } elseif (empty($this->interceptedRequests)) {
+            return null;
+        }
 
         $wait = true;
 
@@ -522,7 +532,9 @@ class HeadlessChrome
 
                 $this->registerEvent($method, $params);
 
-                if ($method === $eventName) {
+                if ($eventName === self::WAIT_FOR_NETWORK) {
+                    $wait = ! empty($this->interceptedRequests);
+                } elseif ($method === $eventName) {
                     if ($expectedParams !== null) {
                         $diff = array_intersect_assoc($params, $expectedParams);
                         $wait = empty($diff);
