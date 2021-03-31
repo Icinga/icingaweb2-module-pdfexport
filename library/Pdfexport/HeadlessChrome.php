@@ -26,6 +26,9 @@ class HeadlessChrome
      */
     const DEBUG_ADDR_PATTERN = '/^DevTools listening on ws:\/\/(127\.0\.0\.1:\d+)\/devtools\/browser\/([\w-]+)$/';
 
+    /** @var string */
+    const WAIT_FOR_NETWORK = 'wait-for-network';
+
     /** @var string Path to the Chrome binary */
     protected $binary;
 
@@ -44,6 +47,9 @@ class HeadlessChrome
 
     /** @var StorageInterface */
     protected $fileStorage;
+
+    /** @var array */
+    private $interceptedRequests = [];
 
     /**
      * Get the path to the Chrome binary
@@ -346,10 +352,15 @@ class HeadlessChrome
 
         $page = new Client(sprintf('ws://%s/devtools/page/%s', $socket, $targetId), ['timeout' => 300]);
 
-        // enable page events
-        $result = $this->communicate($page, 'Page.enable');
-        if (! empty($result)) {
-            throw new Exception('Expected empty result. Got instead: ' . json_encode($result));
+        // enable various events
+        $this->communicate($page, 'Log.enable');
+        $this->communicate($page, 'Network.enable');
+        $this->communicate($page, 'Page.enable');
+
+        try {
+            $this->communicate($page, 'Console.enable');
+        } catch (Exception $_) {
+            // Deprecated, might fail
         }
 
         if (($url = $this->getUrl()) !== null) {
@@ -374,6 +385,9 @@ class HeadlessChrome
         } else {
             throw new LogicException('Nothing to print');
         }
+
+        // Wait for network activity to finish
+        $this->waitFor($page, self::WAIT_FOR_NETWORK);
 
         // print pdf
         $result = $this->communicate($page, 'Page.printToPDF', array_merge(
@@ -431,6 +445,50 @@ class HeadlessChrome
         }
     }
 
+    private function registerEvent($method, $params)
+    {
+        if (Logger::getInstance()->getLevel() === Logger::DEBUG) {
+            $shortenValues = function ($params) use (&$shortenValues) {
+                foreach ($params as &$value) {
+                    if (is_array($value)) {
+                        $value = $shortenValues($value);
+                    } elseif (is_string($value)) {
+                        $shortened = substr($value, 0, 256);
+                        if ($shortened !== $value) {
+                            $value = $shortened . '...';
+                        }
+                    }
+                }
+
+                return $params;
+            };
+            $shortenedParams = $shortenValues($params);
+
+            Logger::debug(
+                'Received CDP event: %s(%s)',
+                $method,
+                join(',', array_map(function ($param) use ($shortenedParams) {
+                    return $param . '=' . json_encode($shortenedParams[$param]);
+                }, array_keys($shortenedParams)))
+            );
+        }
+
+        if ($method === 'Network.requestWillBeSent') {
+            $this->interceptedRequests[$params['requestId']] = $params;
+        } elseif ($method === 'Network.loadingFinished') {
+            unset($this->interceptedRequests[$params['requestId']]);
+        } elseif ($method === 'Network.loadingFailed') {
+            $requestData = $this->interceptedRequests[$params['requestId']];
+            unset($this->interceptedRequests[$params['requestId']]);
+
+            Logger::error(
+                'Headless Chrome was unable to complete a request to "%s". Error: %s',
+                $requestData['request']['url'],
+                $params['errorText']
+            );
+        }
+    }
+
     private function communicate(Client $ws, $method, $params = null)
     {
         Logger::debug('Transmitting CDP call: %s(%s)', $method, $params ? join(',', array_keys($params)) : '');
@@ -441,11 +499,7 @@ class HeadlessChrome
             $gotEvent = isset($response['method']);
 
             if ($gotEvent) {
-                Logger::debug(
-                    'Received CDP event: %s(%s)',
-                    $response['method'],
-                    join(',', array_keys($response['params']))
-                );
+                $this->registerEvent($response['method'], $response['params']);
             }
         } while ($gotEvent);
 
@@ -458,11 +512,15 @@ class HeadlessChrome
 
     private function waitFor(Client $ws, $eventName, array $expectedParams = null)
     {
-        Logger::debug(
-            'Awaiting CDP event: %s(%s)',
-            $eventName,
-            $expectedParams ? join(',', array_keys($expectedParams)) : ''
-        );
+        if ($eventName !== self::WAIT_FOR_NETWORK) {
+            Logger::debug(
+                'Awaiting CDP event: %s(%s)',
+                $eventName,
+                $expectedParams ? join(',', array_keys($expectedParams)) : ''
+            );
+        } elseif (empty($this->interceptedRequests)) {
+            return null;
+        }
 
         $wait = true;
 
@@ -472,9 +530,11 @@ class HeadlessChrome
                 $method = $response['method'];
                 $params = $response['params'];
 
-                Logger::debug('Received CDP event: %s(%s)', $method, join(',', array_keys($params)));
+                $this->registerEvent($method, $params);
 
-                if ($method === $eventName) {
+                if ($eventName === self::WAIT_FOR_NETWORK) {
+                    $wait = ! empty($this->interceptedRequests);
+                } elseif ($method === $eventName) {
                     if ($expectedParams !== null) {
                         $diff = array_intersect_assoc($params, $expectedParams);
                         $wait = empty($diff);
