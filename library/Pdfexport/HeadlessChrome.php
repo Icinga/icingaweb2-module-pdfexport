@@ -29,6 +29,26 @@ class HeadlessChrome
     /** @var string */
     const WAIT_FOR_NETWORK = 'wait-for-network';
 
+    /** @var string Javascript Promise to wait for layout initialization */
+    const WAIT_FOR_LAYOUT = <<<JS
+new Promise((fulfill, reject) => {
+    let timeoutId = setTimeout(() => reject('fail'), 10000);
+
+    if (document.documentElement.dataset.layoutReady === 'yes') {
+        clearTimeout(timeoutId);
+        fulfill(null);
+        return;
+    }
+
+    document.addEventListener('layout-ready', e => {
+        clearTimeout(timeoutId);
+        fulfill(e.detail);
+    }, {
+        once: true
+    });
+})
+JS;
+
     /** @var string Path to the Chrome binary */
     protected $binary;
 
@@ -385,12 +405,46 @@ class HeadlessChrome
                 'frameId'   => $targetId,
                 'html'      => $this->document->render()
             ]);
+
+            // wait for page to fully load
+            $this->waitFor($page, 'Page.loadEventFired');
         } else {
             throw new LogicException('Nothing to print');
         }
 
         // Wait for network activity to finish
         $this->waitFor($page, self::WAIT_FOR_NETWORK);
+
+        // Wait for layout to initialize
+        if (isset($this->document)) {
+            // Ensure layout scripts work in the same environment as the pdf printing itself
+            $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => 'print']);
+
+            $this->communicate($page, 'Runtime.evaluate', [
+                'timeout'       => 1000,
+                'expression'    => 'setTimeout(() => new Layout().apply(), 0)'
+            ]);
+
+            $promisedResult = $this->communicate($page, 'Runtime.evaluate', [
+                'awaitPromise'  => true,
+                'returnByValue' => true,
+                'timeout'       => 1000, // Failsafe, doesn't apply to `await` it seems
+                'expression'    => static::WAIT_FOR_LAYOUT
+            ]);
+            if (isset($promisedResult['exceptionDetails'])) {
+                if (isset($promisedResult['exceptionDetails']['exception']['description'])) {
+                    Logger::error(
+                        'PDF layout failed to initialize: %s',
+                        $promisedResult['exceptionDetails']['exception']['description']
+                    );
+                } else {
+                    Logger::warning('PDF layout failed to initialize. Pages might look skewed.');
+                }
+            }
+
+            // Reset media emulation, this may prevent the real media from coming into effect?
+            $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => '']);
+        }
 
         // print pdf
         $result = $this->communicate($page, 'Page.printToPDF', array_merge(

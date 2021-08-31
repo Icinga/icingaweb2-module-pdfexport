@@ -4,10 +4,12 @@
 
 namespace Icinga\Module\Pdfexport;
 
+use Icinga\Application\Icinga;
 use Icinga\Web\StyleSheet;
 use ipl\Html\BaseHtmlElement;
-use ipl\Html\Html;
+use ipl\Html\HtmlElement;
 use ipl\Html\HtmlString;
+use ipl\Html\Text;
 use ipl\Html\ValidHtml;
 
 class PrintableHtmlDocument extends BaseHtmlElement
@@ -104,6 +106,16 @@ class PrintableHtmlDocument extends BaseHtmlElement
      * @var string
      */
     protected $pageRanges;
+
+    /**
+     * Page height in pixels minus any vertical margins, footer and header
+     *
+     * The default is roughly the amount of pixels matching the default paper height of 11 inches at scale 1.
+     *
+     * @todo Find out why subtracting the vertical margins leaves unused space behind (with a height of ~980px)
+     * @var int
+     */
+    protected $pagePixelHeight = 1056;
 
     /**
      * HTML template for the print header
@@ -248,19 +260,32 @@ class PrintableHtmlDocument extends BaseHtmlElement
      */
     protected function assemble()
     {
-        $html = Html::tag('html')
-            ->add(Html::tag(
-                'style',
+        $this->setWrapper(new HtmlElement(
+            'html',
+            null,
+            new HtmlElement(
+                'head',
                 null,
-                new HtmlString(new StyleSheet())
-            ))
-            ->add(Html::tag(
-                'title',
-                null,
-                $this->title
-            ));
+                new HtmlElement(
+                    'title',
+                    null,
+                    Text::create($this->title)
+                ),
+                new HtmlElement(
+                    'style',
+                    null,
+                    HtmlString::create(new StyleSheet())
+                ),
+                $this->createLayoutScript()
+            )
+        ));
 
-        $this->setWrapper($html);
+        $this->getAttributes()->registerAttributeCallback('data-content-height', function () {
+            return $this->pagePixelHeight;
+        });
+        $this->getAttributes()->registerAttributeCallback('style', function () {
+            return sprintf('width: %sin;', $this->paperWidth ?: 8.5);
+        });
     }
 
     /**
@@ -331,5 +356,23 @@ class PrintableHtmlDocument extends BaseHtmlElement
         }
 
         return $parameters;
+    }
+
+    /**
+     * Create layout javascript
+     *
+     * @return ValidHtml
+     */
+    protected function createLayoutScript(): ValidHtml
+    {
+        $jsPath = Icinga::app()->getModuleManager()->getModule('pdfexport')->getJsDir();
+        $layoutJS = file_get_contents($jsPath . '/layout.js') . "\n\n\n";
+        $layoutJS .= file_get_contents($jsPath . '/layout-plugins/page-breaker.js') . "\n\n\n";
+
+        return new HtmlElement(
+            'script',
+            Attributes::create(['type' => 'application/javascript']),
+            HtmlString::create($layoutJS)
+        );
     }
 }
