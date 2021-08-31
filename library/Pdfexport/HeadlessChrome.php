@@ -51,6 +51,9 @@ class HeadlessChrome
     /** @var array */
     private $interceptedRequests = [];
 
+    /** @var array */
+    private $interceptedEvents = [];
+
     /**
      * Get the path to the Chrome binary
      *
@@ -486,6 +489,8 @@ class HeadlessChrome
                 $requestData['request']['url'],
                 $params['errorText']
             );
+        } else {
+            $this->interceptedEvents[] = ['method' => $method, 'params' => $params];
         }
     }
 
@@ -523,14 +528,24 @@ class HeadlessChrome
         }
 
         $wait = true;
+        $interceptedPos = -1;
 
         do {
-            $response = $this->parseApiResponse($ws->receive());
+            if (isset($this->interceptedEvents[++$interceptedPos])) {
+                $response = $this->interceptedEvents[$interceptedPos];
+                $intercepted = true;
+            } else {
+                $response = $this->parseApiResponse($ws->receive());
+                $intercepted = false;
+            }
+
             if (isset($response['method'])) {
                 $method = $response['method'];
                 $params = $response['params'];
 
-                $this->registerEvent($method, $params);
+                if (! $intercepted) {
+                    $this->registerEvent($method, $params);
+                }
 
                 if ($eventName === self::WAIT_FOR_NETWORK) {
                     $wait = ! empty($this->interceptedRequests);
@@ -541,6 +556,10 @@ class HeadlessChrome
                     } else {
                         $wait = false;
                     }
+                }
+
+                if (! $wait && $intercepted) {
+                    unset($this->interceptedEvents[$interceptedPos]);
                 }
             }
         } while ($wait);
