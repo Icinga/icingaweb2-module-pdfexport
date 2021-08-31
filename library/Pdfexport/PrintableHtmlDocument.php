@@ -6,7 +6,10 @@ namespace Icinga\Module\Pdfexport;
 
 use Icinga\Application\Icinga;
 use Icinga\Web\StyleSheet;
+use Icinga\Web\Url;
+use ipl\Html\Attributes;
 use ipl\Html\BaseHtmlElement;
+use ipl\Html\HtmlDocument;
 use ipl\Html\HtmlElement;
 use ipl\Html\HtmlString;
 use ipl\Html\Text;
@@ -14,6 +17,44 @@ use ipl\Html\ValidHtml;
 
 class PrintableHtmlDocument extends BaseHtmlElement
 {
+    /** @var string */
+    const DEFAULT_HEADER_FOOTER_STYLE = <<<'CSS'
+@font-face {
+  font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+}
+
+header, footer {
+  width: 100%;
+  height: 21px;
+  font-size: 7px;
+  display: flex;
+  justify-content: space-between;
+  margin-left: 0.75cm;
+  margin-right: 0.75cm;
+}
+
+header > *:not(:last-child),
+footer > *:not(:last-child) {
+  margin-right: 10px;
+}
+
+span {
+  line-height: 7px;
+  white-space: nowrap;
+}
+
+p {
+  margin: 0;
+  line-height: 7px;
+  word-break: break-word;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+CSS;
+
     /** @var string Document title */
     protected $title;
 
@@ -129,6 +170,10 @@ class PrintableHtmlDocument extends BaseHtmlElement
      *
      * For example, `<span class=title></span>` would generate span containing the title.
      *
+     * Note that the header cannot exceed a height of 21px regardless of the margin's height or document's scale.
+     * With the default style, this height is separated by three lines, each accommodating 7px.
+     * Use `span`'s for single line text and `p`'s for multiline text.
+     *
      * @var ValidHtml
      */
     protected $headerTemplate;
@@ -144,6 +189,10 @@ class PrintableHtmlDocument extends BaseHtmlElement
      *   * totalPages: total pages in the document
      *
      * For example, `<span class=title></span>` would generate span containing the title.
+     *
+     * Note that the footer cannot exceed a height of 21px regardless of the margin's height or document's scale.
+     * With the default style, this height is separated by three lines, each accommodating 7px.
+     * Use `span`'s for single line text and `p`'s for multiline text.
      *
      * @var ValidHtml
      */
@@ -195,6 +244,7 @@ class PrintableHtmlDocument extends BaseHtmlElement
      * Set page header
      *
      * @param ValidHtml $header
+     *
      * @return $this
      */
     public function setHeader(ValidHtml $header)
@@ -208,6 +258,7 @@ class PrintableHtmlDocument extends BaseHtmlElement
      * Set page footer
      *
      * @param ValidHtml $footer
+     *
      * @return $this
      */
     public function setFooter(ValidHtml $footer)
@@ -231,6 +282,7 @@ class PrintableHtmlDocument extends BaseHtmlElement
      * Set cover page
      *
      * @param ValidHtml $coverPage
+     *
      * @return $this
      */
     public function setCoverPage(ValidHtml $coverPage)
@@ -334,15 +386,23 @@ class PrintableHtmlDocument extends BaseHtmlElement
         }
 
         if (isset($this->headerTemplate)) {
-            $parameters['headerTemplate'] = $this->headerTemplate->render();
+            $parameters['headerTemplate'] = $this->createHeader()->render();
             $parameters['displayHeaderFooter'] = true;
+
+            if (! isset($parameters['marginTop'])) {
+                $parameters['marginTop'] = 0.6;
+            }
         } else {
             $parameters['headerTemplate'] = ' ';  // An empty string is ignored
         }
 
         if (isset($this->footerTemplate)) {
-            $parameters['footerTemplate'] = $this->footerTemplate->render();
+            $parameters['footerTemplate'] = $this->createFooter()->render();
             $parameters['displayHeaderFooter'] = true;
+
+            if (! isset($parameters['marginBottom'])) {
+                $parameters['marginBottom'] = 0.6;
+            }
         } else {
             $parameters['footerTemplate'] = ' ';  // An empty string is ignored
         }
@@ -439,5 +499,37 @@ class PrintableHtmlDocument extends BaseHtmlElement
             Attributes::create(['type' => 'application/javascript']),
             HtmlString::create($layoutJS)
         );
+    }
+
+    /**
+     * Create document header
+     *
+     * @return ValidHtml
+     */
+    protected function createHeader(): ValidHtml
+    {
+        return (new HtmlDocument())
+            ->addHtml(
+                new HtmlElement('style', null, HtmlString::create(
+                    static::DEFAULT_HEADER_FOOTER_STYLE
+                )),
+                new HtmlElement('header', null, $this->headerTemplate)
+            );
+    }
+
+    /**
+     * Create document footer
+     *
+     * @return ValidHtml
+     */
+    protected function createFooter(): ValidHtml
+    {
+        return (new HtmlDocument())
+            ->addHtml(
+                new HtmlElement('style', null, HtmlString::create(
+                    static::DEFAULT_HEADER_FOOTER_STYLE
+                )),
+                new HtmlElement('footer', null, $this->footerTemplate)
+            );
     }
 }
