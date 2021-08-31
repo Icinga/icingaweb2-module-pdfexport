@@ -271,11 +271,7 @@ class PrintableHtmlDocument extends BaseHtmlElement
                     null,
                     Text::create($this->title)
                 ),
-                new HtmlElement(
-                    'style',
-                    null,
-                    HtmlString::create(new StyleSheet())
-                ),
+                $this->createStylesheet(),
                 $this->createLayoutScript()
             )
         ));
@@ -356,6 +352,75 @@ class PrintableHtmlDocument extends BaseHtmlElement
         }
 
         return $parameters;
+    }
+
+    /**
+     * Create CSS stylesheet
+     *
+     * @return ValidHtml
+     */
+    protected function createStylesheet(): ValidHtml
+    {
+        $app = Icinga::app();
+
+        $css = preg_replace_callback(
+            '~(?<=url\()[\'"]?([^(\'"]*)[\'"]?(?=\))~',
+            function ($matches) use ($app) {
+                if (substr($matches[1], 0, 3) !== '../') {
+                    return $matches[1];
+                }
+
+                $path = substr($matches[1], 3);
+                if (substr($path, 0, 4) === 'lib/') {
+                    $assetPath = substr($path, 4);
+
+                    $library = null;
+                    foreach ($app->getLibraries() as $candidate) {
+                        if (substr($assetPath, 0, strlen($candidate->getName())) === $candidate->getName()) {
+                            $library = $candidate;
+                            $assetPath = ltrim(substr($assetPath, strlen($candidate->getName())), '/');
+                            break;
+                        }
+                    }
+
+                    if ($library === null) {
+                        return $matches[1];
+                    }
+
+                    $path = $library->getStaticAssetPath() . DIRECTORY_SEPARATOR . $assetPath;
+                } elseif (substr($matches[1], 0, 14) === '../static/img?') {
+                    $params = Url::fromPath($matches[1])->getParams();
+                    if (! $app->getModuleManager()->hasEnabled($params->get('module_name'))) {
+                        return $matches[1];
+                    }
+
+                    $module = $app->getModuleManager()->getModule($params->get('module_name'));
+                    $imgRoot = $module->getBaseDir() . '/public/img/';
+                    $path = realpath($imgRoot . $params->get('file'));
+                } else {
+                    $path = $app->getBootstrapDirectory() . '/' . $path;
+                }
+
+                if (! $path || ! file_exists($path) || ! is_file($path)) {
+                    return $matches[1];
+                }
+
+                $mimeType = @mime_content_type($path);
+                if ($mimeType === false) {
+                    return $matches[1];
+                }
+
+                $fileContent = @file_get_contents($path);
+                if ($fileContent === false) {
+                    return $matches[1];
+                }
+
+                return "'data:$mimeType; base64, " . base64_encode($fileContent) . "'";
+            },
+            (new StyleSheet())->render(true)
+        );
+
+        return new HtmlElement('style', null, HtmlString::create($css));
     }
 
     /**
