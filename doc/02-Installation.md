@@ -2,7 +2,7 @@
 
 ## Requirements <a id="installation-requirements"></a>
 
-* PHP (>= 7.1)
+* PHP (>= 7.1) with the function `proc_open()` allowed (e.g not listed in `disable_functions`)
 * [Icinga Web 2](https://github.com/Icinga/icingaweb2) (>= 2.6)
 * [Icinga PHP Thirdparty](https://github.com/Icinga/icinga-php-thirdparty) (>= 0.10)
 * [Icinga PHP Library (ipl)](https://github.com/Icinga/icinga-php-library) (>= 0.7)
