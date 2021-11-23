@@ -1,64 +1,64 @@
-Websocket Client for PHP
-========================
+# Websocket Client and Server for PHP
 
-[![Build Status](https://travis-ci.org/Textalk/websocket-php.png)](https://travis-ci.org/Textalk/websocket-php)
-[![Coverage Status](https://coveralls.io/repos/Textalk/websocket-php/badge.png)](https://coveralls.io/r/Textalk/websocket-php)
+[![Build Status](https://travis-ci.org/Textalk/websocket-php.svg?branch=master)](https://travis-ci.org/Textalk/websocket-php)
+[![Coverage Status](https://coveralls.io/repos/github/Textalk/websocket-php/badge.svg?branch=master)](https://coveralls.io/github/Textalk/websocket-php)
 
-This package mainly contains a WebSocket client for PHP.
+This library contains WebSocket client and server for PHP.
 
-I made it because the state of other WebSocket clients I could found was either very poor
-(sometimes failing on large frames) or had huge dependencies (React…).
+The client and server provides methods for reading and writing to WebSocket streams.
+It does not include convenience operations such as listeners and implicit error handling.
 
-The Client should be good.  If it isn't, tell me!
+## Documentation
 
-The Server there because much of the code would be identical in writing a server, and because it is
-used for the tests.  To be really useful though, there should be a Connection-class returned from a
-new Connection, and the Server-class only handling the handshake.  Then you could hold a full array
-of Connections and check them periodically for new data, send something to them all or fork off a
-process handling one connection.  But, I have no use for that right now.  (Actually, I would
-suggest a language with better asynchronous handling than PHP for that.)
+- [Client](docs/Client.md)
+- [Server](docs/Server.md)
+- [Examples](docs/Examples.md)
+- [Changelog](docs/Changelog.md)
+- [Contributing](docs/Contributing.md)
 
-Installing
-----------
+## Installing
 
 Preferred way to install is with [Composer](https://getcomposer.org/).
+```
+composer require textalk/websocket
+```
 
-Just add
+* Current version support PHP versions `^7.1`.
+* For PHP `^5.4` and `7.0` support use version `1.3`.
 
-    "require": {
-      "textalk/websocket": "1.0.*"
-    }
+## Client
 
-in your projects composer.json.
+The [client](docs/Server.md) can read and write on a WebSocket stream.
+It internally supports Upgrade handshake and implicit close and ping/pong operations.
 
-Client usage:
--------------
 ```php
-require('vendor/autoload.php');
-
-use WebSocket\Client;
-
-$client = new Client("ws://echo.websocket.org/");
+$client = new WebSocket\Client("ws://echo.websocket.org/");
 $client->send("Hello WebSocket.org!");
-
-echo $client->receive(); // Will output 'Hello WebSocket.org!'
+echo $client->receive();
+$client->close();
 ```
 
-Developer install
------------------
+## Server
 
-Development depends on php, php-curl and php-xdebug.
+The library contains a rudimentary single stream/single thread [server](docs/Server.md).
+It internally supports Upgrade handshake and implicit close and ping/pong operations.
 
-```bash
-# Will get composer, install dependencies and run tests
-make test
+Note that it does **not** support threading or automatic association ot continuous client requests.
+If you require this kind of server behavior, you need to build it on top of provided server implementation.
+
+```php
+$server = new WebSocket\Server();
+$server->accept();
+$message = $server->receive();
+$server->send($message);
+$server->close();
 ```
 
-Changelog
----------
+### License and Contributors
 
-1.0.0
+[ISC License](COPYING.md)
 
- * Release as production ready.
- * Adding option to set/override headers.
- * Supporting basic authentication from user:pass in URL.
+Fredrik Liljegren, Armen Baghumian Sankbarani, Ruslan Bekenev,
+Joshua Thijssen, Simon Lipp, Quentin Bellus, Patrick McCarren, swmcdonnell,
+Ignas Bernotas, Mark Herhold, Andreas Palm, Sören Jensen, pmaasz, Alexey Stavrov,
+Michael Slezak, Pierre Seznec, rmeisler, Nickolay V. Shmyrev.

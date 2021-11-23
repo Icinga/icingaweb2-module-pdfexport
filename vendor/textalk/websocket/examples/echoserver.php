@@ -2,69 +2,72 @@
 
 /**
  * This file is used for the tests, but can also serve as an example of a WebSocket\Server.
+ * Run in console: php examples/echoserver.php
+ *
+ * Console options:
+ *  --port <int> : The port to listen to, default 8000
+ *  --timeout <int> : Timeout in seconds, default 200 seconds
+ *  --debug : Output log data (if logger is available)
  */
 
-$GLOBALS['PHPUNIT_COVERAGE_DATA_DIRECTORY'] = dirname(dirname(__FILE__)) . '/build/tmp';
+namespace WebSocket;
 
-require(dirname(dirname(__FILE__)) . '/vendor/autoload.php');
+require __DIR__ . '/../vendor/autoload.php';
 
-use WebSocket\Server;
+error_reporting(-1);
 
-// Setting timeout to 200 seconds to make time for all tests and manual runs.
-$server = new Server(array('timeout' => 200));
+echo "> Random server\n";
 
-echo $server->getPort(), "\n";
+// Server options specified or random
+$options = array_merge([
+    'port'          => 8000,
+    'timeout'       => 200,
+], getopt('', ['port:', 'timeout:', 'debug']));
 
-while ($connection = $server->accept()) {
-  $test_id = $server->getPath();
-  $test_id = substr($test_id, 1);
-
-  xdebug_start_code_coverage(XDEBUG_CC_UNUSED | XDEBUG_CC_DEAD_CODE);
-  PHPUnit_Extensions_SeleniumCommon_ExitHandler::init();
-
-  try {
-    while(1) {
-      $message = $server->receive();
-      echo "Received $message\n\n";
-
-      if ($message === 'exit') {
-        echo microtime(true), " Client told me to quit.  Bye bye.\n";
-        echo microtime(true), " Close response: ", $server->close(), "\n";
-        echo microtime(true), " Close status: ", $server->getCloseStatus(), "\n";
-        save_coverage_data($test_id);
-        exit;
-      }
-
-      if ($message === 'Dump headers') {
-        $server->send(implode("\r\n", $server->getRequest()));
-      }
-      elseif ($auth = $server->getHeader('Authorization')) {
-        $server->send("$auth - $message", 'text', false);
-      }
-      else {
-        $server->send($message, 'text', false);
-      }
-    }
-  }
-  catch (WebSocket\ConnectionException $e) {
-    echo "\n", microtime(true), " Client died: $e\n";
-    save_coverage_data($test_id);
-  }
+// If debug mode and logger is available
+if (isset($options['debug']) && class_exists('WebSocket\EchoLog')) {
+    $logger = new EchoLog();
+    $options['logger'] = $logger;
+    echo "> Using logger\n";
 }
 
-exit;
+// Setting timeout to 200 seconds to make time for all tests and manual runs.
+$server = new Server($options);
 
+echo "> Listening to port {$server->getPort()}\n";
 
-function save_coverage_data($test_id) {
-  $data = xdebug_get_code_coverage();
-  xdebug_stop_code_coverage();
+while ($server->accept()) {
+    try {
+        while (true) {
+            $message = $server->receive();
+            $opcode = $server->getLastOpcode();
+            if ($opcode == 'close') {
+                echo "> Closed connection\n";
+                continue;
+            }
+            echo "> Got '{$message}' [opcode: {$opcode}]\n";
 
-  if (!is_dir($GLOBALS['PHPUNIT_COVERAGE_DATA_DIRECTORY'])) {
-    mkdir($GLOBALS['PHPUNIT_COVERAGE_DATA_DIRECTORY'], 0777, true);
-  }
-  $file = $GLOBALS['PHPUNIT_COVERAGE_DATA_DIRECTORY'] . '/' . $test_id
-    . '.' . md5(uniqid(rand(), true));
-
-  echo "Saving coverage data to $file...\n";
-  file_put_contents($file, serialize($data));
+            switch ($message) {
+                case 'exit':
+                    echo "> Client told me to quit.  Bye bye.\n";
+                    $server->close();
+                    echo "> Close status: {$server->getCloseStatus()}\n";
+                    exit;
+                case 'headers':
+                    $server->send(implode("\r\n", $server->getRequest()));
+                    break;
+                case 'ping':
+                    $server->send($message, 'ping');
+                    break;
+                case 'auth':
+                    $auth = $server->getHeader('Authorization');
+                    $server->send("{$auth} - {$message}", $opcode);
+                    break;
+                default:
+                    $server->send($message, $opcode);
+            }
+        }
+    } catch (WebSocket\ConnectionException $e) {
+        echo "\n", microtime(true), " Connection died: $e\n";
+    }
 }
