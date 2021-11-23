@@ -30,6 +30,14 @@ jobs:
           php-version: ${{ matrix.php }}
           tools: phpcs
 
+      # The cleanup is required because otherwise the tests fail on PHP 8+.
+      # Some of our deps are not officially compatible with that but will
+      # pass the lint tests. Removing composer.json and composer.lock first
+      # ensures that the test dep setup succeeds. Not removing vendor, but
+      # only renaming it ensures the files are scanned still.
+      - name: Cleanup
+        run: rm composer.* && mv vendor real-vendor
+
       - name: Setup dependencies
         run: composer require -n --no-progress overtrue/phplint
 
