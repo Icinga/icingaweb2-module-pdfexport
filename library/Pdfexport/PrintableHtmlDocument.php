@@ -5,7 +5,6 @@
 namespace Icinga\Module\Pdfexport;
 
 use Icinga\Application\Icinga;
-use Icinga\Web\StyleSheet;
 use Icinga\Web\Url;
 use ipl\Html\Attributes;
 use ipl\Html\BaseHtmlElement;
@@ -477,7 +476,7 @@ CSS;
 
                 return "'data:$mimeType; base64, " . base64_encode($fileContent) . "'";
             },
-            (new StyleSheet())->render(true)
+            (new PrintStyleSheet())->render(true)
         );
 
         return new HtmlElement('style', null, HtmlString::create($css));
