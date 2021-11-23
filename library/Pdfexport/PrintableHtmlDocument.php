@@ -149,14 +149,15 @@ CSS;
     protected $pageRanges;
 
     /**
-     * Page height in pixels minus any vertical margins, footer and header
+     * Page height in pixels
      *
-     * The default is roughly the amount of pixels matching the default paper height of 11 inches at scale 1.
+     * Minus the default vertical margins, this is 1035.
+     * If the vertical margins are zero, it's 1160.
+     * Whether there's a header or footer doesn't matter in any case.
      *
-     * @todo Find out why subtracting the vertical margins leaves unused space behind (with a height of ~980px)
      * @var int
      */
-    protected $pagePixelHeight = 1056;
+    protected $pagePixelHeight = 1035;
 
     /**
      * HTML template for the print header
