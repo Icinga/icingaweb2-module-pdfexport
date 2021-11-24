@@ -1,7 +1,6 @@
 {
   "require": {
-    "textalk/websocket": "1.0.*",
-    "iio/libmergepdf": "^4.0",
-    "guzzlehttp/guzzle": "~6.0"
+    "textalk/websocket": "^1.4",
+    "iio/libmergepdf": "^4.0"
   }
 }
