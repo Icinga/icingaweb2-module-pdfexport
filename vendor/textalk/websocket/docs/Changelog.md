@@ -1,6 +1,42 @@
-[Client](Client.md) • [Server](Server.md) • [Examples](Examples.md) • Changelog • [Contributing](Contributing.md)
+[Client](Client.md) • [Server](Server.md) • [Message](Message.md) • [Examples](Examples.md) • Changelog • [Contributing](Contributing.md)
 
 # Websocket: Changelog
+
+## `v1.5`
+
+ > PHP version `^7.2|^8.0`
+
+### `1.5.5`
+
+ * Support for psr/log v2 and v3 (@simPod)
+ * GitHub Actions replaces Travis (@sirn-se)
+
+### `1.5.4`
+
+ * Keep open connection on read timeout (@marcroberts)
+
+### `1.5.3`
+
+ * Fix for persistent connection (@sirn-se)
+
+### `1.5.2`
+
+ * Fix for getName() method (@sirn-se)
+
+### `1.5.1`
+
+ * Fix for persistent connections (@rmeisler)
+
+### `1.5.0`
+
+ * Convenience send methods; text(), binary(), ping(), pong() (@sirn-se)
+ * Optional Message instance as receive() method return (@sirn-se)
+ * Opcode filter for receive() method (@sirn-se)
+ * Added PHP `8.0` support (@webpatser)
+ * Dropped PHP `7.1` support (@sirn-se)
+ * Fix for unordered fragmented messages (@sirn-se)
+ * Improved error handling on stream calls (@sirn-se)
+ * Various code re-write (@sirn-se)
 
 ## `v1.4`
 

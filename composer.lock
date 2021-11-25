@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "73f92ceb3ee70133b56e31df923f7c9b",
+    "content-hash": "410e13f411197a49c927ab5e9a9d1c4f",
     "packages": [
         {
             "name": "iio/libmergepdf",
@@ -245,25 +245,25 @@
         },
         {
             "name": "textalk/websocket",
-            "version": "1.4.3",
+            "version": "1.5.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Textalk/websocket-php.git",
-                "reference": "6bc13b277bbca67ee1d697dd74e279da1c2df9ca"
+                "reference": "846542f82658132cd36acb7a7e8ce0f03960c295"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Textalk/websocket-php/zipball/6bc13b277bbca67ee1d697dd74e279da1c2df9ca",
-                "reference": "6bc13b277bbca67ee1d697dd74e279da1c2df9ca",
+                "url": "https://api.github.com/repos/Textalk/websocket-php/zipball/846542f82658132cd36acb7a7e8ce0f03960c295",
+                "reference": "846542f82658132cd36acb7a7e8ce0f03960c295",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.1",
-                "psr/log": "^1.0"
+                "php": "^7.2 | ^8.0",
+                "psr/log": "^1 | ^2 | ^3"
             },
             "require-dev": {
                 "php-coveralls/php-coveralls": "^2.0",
-                "phpunit/phpunit": "^7.0|^8.0|^9.0",
+                "phpunit/phpunit": "^8.0|^9.0",
                 "squizlabs/php_codesniffer": "^3.5"
             },
             "type": "library",
@@ -286,7 +286,7 @@
                 }
             ],
             "description": "WebSocket client and server",
-            "time": "2020-12-05T10:11:34+00:00"
+            "time": "2021-08-07T10:21:40+00:00"
         }
     ],
     "packages-dev": [],
