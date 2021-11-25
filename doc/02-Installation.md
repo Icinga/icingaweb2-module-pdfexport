@@ -2,7 +2,7 @@
 
 ## Requirements <a id="installation-requirements"></a>
 
-* PHP (>= 7.1)
+* PHP (>= 7.2)
 * [Icinga Web 2](https://github.com/Icinga/icingaweb2) (>= 2.7)
 
 If your Icinga Web 2 is **not** v2.9+, the following modules are also required:

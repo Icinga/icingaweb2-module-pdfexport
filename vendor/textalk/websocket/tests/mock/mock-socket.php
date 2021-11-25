@@ -36,6 +36,11 @@ function feof()
     $args = func_get_args();
     return MockSocket::handle('feof', $args);
 }
+function ftell()
+{
+    $args = func_get_args();
+    return MockSocket::handle('ftell', $args);
+}
 function fclose()
 {
     $args = func_get_args();
@@ -65,4 +70,9 @@ function get_resource_type()
 {
     $args = func_get_args();
     return MockSocket::handle('get_resource_type', $args);
+}
+function stream_socket_get_name()
+{
+    $args = func_get_args();
+    return MockSocket::handle('stream_socket_get_name', $args);
 }
