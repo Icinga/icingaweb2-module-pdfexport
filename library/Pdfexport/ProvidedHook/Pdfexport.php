@@ -42,6 +42,11 @@ class Pdfexport extends PdfexportHook
         return Config::module('pdfexport')->get('chrome', 'binary', '/usr/bin/google-chrome');
     }
 
+    public static function getForceTempStorage()
+    {
+        return (bool) Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0');
+    }
+
     public static function getHost()
     {
         return Config::module('pdfexport')->get('chrome', 'host');
@@ -67,7 +72,7 @@ class Pdfexport extends PdfexportHook
         // the object is destructed
         $chrome = $this->chrome();
 
-        $pdf = $chrome->fromHtml($html)->toPdf();
+        $pdf = $chrome->fromHtml($html, static::getForceTempStorage())->toPdf();
 
         if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
             $coverPagePdf = $chrome
@@ -95,7 +100,7 @@ class Pdfexport extends PdfexportHook
         // the object is destructed
         $chrome = $this->chrome();
 
-        $pdf = $chrome->fromHtml($html)->toPdf();
+        $pdf = $chrome->fromHtml($html, static::getForceTempStorage())->toPdf();
 
         if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
             $coverPagePdf = $chrome
