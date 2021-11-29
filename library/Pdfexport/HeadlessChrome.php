@@ -24,7 +24,7 @@ class HeadlessChrome
      *
      * First matching group is the used port and the second one the browser id.
      */
-    const DEBUG_ADDR_PATTERN = '/^DevTools listening on ws:\/\/(127\.0\.0\.1:\d+)\/devtools\/browser\/([\w-]+)$/';
+    const DEBUG_ADDR_PATTERN = '/DevTools listening on ws:\/\/((?>\d+\.?){4}:\d+)\/devtools\/browser\/([\w-]+)/';
 
     /** @var string */
     const WAIT_FOR_NETWORK = 'wait-for-network';
