@@ -47,6 +47,10 @@ class ChromeBinaryForm extends ConfigForm
             })]
         ]);
 
+        $this->addElement('checkbox', 'chrome_force_temp_storage', [
+            'label'     => $this->translate('Force local temp storage')
+        ]);
+
         $this->addElement('text', 'chrome_host', [
             'label'         => $this->translate('Remote Host'),
             'validators'    => [new Zend_Validate_Callback(function ($value) {
