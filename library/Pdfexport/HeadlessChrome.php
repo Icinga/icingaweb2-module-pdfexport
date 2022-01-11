@@ -314,9 +314,13 @@ JS;
                     if (preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
                         $loop->cancelTimer($killer);
 
-                        $pdf = $this->printToPDF($matches[1], $matches[2], isset($this->document)
-                            ? $this->document->getPrintParameters()
-                            : []);
+                        try {
+                            $pdf = $this->printToPDF($matches[1], $matches[2], isset($this->document)
+                                ? $this->document->getPrintParameters()
+                                : []);
+                        } catch (Exception $e) {
+                            Logger::error('Failed to print PDF. An error occurred: %s', $e);
+                        }
 
                         $chrome->terminate();
                     }
