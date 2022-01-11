@@ -5,7 +5,7 @@
 namespace Icinga\Module\Pdfexport;
 
 use Icinga\Application\Icinga;
-use Icinga\Web\Url;
+use Icinga\Web\UrlParams;
 use ipl\Html\Attributes;
 use ipl\Html\BaseHtmlElement;
 use ipl\Html\HtmlDocument;
@@ -449,7 +449,8 @@ CSS;
 
                     $path = $library->getStaticAssetPath() . DIRECTORY_SEPARATOR . $assetPath;
                 } elseif (substr($matches[1], 0, 14) === '../static/img?') {
-                    $params = Url::fromPath($matches[1])->getParams();
+                    list($_, $query) = explode('?', $matches[1], 2);
+                    $params = UrlParams::fromQueryString($query);
                     if (! $app->getModuleManager()->hasEnabled($params->get('module_name'))) {
                         return $matches[1];
                     }
