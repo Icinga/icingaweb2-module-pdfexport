@@ -27,9 +27,9 @@
             }
 
             if (remainingHeight < requiredHeight) {
-                if (!! item.previousSibling) {
-                    item.previousSibling.style.pageBreakAfter = 'always';
-                    item.previousSibling.classList.add('page-break-follows');
+                if (!! item.previousElementSibling) {
+                    item.previousElementSibling.style.pageBreakAfter = 'always';
+                    item.previousElementSibling.classList.add('page-break-follows');
                 } else {
                     item.style.pageBreakAfter = 'always';
                     item.classList.add('page-break-follows');
