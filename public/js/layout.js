@@ -15,7 +15,7 @@ class Layout
             try {
                 plugin();
             } catch (error) {
-                console.error('Layout plugin ' + name + ' failed run: ' + error);
+                console.error('Layout plugin ' + name + ' failed to run: ' + error);
             }
         }
 
