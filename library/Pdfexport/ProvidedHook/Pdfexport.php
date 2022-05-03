@@ -76,10 +76,13 @@ class Pdfexport extends PdfexportHook
 
         if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
             $coverPagePdf = $chrome
-                ->fromHtml((new PrintableHtmlDocument())
-                    ->add($coverPage)
-                    ->addAttributes($html->getAttributes())
-                    ->removeMargins())
+                ->fromHtml(
+                    (new PrintableHtmlDocument())
+                        ->add($coverPage)
+                        ->addAttributes($html->getAttributes())
+                        ->removeMargins(),
+                    static::getForceTempStorage()
+                )
                 ->toPdf();
 
             $merger = new Merger(new TcpdiDriver());
@@ -108,7 +111,8 @@ class Pdfexport extends PdfexportHook
                     (new PrintableHtmlDocument())
                         ->add($coverPage)
                         ->addAttributes($html->getAttributes())
-                        ->removeMargins()
+                        ->removeMargins(),
+                    static::getForceTempStorage()
                 )
                 ->toPdf();
 
