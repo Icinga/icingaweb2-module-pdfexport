@@ -105,7 +105,7 @@ class ShellCommand
         stream_set_blocking($namedpipes->stdout, 0); // non-blocking
         stream_set_blocking($namedpipes->stderr, 0);
 
-        while (stream_select($read, $write, $except, null, 20000) !== false) {
+        while (stream_select($read, $write, $except, 0, 20000) !== false) {
             foreach ($read as $pipe) {
                 if ($pipe === $namedpipes->stdout) {
                     $stdout .= stream_get_contents($pipe);
