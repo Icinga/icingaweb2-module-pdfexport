@@ -1,0 +1,15 @@
+parameters:
+    level: 2
+
+    checkFunctionNameCase: true
+    checkInternalClassCaseSensitivity: true
+
+    paths:
+        - application
+        - library
+
+    scanDirectories:
+        - vendor
+
+    universalObjectCratesClasses:
+        - Icinga\Web\View
