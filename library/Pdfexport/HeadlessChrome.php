@@ -588,6 +588,7 @@ JS;
         $wait = true;
         $interceptedPos = -1;
 
+        $params = null;
         do {
             if (isset($this->interceptedEvents[++$interceptedPos])) {
                 $response = $this->interceptedEvents[$interceptedPos];
