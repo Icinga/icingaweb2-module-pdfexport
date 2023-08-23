@@ -12,7 +12,7 @@ class ShellCommand
     /** @var int Exit code of the command */
     protected $exitCode;
 
-    /** @var resource Process resource */
+    /** @var ?resource Process resource */
     protected $resource;
 
     /**
