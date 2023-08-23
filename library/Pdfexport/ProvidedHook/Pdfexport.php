@@ -9,6 +9,7 @@ use Icinga\Application\Config;
 use Icinga\Application\Hook;
 use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
+use Icinga\Application\Web;
 use Icinga\Module\Pdfexport\HeadlessChrome;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use iio\libmergepdf\Driver\TcpdiDriver;
@@ -123,7 +124,9 @@ class Pdfexport extends PdfexportHook
             $pdf = $merger->merge();
         }
 
-        Icinga::app()->getResponse()
+        /** @var Web $app */
+        $app = Icinga::app();
+        $app->getResponse()
             ->setHeader('Content-Type', 'application/pdf', true)
             ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true)
             ->setBody($pdf)
