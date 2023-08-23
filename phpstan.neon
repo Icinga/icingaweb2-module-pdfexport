@@ -1,8 +1,9 @@
 parameters:
-    level: 2
+    level: 5
 
     checkFunctionNameCase: true
     checkInternalClassCaseSensitivity: true
+    treatPhpDocTypesAsCertain: false
 
     paths:
         - application

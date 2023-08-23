@@ -62,7 +62,7 @@ CSS;
      *
      * Defaults to false.
      *
-     * @var bool
+     * @var ?bool
      */
     protected $landscape;
 
@@ -71,7 +71,7 @@ CSS;
      *
      * Defaults to false.
      *
-     * @var bool
+     * @var ?bool
      */
     protected $printBackground;
 
@@ -80,7 +80,7 @@ CSS;
      *
      * Defaults to 1.
      *
-     * @var float
+     * @var ?float
      */
     protected $scale;
 
@@ -89,7 +89,7 @@ CSS;
      *
      * Defaults to 8.5 inches.
      *
-     * @var float
+     * @var ?float
      */
     protected $paperWidth;
 
@@ -98,7 +98,7 @@ CSS;
      *
      * Defaults to 11 inches.
      *
-     * @var float
+     * @var ?float
      */
     protected $paperHeight;
 
@@ -107,7 +107,7 @@ CSS;
      *
      * Defaults to 1cm (~0.4 inches).
      *
-     * @var float
+     * @var ?float
      */
     protected $marginTop;
 
@@ -116,7 +116,7 @@ CSS;
      *
      * Defaults to 1cm (~0.4 inches).
      *
-     * @var float
+     * @var ?float
      */
     protected $marginBottom;
 
@@ -125,7 +125,7 @@ CSS;
      *
      * Defaults to 1cm (~0.4 inches).
      *
-     * @var float
+     * @var ?float
      */
     protected $marginLeft;
 
@@ -134,7 +134,7 @@ CSS;
      *
      * Defaults to 1cm (~0.4 inches).
      *
-     * @var float
+     * @var ?float
      */
     protected $marginRight;
 
@@ -143,7 +143,7 @@ CSS;
      *
      * Defaults to the empty string, which means print all pages
      *
-     * @var string
+     * @var ?string
      */
     protected $pageRanges;
 
@@ -174,7 +174,7 @@ CSS;
      * With the default style, this height is separated by three lines, each accommodating 7px.
      * Use `span`'s for single line text and `p`'s for multiline text.
      *
-     * @var ValidHtml
+     * @var ?ValidHtml
      */
     protected $headerTemplate;
 
@@ -194,7 +194,7 @@ CSS;
      * With the default style, this height is separated by three lines, each accommodating 7px.
      * Use `span`'s for single line text and `p`'s for multiline text.
      *
-     * @var ValidHtml
+     * @var ?ValidHtml
      */
     protected $footerTemplate;
 
@@ -210,7 +210,7 @@ CSS;
      *
      * Defaults to false, in which case the content will be scaled to fit the paper size.
      *
-     * @var bool
+     * @var ?bool
      */
     protected $preferCSSPageSize;
 
