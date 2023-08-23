@@ -1,5 +1,8 @@
+includes:
+	- phpstan-baseline.neon
+
 parameters:
-    level: 5
+    level: max
 
     checkFunctionNameCase: true
     checkInternalClassCaseSensitivity: true
@@ -8,6 +11,13 @@ parameters:
     paths:
         - application
         - library
+
+    ignoreErrors:
+        -
+            messages:
+                - '#Unsafe usage of new static\(\)#'
+                - '#. but return statement is missing#'
+            reportUnmatched: false
 
     scanDirectories:
         - vendor
