@@ -252,9 +252,11 @@ JS;
                 try {
                     $result = $this->jsonVersion($this->remote[0], $this->remote[1]);
                     $parts = explode('/', $result['webSocketDebuggerUrl']);
-                    $pdf = $this->printToPDF(join(':', $this->remote), end($parts), isset($this->document)
-                        ? $this->document->getPrintParameters()
-                        : []);
+                    $pdf = $this->printToPDF(
+                        join(':', $this->remote),
+                        end($parts),
+                        ! $this->document->isEmpty() ? $this->document->getPrintParameters() : []
+                    );
                     break;
                 } catch (Exception $e) {
                     if ($this->binary === null) {
@@ -315,9 +317,11 @@ JS;
                         $loop->cancelTimer($killer);
 
                         try {
-                            $pdf = $this->printToPDF($matches[1], $matches[2], isset($this->document)
-                                ? $this->document->getPrintParameters()
-                                : []);
+                            $pdf = $this->printToPDF(
+                                $matches[1],
+                                $matches[2],
+                                ! $this->document->isEmpty() ? $this->document->getPrintParameters() : []
+                            );
                         } catch (Exception $e) {
                             Logger::error('Failed to print PDF. An error occurred: %s', $e);
                         }
@@ -403,7 +407,7 @@ JS;
 
             // wait for page to fully load
             $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $frameId]);
-        } elseif (isset($this->document)) {
+        } elseif (! $this->document->isEmpty()) {
             // If there's no url to load transfer the document's content directly
             $this->communicate($page, 'Page.setDocumentContent', [
                 'frameId'   => $targetId,
@@ -420,7 +424,7 @@ JS;
         $this->waitFor($page, self::WAIT_FOR_NETWORK);
 
         // Wait for layout to initialize
-        if (isset($this->document)) {
+        if (! $this->document->isEmpty()) {
             // Ensure layout scripts work in the same environment as the pdf printing itself
             $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => 'print']);
 
@@ -588,6 +592,7 @@ JS;
         $wait = true;
         $interceptedPos = -1;
 
+        $params = null;
         do {
             if (isset($this->interceptedEvents[++$interceptedPos])) {
                 $response = $this->interceptedEvents[$interceptedPos];
