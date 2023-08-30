@@ -42,9 +42,9 @@ jobs:
         run: ./vendor/bin/phplint -n --exclude={^vendor/.*} -- .
 
       - name: PHP CodeSniffer
-        if: success() || matrix.allow_failure
+        if: ${{ ! cancelled() }}
         run: phpcs
 
       - name: PHPStan
+        if: ${{ ! cancelled() }}
         uses: php-actions/phpstan@v3
-        if: success() || matrix.allow_failure
