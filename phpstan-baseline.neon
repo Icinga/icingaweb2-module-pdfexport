@@ -66,12 +66,12 @@ parameters:
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Cannot access offset 'webSocketDebuggerUrl' on array\\|bool\\.$#"
+			message: "#^Cannot call method on\\(\\) on React\\\\Stream\\\\ReadableStreamInterface\\|React\\\\Stream\\\\WritableStreamInterface\\|null\\.$#"
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Cannot call method on\\(\\) on React\\\\Stream\\\\ReadableStreamInterface\\|React\\\\Stream\\\\WritableStreamInterface\\|null\\.$#"
+			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:asyncToPdf\\(\\) should return React\\\\Promise\\\\ExtendedPromiseInterface but returns React\\\\Promise\\\\PromiseInterface\\.$#"
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
