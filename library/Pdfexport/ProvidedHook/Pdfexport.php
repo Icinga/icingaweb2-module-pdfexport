@@ -100,36 +100,12 @@ class Pdfexport extends PdfexportHook
     {
         $filename = basename($filename, '.pdf') . '.pdf';
 
-        // Keep reference to the chrome object because it is using temp files which are automatically removed when
-        // the object is destructed
-        $chrome = $this->chrome();
-
-        $pdf = $chrome->fromHtml($html, static::getForceTempStorage())->toPdf();
-
-        if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
-            $coverPagePdf = $chrome
-                ->fromHtml(
-                    (new PrintableHtmlDocument())
-                        ->add($coverPage)
-                        ->addAttributes($html->getAttributes())
-                        ->removeMargins(),
-                    static::getForceTempStorage()
-                )
-                ->toPdf();
-
-            $merger = new Merger(new TcpdiDriver());
-            $merger->addRaw($coverPagePdf);
-            $merger->addRaw($pdf);
-
-            $pdf = $merger->merge();
-        }
-
         /** @var Web $app */
         $app = Icinga::app();
         $app->getResponse()
             ->setHeader('Content-Type', 'application/pdf', true)
             ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true)
-            ->setBody($pdf)
+            ->setBody($this->htmlToPdf($html))
             ->sendResponse();
 
         exit;
