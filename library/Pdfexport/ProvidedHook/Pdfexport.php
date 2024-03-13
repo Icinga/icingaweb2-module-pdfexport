@@ -86,11 +86,7 @@ class Pdfexport extends PdfexportHook
                 )
                 ->toPdf();
 
-            $merger = new Merger(new TcpdiDriver());
-            $merger->addRaw($coverPagePdf);
-            $merger->addRaw($pdf);
-
-            $pdf = $merger->merge();
+            $pdf = $this->mergePdfs($coverPagePdf, $pdf);
         }
 
         return $pdf;
@@ -126,5 +122,15 @@ class Pdfexport extends PdfexportHook
         }
 
         return $chrome;
+    }
+
+    protected function mergePdfs(string ...$pdfs): string
+    {
+        $merger = new Merger(new TcpdiDriver());
+        foreach ($pdfs as $pdf) {
+            $merger->addRaw($pdf);
+        }
+
+        return $merger->merge();
     }
 }
