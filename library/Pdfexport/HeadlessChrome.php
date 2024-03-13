@@ -12,12 +12,11 @@ use Icinga\File\Storage\TemporaryLocalFileStorage;
 use ipl\Html\HtmlString;
 use LogicException;
 use React\ChildProcess\Process;
-use React\EventLoop\Factory;
 use React\EventLoop\Loop;
 use React\EventLoop\TimerInterface;
 use React\Promise;
 use React\Promise\ExtendedPromiseInterface;
-use RuntimeException;
+use Throwable;
 use WebSocket\Client;
 use WebSocket\ConnectionException;
 
@@ -252,39 +251,22 @@ JS;
     {
         $deferred = new Promise\Deferred();
         Loop::futureTick(function () use ($deferred) {
-            $rejectEmptyResp = function () use ($deferred) {
-                $deferred->reject(
-                    new Exception(
-                        'Received empty response or none at all from browser.'
-                        . ' Please check the logs for further details.'
-                    )
-                );
-            };
-
             switch (true) {
-                /** @noinspection PhpMissingBreakStatementInspection */
                 case $this->remote !== null:
                     try {
                         $result = $this->jsonVersion($this->remote[0], $this->remote[1]);
-                        $parts = explode('/', $result['webSocketDebuggerUrl']);
-
-                        $printParams = ! $this->document->isEmpty() ? $this->document->getPrintParameters() : [];
-                        $pdf = $this->printToPDF(join(':', $this->remote), end($parts), $printParams);
-                        // Reject/resolve the promise on its own event tick not to block the current one.
-                        Loop::futureTick(function () use ($deferred, $pdf, $rejectEmptyResp) {
-                            if (empty($pdf)) {
-                                $rejectEmptyResp();
-                            } else {
-                                $deferred->resolve($pdf);
-                            }
-                        });
+                        if (is_array($result)) {
+                            $parts = explode('/', $result['webSocketDebuggerUrl']);
+                            $pdf = $this->printToPDF(
+                                join(':', $this->remote),
+                                end($parts),
+                                ! $this->document->isEmpty() ? $this->document->getPrintParameters() : []
+                            );
+                            break;
+                        }
                     } catch (Exception $e) {
-                        if ($this->binary === null) {
-                            // Reject/resolve the promise on its own event tick not to block the current one.
-                            Loop::futureTick(function () use ($e, $deferred) {
-                                $deferred->reject($e);
-                            });
-
+                        if ($this->binary == null) {
+                            $deferred->reject($e);
                             return;
                         }
 
@@ -296,54 +278,86 @@ JS;
                         );
                     }
 
+                    // Reject the promise if we didn't get the expected output from the /json/version endpoint.
+                    if ($this->binary === null) {
+                        $deferred->reject(
+                            new Exception('Failed to determine remote chrome version via the /json/version endpoint.')
+                        );
+                        return;
+                    }
+
                 // Fallback to the local binary if a remote chrome is unavailable
                 case $this->binary !== null:
-                    $chrome = $this->chrome();
+                    $browserHome = $this->getFileStorage()->resolvePath('HOME');
+                    $commandLine = join(' ', [
+                        escapeshellarg($this->getBinary()),
+                        static::renderArgumentList([
+                            '--bwsi',
+                            '--headless',
+                            '--disable-gpu',
+                            '--no-sandbox',
+                            '--no-first-run',
+                            '--disable-dev-shm-usage',
+                            '--remote-debugging-port=0',
+                            '--homedir=' => $browserHome,
+                            '--user-data-dir=' => $browserHome
+                        ])
+                    ]);
+
+                    if (Platform::isLinux()) {
+                        Logger::debug('Starting browser process: HOME=%s exec %s', $browserHome, $commandLine);
+                        $chrome = new Process('exec ' . $commandLine, null, ['HOME' => $browserHome]);
+                    } else {
+                        Logger::debug('Starting browser process: %s', $commandLine);
+                        $chrome = new Process($commandLine);
+                    }
+
                     $killer = Loop::addTimer(10, function (TimerInterface $timer) use ($chrome, $deferred) {
                         $chrome->terminate(6); // SIGABRT
+
                         Logger::error(
-                            'Terminated browser process after %d seconds elapsed without the expected output',
+                            'Browser timed out after %d seconds without the expected output',
                             $timer->getInterval()
                         );
 
-                        $interval = $timer->getInterval();
-                        // Reject/resolve the promise on its own event tick not to block the current one.
-                        Loop::futureTick(function () use ($deferred, $interval) {
-                            $deferred->reject(
-                                new RuntimeException(sprintf('Browser timed out after %d seconds', $interval))
-                            );
-                        });
+                        $deferred->reject(
+                            new Exception(
+                                'Received empty response or none at all from browser.'
+                                . ' Please check the logs for further details.'
+                            )
+                        );
                     });
 
                     $chrome->start();
-                    $chrome->stderr->on('data', function ($chunk) use ($chrome, $deferred, $killer, $rejectEmptyResp) {
+
+                    $chrome->stderr->on('data', function ($chunk) use ($chrome, $deferred, $killer) {
                         Logger::debug('Caught browser output: %s', $chunk);
 
                         if (preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
                             Loop::cancelTimer($killer);
 
-                            $printParams = ! $this->document->isEmpty() ? $this->document->getPrintParameters() : [];
-
                             try {
-                                $pdf = $this->printToPDF($matches[1], $matches[2], $printParams);
-                                // Reject/resolve the promise on its own event tick not to block the current one.
-                                Loop::futureTick(function () use ($deferred, $pdf, $rejectEmptyResp) {
-                                    if (empty($pdf)) {
-                                        $rejectEmptyResp();
-                                    } else {
-                                        $deferred->resolve($pdf);
-                                    }
-                                });
+                                $pdf = $this->printToPDF(
+                                    $matches[1],
+                                    $matches[2],
+                                    ! $this->document->isEmpty() ? $this->document->getPrintParameters() : []
+                                );
                             } catch (Exception $e) {
                                 Logger::error('Failed to print PDF. An error occurred: %s', $e);
-
-                                // Reject/resolve the promise on its own event tick not to block the current one.
-                                Loop::futureTick(function () use ($e, $deferred) {
-                                    $deferred->reject($e);
-                                });
                             }
 
                             $chrome->terminate();
+
+                            if (! empty($pdf)) {
+                                $deferred->resolve($pdf);
+                            } else {
+                                $deferred->reject(
+                                    new Exception(
+                                        'Received empty response or none at all from browser.'
+                                        . ' Please check the logs for further details.'
+                                    )
+                                );
+                            }
                         }
                     });
 
@@ -356,12 +370,23 @@ JS;
                         // or it is terminated using its terminate() method, in which case the promise is also already
                         // resolved/rejected. So, we don't need to resolve/reject the promise here.
                     });
+
+                    return;
+            }
+
+            if (! empty($pdf)) {
+                $deferred->resolve($pdf);
+            } else {
+                $deferred->reject(
+                    new Exception(
+                        'Received empty response or none at all from browser.'
+                        . ' Please check the logs for further details.'
+                    )
+                );
             }
         });
 
-        /** @var ExtendedPromiseInterface $promise */
-        $promise = $deferred->promise();
-        return $promise;
+        return $deferred->promise();
     }
 
     /**
@@ -372,82 +397,14 @@ JS;
      */
     public function toPdf()
     {
-        switch (true) {
-            case $this->remote !== null:
-                try {
-                    $result = $this->jsonVersion($this->remote[0], $this->remote[1]);
-                    $parts = explode('/', $result['webSocketDebuggerUrl']);
-                    $pdf = $this->printToPDF(
-                        join(':', $this->remote),
-                        end($parts),
-                        ! $this->document->isEmpty() ? $this->document->getPrintParameters() : []
-                    );
-                    break;
-                } catch (Exception $e) {
-                    if ($this->binary === null) {
-                        throw $e;
-                    } else {
-                        Logger::warning(
-                            'Failed to connect to remote chrome: %s:%d (%s)',
-                            $this->remote[0],
-                            $this->remote[1],
-                            $e
-                        );
-                    }
-                }
+        $pdf = '';
+        // We don't intend to register any then/otherwise handlers, so call done on that promise
+        // to properly propagate unhandled exceptions to the caller.
+        $this->asyncToPdf()->done(function (string $newPdf) use (&$pdf) {
+            $pdf = $newPdf;
+        });
 
-                // Fallback to the local binary if a remote chrome is unavailable
-            case $this->binary !== null:
-                $chrome = $this->chrome();
-
-                $loop = Factory::create();
-
-                $killer = $loop->addTimer(10, function (TimerInterface $timer) use ($chrome) {
-                    $chrome->terminate(6); // SIGABRT
-                    Logger::error(
-                        'Terminated browser process after %d seconds elapsed without the expected output',
-                        $timer->getInterval()
-                    );
-                });
-
-                $chrome->start($loop);
-
-                $pdf = null;
-                $chrome->stderr->on('data', function ($chunk) use (&$pdf, $chrome, $loop, $killer) {
-                    Logger::debug('Caught browser output: %s', $chunk);
-
-                    if (preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
-                        $loop->cancelTimer($killer);
-
-                        try {
-                            $pdf = $this->printToPDF(
-                                $matches[1],
-                                $matches[2],
-                                ! $this->document->isEmpty() ? $this->document->getPrintParameters() : []
-                            );
-                        } catch (Exception $e) {
-                            Logger::error('Failed to print PDF. An error occurred: %s', $e);
-                        }
-
-                        $chrome->terminate();
-                    }
-                });
-
-                $chrome->on('exit', function ($exitCode, $termSignal) use ($loop, $killer) {
-                    $loop->cancelTimer($killer);
-
-                    Logger::debug('Browser terminated by signal %d and exited with code %d', $termSignal, $exitCode);
-                });
-
-                $loop->run();
-        }
-
-        if (empty($pdf)) {
-            throw new Exception(
-                'Received empty response or none at all from browser.'
-                . ' Please check the logs for further details.'
-            );
-        }
+        Loop::run();
 
         return $pdf;
     }
@@ -805,34 +762,5 @@ JS;
         }
 
         return json_decode($response->getBody(), true);
-    }
-
-    private function chrome(): Process
-    {
-        $browserHome = $this->getFileStorage()->resolvePath('HOME');
-        $commandLine = join(' ', [
-            escapeshellarg($this->getBinary()),
-            static::renderArgumentList([
-                '--bwsi',
-                '--headless',
-                '--disable-gpu',
-                '--no-sandbox',
-                '--no-first-run',
-                '--disable-dev-shm-usage',
-                '--remote-debugging-port=0',
-                '--homedir=' => $browserHome,
-                '--user-data-dir=' => $browserHome
-            ])
-        ]);
-
-        if (Platform::isLinux()) {
-            Logger::debug('Starting browser process: HOME=%s exec %s', $browserHome, $commandLine);
-            $chrome = new Process('exec ' . $commandLine, null, ['HOME' => $browserHome]);
-        } else {
-            Logger::debug('Starting browser process: %s', $commandLine);
-            $chrome = new Process($commandLine);
-        }
-
-        return $chrome;
     }
 }
