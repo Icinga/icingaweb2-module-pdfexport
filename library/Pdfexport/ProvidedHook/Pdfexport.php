@@ -132,12 +132,15 @@ class Pdfexport extends PdfexportHook
     {
         $filename = basename($filename, '.pdf') . '.pdf';
 
+        // Generate the PDF before changing the response headers to properly handle and display errors in the UI.
+        $pdf = $this->htmlToPdf($html);
+
         /** @var Web $app */
         $app = Icinga::app();
         $app->getResponse()
             ->setHeader('Content-Type', 'application/pdf', true)
             ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true)
-            ->setBody($this->htmlToPdf($html))
+            ->setBody($pdf)
             ->sendResponse();
 
         exit;
