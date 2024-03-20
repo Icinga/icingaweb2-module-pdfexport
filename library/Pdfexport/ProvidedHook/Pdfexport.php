@@ -14,6 +14,7 @@ use Icinga\Module\Pdfexport\HeadlessChrome;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use iio\libmergepdf\Driver\TcpdiDriver;
 use iio\libmergepdf\Merger;
+use React\Promise\ExtendedPromiseInterface;
 
 class Pdfexport extends PdfexportHook
 {
@@ -86,43 +87,53 @@ class Pdfexport extends PdfexportHook
                 )
                 ->toPdf();
 
-            $merger = new Merger(new TcpdiDriver());
-            $merger->addRaw($coverPagePdf);
-            $merger->addRaw($pdf);
-
-            $pdf = $merger->merge();
+            $pdf = $this->mergePdfs($coverPagePdf, $pdf);
         }
 
         return $pdf;
+    }
+
+    /**
+     * Transforms the given printable html document/string asynchronously to PDF.
+     *
+     * @param PrintableHtmlDocument|string $html
+     *
+     * @return ExtendedPromiseInterface
+     */
+    public function asyncHtmlToPdf($html): ExtendedPromiseInterface
+    {
+        // Keep reference to the chrome object because it is using temp files which are automatically removed when
+        // the object is destructed
+        $chrome = $this->chrome();
+
+        $pdfPromise = $chrome->fromHtml($html, static::getForceTempStorage())->asyncToPdf();
+
+        if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
+            /** @var ExtendedPromiseInterface $pdfPromise */
+            $pdfPromise = $pdfPromise->then(function (string $pdf) use ($chrome, $html, $coverPage) {
+                return $chrome->fromHtml(
+                    (new PrintableHtmlDocument())
+                        ->add($coverPage)
+                        ->addAttributes($html->getAttributes())
+                        ->removeMargins(),
+                    static::getForceTempStorage()
+                )->asyncToPdf()->then(
+                    function (string $coverPagePdf) use ($pdf) {
+                        return $this->mergePdfs($coverPagePdf, $pdf);
+                    }
+                );
+            });
+        }
+
+        return $pdfPromise;
     }
 
     public function streamPdfFromHtml($html, $filename)
     {
         $filename = basename($filename, '.pdf') . '.pdf';
 
-        // Keep reference to the chrome object because it is using temp files which are automatically removed when
-        // the object is destructed
-        $chrome = $this->chrome();
-
-        $pdf = $chrome->fromHtml($html, static::getForceTempStorage())->toPdf();
-
-        if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
-            $coverPagePdf = $chrome
-                ->fromHtml(
-                    (new PrintableHtmlDocument())
-                        ->add($coverPage)
-                        ->addAttributes($html->getAttributes())
-                        ->removeMargins(),
-                    static::getForceTempStorage()
-                )
-                ->toPdf();
-
-            $merger = new Merger(new TcpdiDriver());
-            $merger->addRaw($coverPagePdf);
-            $merger->addRaw($pdf);
-
-            $pdf = $merger->merge();
-        }
+        // Generate the PDF before changing the response headers to properly handle and display errors in the UI.
+        $pdf = $this->htmlToPdf($html);
 
         /** @var Web $app */
         $app = Icinga::app();
@@ -150,5 +161,15 @@ class Pdfexport extends PdfexportHook
         }
 
         return $chrome;
+    }
+
+    protected function mergePdfs(string ...$pdfs): string
+    {
+        $merger = new Merger(new TcpdiDriver());
+        foreach ($pdfs as $pdf) {
+            $merger->addRaw($pdf);
+        }
+
+        return $merger->merge();
     }
 }
