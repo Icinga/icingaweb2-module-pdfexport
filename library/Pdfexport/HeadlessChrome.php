@@ -243,7 +243,7 @@ JS;
     }
 
     /**
-     * Tries to asynchronously generate/print a PDF raw string from the configured browser.
+     * Generate a PDF raw string asynchronously.
      *
      * @return ExtendedPromiseInterface
      */
