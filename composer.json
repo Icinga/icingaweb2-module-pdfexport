@@ -8,5 +8,13 @@
     "allow-plugins": {
       "cweagans/composer-patches": true
     }
+  },
+  "extra": {
+    "composer-exit-on-patch-failure": true,
+    "patches": {
+      "iio/libmergepdf": {
+        "Add PHP 8.2 support": "patches/iio-libmergepdf-support-php82.patch"
+      }
+    }
   }
 }
