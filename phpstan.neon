@@ -20,7 +20,8 @@ parameters:
             reportUnmatched: false
 
     scanDirectories:
-        - vendor
+        - /icingaweb2
+        - /usr/share/icinga-php
 
     universalObjectCratesClasses:
         - Icinga\Web\View
