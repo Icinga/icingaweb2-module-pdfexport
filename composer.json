@@ -1,6 +1,20 @@
 {
   "require": {
     "textalk/websocket": "^1.5",
-    "iio/libmergepdf": "^4.0"
+    "iio/libmergepdf": "^4.0",
+    "cweagans/composer-patches": "^1.7"
+  },
+  "config": {
+    "allow-plugins": {
+      "cweagans/composer-patches": true
+    }
+  },
+  "extra": {
+    "composer-exit-on-patch-failure": true,
+    "patches": {
+      "iio/libmergepdf": {
+        "Add PHP 8.2 support": "patches/iio-libmergepdf-support-php82.patch"
+      }
+    }
   }
 }
