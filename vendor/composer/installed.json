@@ -81,6 +81,11 @@
                         },
                         "time": "2020-12-07T12:18:49+00:00",
                         "type": "library",
+                        "extra": {
+                                "patches_applied": {
+                                        "Add PHP 8.2 support": "patches/iio-libmergepdf-support-php82.patch"
+                                }
+                        },
                         "installation-source": "dist",
                         "autoload": {
                                 "psr-4": {
