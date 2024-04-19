@@ -15,6 +15,10 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
         array (
             'iio\\libmergepdf\\' => 16,
         ),
+        'c' => 
+        array (
+            'cweagans\\Composer\\' => 18,
+        ),
         'W' => 
         array (
             'WebSocket\\' => 10,
@@ -34,6 +38,10 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
         array (
             0 => __DIR__ . '/..' . '/iio/libmergepdf/src',
         ),
+        'cweagans\\Composer\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/cweagans/composer-patches/src',
+        ),
         'WebSocket\\' => 
         array (
             0 => __DIR__ . '/..' . '/textalk/websocket/lib',
@@ -45,6 +53,7 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
     );
 
     public static $classMap = array (
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Datamatrix' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/datamatrix.php',
         'FPDF' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/tcpdi.php',
         'FPDF_TPL' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/fpdf_tpl.php',

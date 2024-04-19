@@ -1,6 +1,12 @@
 {
   "require": {
     "textalk/websocket": "^1.5",
-    "iio/libmergepdf": "^4.0"
+    "iio/libmergepdf": "^4.0",
+    "cweagans/composer-patches": "^1.7"
+  },
+  "config": {
+    "allow-plugins": {
+      "cweagans/composer-patches": true
+    }
   }
 }
