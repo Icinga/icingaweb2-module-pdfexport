@@ -165,17 +165,17 @@
                 },
                 {
                         "name": "setasign/fpdi",
-                        "version": "v2.3.6",
-                        "version_normalized": "2.3.6.0",
+                        "version": "v2.6.0",
+                        "version_normalized": "2.6.0.0",
                         "source": {
                                 "type": "git",
                                 "url": "https://github.com/Setasign/FPDI.git",
-                                "reference": "6231e315f73e4f62d72b73f3d6d78ff0eed93c31"
+                                "reference": "a6db878129ec6c7e141316ee71872923e7f1b7ad"
                         },
                         "dist": {
                                 "type": "zip",
-                                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/6231e315f73e4f62d72b73f3d6d78ff0eed93c31",
-                                "reference": "6231e315f73e4f62d72b73f3d6d78ff0eed93c31",
+                                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/a6db878129ec6c7e141316ee71872923e7f1b7ad",
+                                "reference": "a6db878129ec6c7e141316ee71872923e7f1b7ad",
                                 "shasum": ""
                         },
                         "require": {
@@ -187,15 +187,15 @@
                         },
                         "require-dev": {
                                 "phpunit/phpunit": "~5.7",
-                                "setasign/fpdf": "~1.8",
-                                "setasign/tfpdf": "1.31",
+                                "setasign/fpdf": "~1.8.6",
+                                "setasign/tfpdf": "~1.33",
                                 "squizlabs/php_codesniffer": "^3.5",
                                 "tecnickcom/tcpdf": "~6.2"
                         },
                         "suggest": {
                                 "setasign/fpdf": "FPDI will extend this class but as it is also possible to use TCPDF or tFPDF as an alternative. There's no fixed dependency configured."
                         },
-                        "time": "2021-02-11T11:37:01+00:00",
+                        "time": "2023-12-11T16:03:32+00:00",
                         "type": "library",
                         "installation-source": "dist",
                         "autoload": {
@@ -226,6 +226,10 @@
                                 "fpdi",
                                 "pdf"
                         ],
+                        "support": {
+                                "issues": "https://github.com/Setasign/FPDI/issues",
+                                "source": "https://github.com/Setasign/FPDI/tree/v2.6.0"
+                        },
                         "funding": [
                                 {
                                         "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
@@ -236,23 +240,23 @@
                 },
                 {
                         "name": "tecnickcom/tcpdf",
-                        "version": "6.4.2",
-                        "version_normalized": "6.4.2.0",
+                        "version": "6.7.5",
+                        "version_normalized": "6.7.5.0",
                         "source": {
                                 "type": "git",
                                 "url": "https://github.com/tecnickcom/TCPDF.git",
-                                "reference": "172540dcbfdf8dc983bc2fe78feff48ff7ec1c76"
+                                "reference": "951eabf0338ec2522bd0d5d9c79b08a3a3d36b36"
                         },
                         "dist": {
                                 "type": "zip",
-                                "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/172540dcbfdf8dc983bc2fe78feff48ff7ec1c76",
-                                "reference": "172540dcbfdf8dc983bc2fe78feff48ff7ec1c76",
+                                "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/951eabf0338ec2522bd0d5d9c79b08a3a3d36b36",
+                                "reference": "951eabf0338ec2522bd0d5d9c79b08a3a3d36b36",
                                 "shasum": ""
                         },
                         "require": {
-                                "php": ">=5.3.0"
+                                "php": ">=5.5.0"
                         },
-                        "time": "2021-07-20T14:43:20+00:00",
+                        "time": "2024-04-20T17:25:10+00:00",
                         "type": "library",
                         "installation-source": "dist",
                         "autoload": {
@@ -277,7 +281,7 @@
                         },
                         "notification-url": "https://packagist.org/downloads/",
                         "license": [
-                                "LGPL-3.0-only"
+                                "LGPL-3.0-or-later"
                         ],
                         "authors": [
                                 {
@@ -297,6 +301,10 @@
                                 "pdf417",
                                 "qrcode"
                         ],
+                        "support": {
+                                "issues": "https://github.com/tecnickcom/TCPDF/issues",
+                                "source": "https://github.com/tecnickcom/TCPDF/tree/6.7.5"
+                        },
                         "funding": [
                                 {
                                         "url": "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&currency_code=GBP&business=paypal@tecnick.com&item_name=donation%20for%20tcpdf%20project",
@@ -307,17 +315,17 @@
                 },
                 {
                         "name": "textalk/websocket",
-                        "version": "1.5.5",
-                        "version_normalized": "1.5.5.0",
+                        "version": "1.5.8",
+                        "version_normalized": "1.5.8.0",
                         "source": {
                                 "type": "git",
                                 "url": "https://github.com/Textalk/websocket-php.git",
-                                "reference": "846542f82658132cd36acb7a7e8ce0f03960c295"
+                                "reference": "d05dbaa97500176447ffb1f1800573f23085ab13"
                         },
                         "dist": {
                                 "type": "zip",
-                                "url": "https://api.github.com/repos/Textalk/websocket-php/zipball/846542f82658132cd36acb7a7e8ce0f03960c295",
-                                "reference": "846542f82658132cd36acb7a7e8ce0f03960c295",
+                                "url": "https://api.github.com/repos/Textalk/websocket-php/zipball/d05dbaa97500176447ffb1f1800573f23085ab13",
+                                "reference": "d05dbaa97500176447ffb1f1800573f23085ab13",
                                 "shasum": ""
                         },
                         "require": {
@@ -329,7 +337,7 @@
                                 "phpunit/phpunit": "^8.0|^9.0",
                                 "squizlabs/php_codesniffer": "^3.5"
                         },
-                        "time": "2021-08-07T10:21:40+00:00",
+                        "time": "2022-04-26T06:28:24+00:00",
                         "type": "library",
                         "installation-source": "dist",
                         "autoload": {
@@ -351,6 +359,10 @@
                                 }
                         ],
                         "description": "WebSocket client and server",
+                        "support": {
+                                "issues": "https://github.com/Textalk/websocket-php/issues",
+                                "source": "https://github.com/Textalk/websocket-php/tree/1.5.8"
+                        },
                         "install-path": "../textalk/websocket"
                 }
         ],

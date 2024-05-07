@@ -6,6 +6,19 @@
 
  > PHP version `^7.2|^8.0`
 
+### `1.5.8`
+
+ * Handle read error during handshake (@sirn-se)
+
+### `1.5.7`
+
+ * Large header block fix (@sirn-se)
+
+### `1.5.6`
+
+ * Add test for PHP 8.1 (@sirn-se)
+ * Code standard (@sirn-se)
+
 ### `1.5.5`
 
  * Support for psr/log v2 and v3 (@simPod)

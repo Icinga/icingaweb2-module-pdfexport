@@ -177,7 +177,17 @@ class Client extends Base
             $this->write($header);
 
             // Get server response header (terminated with double CR+LF).
-            $response = stream_get_line($this->socket, 1024, "\r\n\r\n");
+            $response = '';
+            do {
+                $buffer = fgets($this->socket, 1024);
+                if ($buffer === false) {
+                    $meta = stream_get_meta_data($this->socket);
+                    $message = 'Client handshake error';
+                    $this->logger->error($message, $meta);
+                    throw new ConnectionException($message);
+                }
+                $response .= $buffer;
+            } while (substr_count($response, "\r\n\r\n") == 0);
 
             // Validate response.
             if (!preg_match('#Sec-WebSocket-Accept:\s(.*)$#mUi', $response, $matches)) {

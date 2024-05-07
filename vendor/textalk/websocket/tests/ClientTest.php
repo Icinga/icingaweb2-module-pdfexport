@@ -13,7 +13,6 @@ use PHPUnit\Framework\TestCase;
 
 class ClientTest extends TestCase
 {
-
     public function setUp(): void
     {
         error_reporting(-1);
@@ -351,6 +350,16 @@ class ClientTest extends TestCase
         $this->expectExceptionCode(1025);
         $this->expectExceptionMessage('Broken frame, read 0 of stated 2 bytes.');
         $client->receive();
+    }
+
+    public function testHandshakeError(): void
+    {
+        MockSocket::initialize('client.connect-handshake-error', $this);
+        $client = new Client('ws://localhost:8000/my/mock/path');
+        $this->expectException('WebSocket\ConnectionException');
+        $this->expectExceptionCode(0);
+        $this->expectExceptionMessage('Client handshake error');
+        $client->send('Connect');
     }
 
     public function testReadTimeout(): void
