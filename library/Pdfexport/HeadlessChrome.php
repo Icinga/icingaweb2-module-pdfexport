@@ -755,7 +755,7 @@ JS;
     protected function jsonVersion($host, $port)
     {
         $client = new \GuzzleHttp\Client();
-        $response = $client->request('GET', sprintf('http://%s:%s/json/version', $host, $port));
+        $response = $client->request('GET', sprintf('http://%s:%s/json/version', $host, $port), ['headers' => ['Host' => 'localhost']]);
 
         if ($response->getStatusCode() !== 200) {
             return false;
