@@ -755,7 +755,20 @@ JS;
     protected function jsonVersion($host, $port)
     {
         $client = new \GuzzleHttp\Client();
-        $response = $client->request('GET', sprintf('http://%s:%s/json/version', $host, $port));
+
+        try {
+            $response = $client->request('GET', sprintf('http://%s:%s/json/version', $host, $port));
+        } catch (\GuzzleHttp\Exception\ServerException $e) {
+            // Check if we've run into the host header security change, and re-run the request with no host header.
+            // ref: https://issues.chromium.org/issues/40090537
+            if (strstr($e->getMessage(), 'Host header is specified and is not an IP address or localhost.')) {
+                $response = $client->request(
+                    'GET', sprintf('http://%s:%s/json/version', $host, $port),
+                    ['headers' => ['Host' => null]]);
+            } else {
+                throw $e;
+            }
+        }
 
         if ($response->getStatusCode() !== 200) {
             return false;
