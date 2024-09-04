@@ -499,6 +499,11 @@ CSS;
         }
 
         $layoutJS = file_get_contents($jsPath . '/layout.js') . "\n\n\n";
+        $layoutJS .= file_get_contents('/usr/share/icinga-php/ipl/asset/js/vendor/d3.min.js') . "\n\n\n";
+        $layoutJS .= file_get_contents('/usr/share/icinga-php/ipl/asset/js/vendor/billboard.min.js') . "\n\n\n";
+        $layoutJS .= file_get_contents($jsPath . '/layout-plugins/chart-renderer.js') . "\n\n\n";
+
+
         $layoutJS .= file_get_contents($jsPath . '/layout-plugins/page-breaker.js') . "\n\n\n";
 
         return new HtmlElement(
