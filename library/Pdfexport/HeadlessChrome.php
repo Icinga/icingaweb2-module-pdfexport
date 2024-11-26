@@ -763,8 +763,10 @@ JS;
             // ref: https://issues.chromium.org/issues/40090537
             if (strstr($e->getMessage(), 'Host header is specified and is not an IP address or localhost.')) {
                 $response = $client->request(
-                    'GET', sprintf('http://%s:%s/json/version', $host, $port),
-                    ['headers' => ['Host' => null]]);
+                    'GET',
+                    sprintf('http://%s:%s/json/version', $host, $port),
+                    ['headers' => ['Host' => null]]
+                );
             } else {
                 throw $e;
             }
