@@ -2,11 +2,11 @@
 
 ## Requirements <a id="installation-requirements"></a>
 
-* PHP (>= 7.2)
-* Icinga Web 2 (>= 2.9)
+* PHP (>= 8.2)
+* Icinga Web 2 (>= 2.12)
 * Icinga Web 2 libraries:
-  * [Icinga PHP Library (ipl)](https://github.com/Icinga/icinga-php-library) (>= 0.8)
-  * [Icinga PHP Thirdparty](https://github.com/Icinga/icinga-php-thirdparty) (>= 0.10)
+  * [Icinga PHP Library (ipl)](https://github.com/Icinga/icinga-php-library) (>= 0.17.1)
+  * [Icinga PHP Thirdparty](https://github.com/Icinga/icinga-php-thirdparty) (>= 0.13)
 
 ## Google Chrome/Chromium Setup <a id="installation-chrome-setup"></a>
 
