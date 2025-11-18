@@ -1,0 +1,53 @@
+{
+    "name": "karriere/pdf-merge",
+    "description": "A wrapper for the TCPDF class that provides an elegant API for merging PDFs",
+    "keywords": ["pdf", "merge"],
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Alexander Lentner",
+            "email": "alexander.lentner@karriere.at",
+            "role": "Maintainer"
+        }
+    ],
+    "require": {
+        "php": "8.1.* | 8.2.* | 8.3.* | 8.4.*",
+        "tecnickcom/tcpdf": "^6.3"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.5 | ^1.6",
+        "pestphp/pest": "^1.22",
+        "phpstan/phpstan": "^1.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "Karriere\\PdfMerge\\": "src/"
+        },
+        "classmap": [
+            "tcpi/fpdf_tpl.php",
+            "tcpi/tcpdi.php",
+            "tcpi/tcpdi_parser.php"
+		]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Karriere\\PdfMerge\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "analyse": "phpstan analyse --memory-limit 512M",
+        "lint": "pint --test",
+        "lint:verbose": "pint -v --test",
+        "fix": "pint",
+        "test": "vendor/bin/pest",
+        "coverage": "vendor/bin/pest --coverage --ci --coverage-html coverage --coverage-clover coverage.xml --log-junit junit.xml",
+        "report": "vendor/bin/pest --coverage",
+        "report:html": "vendor/bin/pest --coverage --coverage-html coverage"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    }
+}

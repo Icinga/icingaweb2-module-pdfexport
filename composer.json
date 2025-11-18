@@ -1,24 +1,10 @@
 {
   "require": {
-    "textalk/websocket": "^1.5",
-    "iio/libmergepdf": "^4.0",
-    "cweagans/composer-patches": "^1.7"
+    "php": ">=8.2",
+    "phrity/websocket": "^3.6",
+    "karriere/pdf-merge": "^3.3"
   },
   "config": {
-    "sort-packages": true,
-    "platform": {
-      "php": "7.2.9"
-    },
-    "allow-plugins": {
-      "cweagans/composer-patches": true
-    }
-  },
-  "extra": {
-    "composer-exit-on-patch-failure": true,
-    "patches": {
-      "iio/libmergepdf": {
-        "Add PHP 8.2 support": "patches/iio-libmergepdf-support-php82.patch"
-      }
-    }
+    "sort-packages": true
   }
 }
