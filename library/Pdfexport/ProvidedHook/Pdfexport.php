@@ -10,10 +10,10 @@ use Icinga\Application\Hook;
 use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
 use Icinga\Application\Web;
+use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\HeadlessChrome;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
-use iio\libmergepdf\Driver\TcpdiDriver;
-use iio\libmergepdf\Merger;
+use Karriere\PdfMerge\PdfMerge;
 use React\Promise\ExtendedPromiseInterface;
 
 class Pdfexport extends PdfexportHook
@@ -165,11 +165,20 @@ class Pdfexport extends PdfexportHook
 
     protected function mergePdfs(string ...$pdfs): string
     {
-        $merger = new Merger(new TcpdiDriver());
-        foreach ($pdfs as $pdf) {
-            $merger->addRaw($pdf);
-        }
+        $merger = new PdfMerge();
+        $storage = new TemporaryLocalFileStorage();
 
-        return $merger->merge();
+        try {
+            foreach ($pdfs as $i => $pdf) {
+                $storage->create($i, $pdf);
+                $merger->add($storage->resolvePath($i));
+            }
+
+            return $merger->merge('', 'S');
+        } finally {
+            foreach ($pdfs as $i => $_) {
+                $storage->delete($i);
+            }
+        }
     }
 }

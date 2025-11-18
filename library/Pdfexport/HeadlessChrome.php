@@ -543,7 +543,7 @@ JS;
         return $pdf;
     }
 
-    private function renderApiCall($method, $options = null)
+    private function renderApiCall($method, $options = null): string
     {
         $data = [
             'id' => time(),
@@ -554,7 +554,7 @@ JS;
         return json_encode($data, JSON_FORCE_OBJECT);
     }
 
-    private function parseApiResponse($payload)
+    private function parseApiResponse(string $payload)
     {
         $data = json_decode($payload, true);
         if (isset($data['method']) || isset($data['result'])) {
@@ -619,10 +619,10 @@ JS;
     private function communicate(Client $ws, $method, $params = null)
     {
         Logger::debug('Transmitting CDP call: %s(%s)', $method, $params ? join(',', array_keys($params)) : '');
-        $ws->send($this->renderApiCall($method, $params));
+        $ws->text($this->renderApiCall($method, $params));
 
         do {
-            $response = $this->parseApiResponse($ws->receive());
+            $response = $this->parseApiResponse($ws->receive()->getContent());
             $gotEvent = isset($response['method']);
 
             if ($gotEvent) {
@@ -658,7 +658,7 @@ JS;
                 $response = $this->interceptedEvents[$interceptedPos];
                 $intercepted = true;
             } else {
-                $response = $this->parseApiResponse($ws->receive());
+                $response = $this->parseApiResponse($ws->receive()->getContent());
                 $intercepted = false;
             }
 
