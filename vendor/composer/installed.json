@@ -1,147 +1,578 @@
 {
         "packages": [
                 {
-                        "name": "cweagans/composer-patches",
-                        "version": "1.7.3",
-                        "version_normalized": "1.7.3.0",
+                        "name": "karriere/pdf-merge",
+                        "version": "v3.3.1",
+                        "version_normalized": "3.3.1.0",
                         "source": {
                                 "type": "git",
-                                "url": "https://github.com/cweagans/composer-patches.git",
-                                "reference": "e190d4466fe2b103a55467dfa83fc2fecfcaf2db"
+                                "url": "https://github.com/karriereat/pdf-merge.git",
+                                "reference": "d524a9d261ea96b18bbbab685b5710a7a0fe3a6e"
                         },
                         "dist": {
                                 "type": "zip",
-                                "url": "https://api.github.com/repos/cweagans/composer-patches/zipball/e190d4466fe2b103a55467dfa83fc2fecfcaf2db",
-                                "reference": "e190d4466fe2b103a55467dfa83fc2fecfcaf2db",
+                                "url": "https://api.github.com/repos/karriereat/pdf-merge/zipball/d524a9d261ea96b18bbbab685b5710a7a0fe3a6e",
+                                "reference": "d524a9d261ea96b18bbbab685b5710a7a0fe3a6e",
                                 "shasum": ""
                         },
                         "require": {
-                                "composer-plugin-api": "^1.0 || ^2.0",
-                                "php": ">=5.3.0"
+                                "php": "8.1.* | 8.2.* | 8.3.* | 8.4.*",
+                                "tecnickcom/tcpdf": "^6.3"
                         },
                         "require-dev": {
-                                "composer/composer": "~1.0 || ~2.0",
-                                "phpunit/phpunit": "~4.6"
+                                "laravel/pint": "^1.5 | ^1.6",
+                                "pestphp/pest": "^1.22",
+                                "phpstan/phpstan": "^1.10"
                         },
-                        "time": "2022-12-20T22:53:13+00:00",
-                        "type": "composer-plugin",
-                        "extra": {
-                                "class": "cweagans\\Composer\\Patches"
-                        },
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "cweagans\\Composer\\": "src"
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "BSD-3-Clause"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Cameron Eagans",
-                                        "email": "me@cweagans.net"
-                                }
-                        ],
-                        "description": "Provides a way to patch Composer packages.",
-                        "support": {
-                                "issues": "https://github.com/cweagans/composer-patches/issues",
-                                "source": "https://github.com/cweagans/composer-patches/tree/1.7.3"
-                        },
-                        "install-path": "../cweagans/composer-patches"
-                },
-                {
-                        "name": "iio/libmergepdf",
-                        "version": "4.0.4",
-                        "version_normalized": "4.0.4.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/hanneskod/libmergepdf.git",
-                                "reference": "6613b978c08d00d559796ab510614243e4dd5dfb"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/hanneskod/libmergepdf/zipball/6613b978c08d00d559796ab510614243e4dd5dfb",
-                                "reference": "6613b978c08d00d559796ab510614243e4dd5dfb",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": "^7.1||^8.0",
-                                "setasign/fpdi": "^2",
-                                "tecnickcom/tcpdf": "^6.2.22"
-                        },
-                        "conflict": {
-                                "rafikhaceb/tcpdi": "*",
-                                "setasign/fpdf": "*"
-                        },
-                        "require-dev": {
-                                "phpunit/phpunit": "^7|^8",
-                                "smalot/pdfparser": "~0.13"
-                        },
-                        "time": "2020-12-07T12:18:49+00:00",
+                        "time": "2025-02-19T11:02:10+00:00",
                         "type": "library",
-                        "extra": {
-                                "patches_applied": {
-                                        "Add PHP 8.2 support": "patches/iio-libmergepdf-support-php82.patch"
-                                }
-                        },
                         "installation-source": "dist",
                         "autoload": {
                                 "psr-4": {
-                                        "iio\\libmergepdf\\": "src/"
+                                        "Karriere\\PdfMerge\\": "src/"
                                 },
                                 "classmap": [
-                                        "tcpdi/"
+                                        "tcpi/fpdf_tpl.php",
+                                        "tcpi/tcpdi.php",
+                                        "tcpi/tcpdi_parser.php"
                                 ]
                         },
                         "notification-url": "https://packagist.org/downloads/",
                         "license": [
-                                "WTFPL"
+                                "Apache-2.0"
                         ],
                         "authors": [
                                 {
-                                        "name": "Hannes Forsgård",
-                                        "email": "hannes.forsgard@fripost.org"
+                                        "name": "Alexander Lentner",
+                                        "email": "alexander.lentner@karriere.at",
+                                        "role": "Maintainer"
                                 }
                         ],
-                        "description": "Library for merging multiple PDFs",
-                        "homepage": "https://github.com/hanneskod/libmergepdf",
+                        "description": "A wrapper for the TCPDF class that provides an elegant API for merging PDFs",
                         "keywords": [
                                 "merge",
                                 "pdf"
                         ],
-                        "install-path": "../iio/libmergepdf"
+                        "support": {
+                                "issues": "https://github.com/karriereat/pdf-merge/issues",
+                                "source": "https://github.com/karriereat/pdf-merge/tree/v3.3.1"
+                        },
+                        "install-path": "../karriere/pdf-merge"
                 },
                 {
-                        "name": "psr/log",
-                        "version": "1.1.4",
-                        "version_normalized": "1.1.4.0",
+                        "name": "phrity/comparison",
+                        "version": "1.4.0",
+                        "version_normalized": "1.4.0.0",
                         "source": {
                                 "type": "git",
-                                "url": "https://github.com/php-fig/log.git",
-                                "reference": "d49695b909c3b7628b6289db5479a1c204601f11"
+                                "url": "https://github.com/sirn-se/phrity-comparison.git",
+                                "reference": "aedd44d59db08de7d6c31812d1490c22aab35c92"
                         },
                         "dist": {
                                 "type": "zip",
-                                "url": "https://api.github.com/repos/php-fig/log/zipball/d49695b909c3b7628b6289db5479a1c204601f11",
-                                "reference": "d49695b909c3b7628b6289db5479a1c204601f11",
+                                "url": "https://api.github.com/repos/sirn-se/phrity-comparison/zipball/aedd44d59db08de7d6c31812d1490c22aab35c92",
+                                "reference": "aedd44d59db08de7d6c31812d1490c22aab35c92",
                                 "shasum": ""
                         },
                         "require": {
-                                "php": ">=5.3.0"
+                                "php": "^8.1"
                         },
-                        "time": "2021-05-03T11:20:27+00:00",
+                        "require-dev": {
+                                "php-coveralls/php-coveralls": "^2.0",
+                                "phpstan/phpstan": "^2.0",
+                                "phpunit/phpunit": "^10.0 | ^11.0  | ^12.0",
+                                "squizlabs/php_codesniffer": "^3.5"
+                        },
+                        "time": "2025-05-26T20:12:39+00:00",
+                        "type": "library",
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Phrity\\Comparison\\": "src/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Sören Jensen",
+                                        "email": "sirn@sirn.se",
+                                        "homepage": "https://phrity.sirn.se"
+                                }
+                        ],
+                        "description": "Interfaces and helper trait for comparing objects. Comparator for sort and filter applications.",
+                        "homepage": "https://phrity.sirn.se/comparison",
+                        "keywords": [
+                                "comparable",
+                                "comparator",
+                                "comparison",
+                                "equalable",
+                                "filter",
+                                "sort"
+                        ],
+                        "support": {
+                                "issues": "https://github.com/sirn-se/phrity-comparison/issues",
+                                "source": "https://github.com/sirn-se/phrity-comparison/tree/1.4.0"
+                        },
+                        "install-path": "../phrity/comparison"
+                },
+                {
+                        "name": "phrity/http",
+                        "version": "1.0.0",
+                        "version_normalized": "1.0.0.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/sirn-se/phrity-http.git",
+                                "reference": "536e3e46e6220d171a59599ed1f4da9f6b6244fc"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/sirn-se/phrity-http/zipball/536e3e46e6220d171a59599ed1f4da9f6b6244fc",
+                                "reference": "536e3e46e6220d171a59599ed1f4da9f6b6244fc",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": "^8.1",
+                                "psr/http-factory": "^1.0",
+                                "psr/http-message": "^1.1 | ^2.0"
+                        },
+                        "require-dev": {
+                                "guzzlehttp/psr7": "^2.0",
+                                "phpstan/phpstan": "^2.0",
+                                "phpunit/phpunit": "^10.0 | ^11.0  | ^12.0",
+                                "robiningelbrecht/phpunit-coverage-tools": "^1.9",
+                                "squizlabs/php_codesniffer": "^3.5"
+                        },
+                        "time": "2025-09-07T17:04:26+00:00",
+                        "type": "library",
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Phrity\\Http\\": "src/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Sören Jensen",
+                                        "email": "sirn@sirn.se",
+                                        "homepage": "https://phrity.sirn.se"
+                                }
+                        ],
+                        "description": "Utilities and interfaces for handling HTTP.",
+                        "homepage": "https://phrity.sirn.se/http",
+                        "keywords": [
+                                "HTTP Factories",
+                                "http",
+                                "psr-17"
+                        ],
+                        "support": {
+                                "issues": "https://github.com/sirn-se/phrity-http/issues",
+                                "source": "https://github.com/sirn-se/phrity-http/tree/1.0.0"
+                        },
+                        "install-path": "../phrity/http"
+                },
+                {
+                        "name": "phrity/net-stream",
+                        "version": "2.3.1",
+                        "version_normalized": "2.3.1.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/sirn-se/phrity-net-stream.git",
+                                "reference": "c621bb3108a5a02bba64df2e5f0cd7ada02665b5"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/sirn-se/phrity-net-stream/zipball/c621bb3108a5a02bba64df2e5f0cd7ada02665b5",
+                                "reference": "c621bb3108a5a02bba64df2e5f0cd7ada02665b5",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": "^8.1",
+                                "phrity/util-errorhandler": "^1.1",
+                                "psr/http-factory": "^1.0",
+                                "psr/http-message": "^1.1 | ^2.0"
+                        },
+                        "require-dev": {
+                                "php-coveralls/php-coveralls": "^2.0",
+                                "phpstan/phpstan": "^2.0",
+                                "phpunit/phpunit": "^10.0 | ^11.0  | ^12.0",
+                                "phrity/net-uri": "^2.0",
+                                "squizlabs/php_codesniffer": "^3.5"
+                        },
+                        "time": "2025-08-08T09:51:04+00:00",
+                        "type": "library",
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Phrity\\Net\\": "src/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Sören Jensen",
+                                        "email": "sirn@sirn.se",
+                                        "homepage": "https://phrity.sirn.se"
+                                }
+                        ],
+                        "description": "Socket stream classes implementing PSR-7 Stream and PSR-17 StreamFactory",
+                        "homepage": "https://phrity.sirn.se/net-stream",
+                        "keywords": [
+                                "Socket",
+                                "client",
+                                "psr-17",
+                                "psr-7",
+                                "server",
+                                "stream",
+                                "stream factory"
+                        ],
+                        "support": {
+                                "issues": "https://github.com/sirn-se/phrity-net-stream/issues",
+                                "source": "https://github.com/sirn-se/phrity-net-stream/tree/2.3.1"
+                        },
+                        "install-path": "../phrity/net-stream"
+                },
+                {
+                        "name": "phrity/net-uri",
+                        "version": "2.2.0",
+                        "version_normalized": "2.2.0.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/sirn-se/phrity-net-uri.git",
+                                "reference": "08de4cf07e439c4708f572249659f09198ac99f0"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/sirn-se/phrity-net-uri/zipball/08de4cf07e439c4708f572249659f09198ac99f0",
+                                "reference": "08de4cf07e439c4708f572249659f09198ac99f0",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "ext-mbstring": "*",
+                                "php": "^8.1",
+                                "phrity/comparison": "^1.0",
+                                "psr/http-factory": "^1.0",
+                                "psr/http-message": "^1.1 | ^2.0"
+                        },
+                        "require-dev": {
+                                "php-coveralls/php-coveralls": "^2.0",
+                                "phpstan/phpstan": "^2.0",
+                                "phpunit/phpunit": "^10.0 | ^11.0  | ^12.0",
+                                "phrity/util-errorhandler": "^1.1",
+                                "squizlabs/php_codesniffer": "^3.5"
+                        },
+                        "suggest": {
+                                "ext-intl": "Enables IDN conversion for non-ASCII domains"
+                        },
+                        "time": "2025-05-25T13:05:13+00:00",
+                        "type": "library",
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Phrity\\Net\\": "src/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Sören Jensen",
+                                        "email": "sirn@sirn.se",
+                                        "homepage": "https://phrity.sirn.se"
+                                }
+                        ],
+                        "description": "PSR-7 Uri and PSR-17 UriFactory implementation",
+                        "homepage": "https://phrity.sirn.se/net-uri",
+                        "keywords": [
+                                "psr-17",
+                                "psr-7",
+                                "uri",
+                                "uri factory"
+                        ],
+                        "support": {
+                                "issues": "https://github.com/sirn-se/phrity-net-uri/issues",
+                                "source": "https://github.com/sirn-se/phrity-net-uri/tree/2.2.0"
+                        },
+                        "install-path": "../phrity/net-uri"
+                },
+                {
+                        "name": "phrity/util-errorhandler",
+                        "version": "1.2.1",
+                        "version_normalized": "1.2.1.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/sirn-se/phrity-util-errorhandler.git",
+                                "reference": "9825f15ef9b4a93252ce53ca8962278832d834da"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/sirn-se/phrity-util-errorhandler/zipball/9825f15ef9b4a93252ce53ca8962278832d834da",
+                                "reference": "9825f15ef9b4a93252ce53ca8962278832d834da",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": "^8.1"
+                        },
+                        "require-dev": {
+                                "php-coveralls/php-coveralls": "^2.0",
+                                "phpstan/phpstan": "^2.0",
+                                "phpunit/phpunit": "^10.0 | ^11.0  | ^12.0",
+                                "squizlabs/php_codesniffer": "^3.5"
+                        },
+                        "time": "2025-08-08T09:48:45+00:00",
+                        "type": "library",
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Phrity\\Util\\": "src/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Sören Jensen",
+                                        "email": "sirn@sirn.se",
+                                        "homepage": "https://phrity.sirn.se"
+                                }
+                        ],
+                        "description": "Inline error handler; catch and resolve errors for code block.",
+                        "homepage": "https://phrity.sirn.se/util-errorhandler",
+                        "keywords": [
+                                "error",
+                                "warning"
+                        ],
+                        "support": {
+                                "issues": "https://github.com/sirn-se/phrity-util-errorhandler/issues",
+                                "source": "https://github.com/sirn-se/phrity-util-errorhandler/tree/1.2.1"
+                        },
+                        "install-path": "../phrity/util-errorhandler"
+                },
+                {
+                        "name": "phrity/websocket",
+                        "version": "3.6.0",
+                        "version_normalized": "3.6.0.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/sirn-se/websocket-php.git",
+                                "reference": "3f16b2564a230bbce716cccaff2f6156a60a8798"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/sirn-se/websocket-php/zipball/3f16b2564a230bbce716cccaff2f6156a60a8798",
+                                "reference": "3f16b2564a230bbce716cccaff2f6156a60a8798",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": "^8.1",
+                                "phrity/http": "^1.0",
+                                "phrity/net-stream": "^2.3",
+                                "phrity/net-uri": "^2.1",
+                                "psr/http-message": "^1.1 | ^2.0",
+                                "psr/log": "^1.0 | ^2.0 | ^3.0"
+                        },
+                        "require-dev": {
+                                "guzzlehttp/psr7": "^2.0",
+                                "php-coveralls/php-coveralls": "^2.0",
+                                "phpstan/phpstan": "^2.0",
+                                "phpunit/phpunit": "^10.0 | ^11.0 | ^12.0",
+                                "phrity/logger-console": "^1.0",
+                                "phrity/net-mock": "^2.3",
+                                "phrity/util-errorhandler": "^1.1",
+                                "robiningelbrecht/phpunit-coverage-tools": "^1.9",
+                                "squizlabs/php_codesniffer": "^3.5"
+                        },
+                        "time": "2025-09-08T16:21:41+00:00",
+                        "type": "library",
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "WebSocket\\": "src/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "ISC"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "Fredrik Liljegren"
+                                },
+                                {
+                                        "name": "Sören Jensen",
+                                        "email": "sirn@sirn.se",
+                                        "homepage": "https://phrity.sirn.se"
+                                }
+                        ],
+                        "description": "WebSocket client and server",
+                        "homepage": "https://phrity.sirn.se/websocket",
+                        "keywords": [
+                                "client",
+                                "server",
+                                "websocket"
+                        ],
+                        "support": {
+                                "issues": "https://github.com/sirn-se/websocket-php/issues",
+                                "source": "https://github.com/sirn-se/websocket-php/tree/3.6.0"
+                        },
+                        "install-path": "../phrity/websocket"
+                },
+                {
+                        "name": "psr/http-factory",
+                        "version": "1.1.0",
+                        "version_normalized": "1.1.0.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/php-fig/http-factory.git",
+                                "reference": "2b4765fddfe3b508ac62f829e852b1501d3f6e8a"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/php-fig/http-factory/zipball/2b4765fddfe3b508ac62f829e852b1501d3f6e8a",
+                                "reference": "2b4765fddfe3b508ac62f829e852b1501d3f6e8a",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": ">=7.1",
+                                "psr/http-message": "^1.0 || ^2.0"
+                        },
+                        "time": "2024-04-15T12:06:14+00:00",
                         "type": "library",
                         "extra": {
                                 "branch-alias": {
-                                        "dev-master": "1.1.x-dev"
+                                        "dev-master": "1.0.x-dev"
                                 }
                         },
                         "installation-source": "dist",
                         "autoload": {
                                 "psr-4": {
-                                        "Psr\\Log\\": "Psr/Log/"
+                                        "Psr\\Http\\Message\\": "src/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "PHP-FIG",
+                                        "homepage": "https://www.php-fig.org/"
+                                }
+                        ],
+                        "description": "PSR-17: Common interfaces for PSR-7 HTTP message factories",
+                        "keywords": [
+                                "factory",
+                                "http",
+                                "message",
+                                "psr",
+                                "psr-17",
+                                "psr-7",
+                                "request",
+                                "response"
+                        ],
+                        "support": {
+                                "source": "https://github.com/php-fig/http-factory"
+                        },
+                        "install-path": "../psr/http-factory"
+                },
+                {
+                        "name": "psr/http-message",
+                        "version": "2.0",
+                        "version_normalized": "2.0.0.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/php-fig/http-message.git",
+                                "reference": "402d35bcb92c70c026d1a6a9883f06b2ead23d71"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/php-fig/http-message/zipball/402d35bcb92c70c026d1a6a9883f06b2ead23d71",
+                                "reference": "402d35bcb92c70c026d1a6a9883f06b2ead23d71",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": "^7.2 || ^8.0"
+                        },
+                        "time": "2023-04-04T09:54:51+00:00",
+                        "type": "library",
+                        "extra": {
+                                "branch-alias": {
+                                        "dev-master": "2.0.x-dev"
+                                }
+                        },
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Psr\\Http\\Message\\": "src/"
+                                }
+                        },
+                        "notification-url": "https://packagist.org/downloads/",
+                        "license": [
+                                "MIT"
+                        ],
+                        "authors": [
+                                {
+                                        "name": "PHP-FIG",
+                                        "homepage": "https://www.php-fig.org/"
+                                }
+                        ],
+                        "description": "Common interface for HTTP messages",
+                        "homepage": "https://github.com/php-fig/http-message",
+                        "keywords": [
+                                "http",
+                                "http-message",
+                                "psr",
+                                "psr-7",
+                                "request",
+                                "response"
+                        ],
+                        "support": {
+                                "source": "https://github.com/php-fig/http-message/tree/2.0"
+                        },
+                        "install-path": "../psr/http-message"
+                },
+                {
+                        "name": "psr/log",
+                        "version": "3.0.2",
+                        "version_normalized": "3.0.2.0",
+                        "source": {
+                                "type": "git",
+                                "url": "https://github.com/php-fig/log.git",
+                                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3"
+                        },
+                        "dist": {
+                                "type": "zip",
+                                "url": "https://api.github.com/repos/php-fig/log/zipball/f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
+                                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
+                                "shasum": ""
+                        },
+                        "require": {
+                                "php": ">=8.0.0"
+                        },
+                        "time": "2024-09-11T13:17:53+00:00",
+                        "type": "library",
+                        "extra": {
+                                "branch-alias": {
+                                        "dev-master": "3.x-dev"
+                                }
+                        },
+                        "installation-source": "dist",
+                        "autoload": {
+                                "psr-4": {
+                                        "Psr\\Log\\": "src"
                                 }
                         },
                         "notification-url": "https://packagist.org/downloads/",
@@ -161,102 +592,31 @@
                                 "psr",
                                 "psr-3"
                         ],
+                        "support": {
+                                "source": "https://github.com/php-fig/log/tree/3.0.2"
+                        },
                         "install-path": "../psr/log"
                 },
                 {
-                        "name": "setasign/fpdi",
-                        "version": "v2.6.0",
-                        "version_normalized": "2.6.0.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/Setasign/FPDI.git",
-                                "reference": "a6db878129ec6c7e141316ee71872923e7f1b7ad"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/a6db878129ec6c7e141316ee71872923e7f1b7ad",
-                                "reference": "a6db878129ec6c7e141316ee71872923e7f1b7ad",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "ext-zlib": "*",
-                                "php": "^5.6 || ^7.0 || ^8.0"
-                        },
-                        "conflict": {
-                                "setasign/tfpdf": "<1.31"
-                        },
-                        "require-dev": {
-                                "phpunit/phpunit": "~5.7",
-                                "setasign/fpdf": "~1.8.6",
-                                "setasign/tfpdf": "~1.33",
-                                "squizlabs/php_codesniffer": "^3.5",
-                                "tecnickcom/tcpdf": "~6.2"
-                        },
-                        "suggest": {
-                                "setasign/fpdf": "FPDI will extend this class but as it is also possible to use TCPDF or tFPDF as an alternative. There's no fixed dependency configured."
-                        },
-                        "time": "2023-12-11T16:03:32+00:00",
-                        "type": "library",
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "setasign\\Fpdi\\": "src/"
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "MIT"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Jan Slabon",
-                                        "email": "jan.slabon@setasign.com",
-                                        "homepage": "https://www.setasign.com"
-                                },
-                                {
-                                        "name": "Maximilian Kresse",
-                                        "email": "maximilian.kresse@setasign.com",
-                                        "homepage": "https://www.setasign.com"
-                                }
-                        ],
-                        "description": "FPDI is a collection of PHP classes facilitating developers to read pages from existing PDF documents and use them as templates in FPDF. Because it is also possible to use FPDI with TCPDF, there are no fixed dependencies defined. Please see suggestions for packages which evaluates the dependencies automatically.",
-                        "homepage": "https://www.setasign.com/fpdi",
-                        "keywords": [
-                                "fpdf",
-                                "fpdi",
-                                "pdf"
-                        ],
-                        "support": {
-                                "issues": "https://github.com/Setasign/FPDI/issues",
-                                "source": "https://github.com/Setasign/FPDI/tree/v2.6.0"
-                        },
-                        "funding": [
-                                {
-                                        "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
-                                        "type": "tidelift"
-                                }
-                        ],
-                        "install-path": "../setasign/fpdi"
-                },
-                {
                         "name": "tecnickcom/tcpdf",
-                        "version": "6.7.5",
-                        "version_normalized": "6.7.5.0",
+                        "version": "6.10.0",
+                        "version_normalized": "6.10.0.0",
                         "source": {
                                 "type": "git",
                                 "url": "https://github.com/tecnickcom/TCPDF.git",
-                                "reference": "951eabf0338ec2522bd0d5d9c79b08a3a3d36b36"
+                                "reference": "ca5b6de294512145db96bcbc94e61696599c391d"
                         },
                         "dist": {
                                 "type": "zip",
-                                "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/951eabf0338ec2522bd0d5d9c79b08a3a3d36b36",
-                                "reference": "951eabf0338ec2522bd0d5d9c79b08a3a3d36b36",
+                                "url": "https://api.github.com/repos/tecnickcom/TCPDF/zipball/ca5b6de294512145db96bcbc94e61696599c391d",
+                                "reference": "ca5b6de294512145db96bcbc94e61696599c391d",
                                 "shasum": ""
                         },
                         "require": {
-                                "php": ">=5.5.0"
+                                "ext-curl": "*",
+                                "php": ">=7.1.0"
                         },
-                        "time": "2024-04-20T17:25:10+00:00",
+                        "time": "2025-05-27T18:02:28+00:00",
                         "type": "library",
                         "installation-source": "dist",
                         "autoload": {
@@ -264,8 +624,6 @@
                                         "config",
                                         "include",
                                         "tcpdf.php",
-                                        "tcpdf_parser.php",
-                                        "tcpdf_import.php",
                                         "tcpdf_barcodes_1d.php",
                                         "tcpdf_barcodes_2d.php",
                                         "include/tcpdf_colors.php",
@@ -303,67 +661,15 @@
                         ],
                         "support": {
                                 "issues": "https://github.com/tecnickcom/TCPDF/issues",
-                                "source": "https://github.com/tecnickcom/TCPDF/tree/6.7.5"
+                                "source": "https://github.com/tecnickcom/TCPDF/tree/6.10.0"
                         },
                         "funding": [
                                 {
-                                        "url": "https://www.paypal.com/cgi-bin/webscr?cmd=_donations&currency_code=GBP&business=paypal@tecnick.com&item_name=donation%20for%20tcpdf%20project",
+                                        "url": "https://www.paypal.com/donate/?hosted_button_id=NZUEC5XS8MFBJ",
                                         "type": "custom"
                                 }
                         ],
                         "install-path": "../tecnickcom/tcpdf"
-                },
-                {
-                        "name": "textalk/websocket",
-                        "version": "1.5.8",
-                        "version_normalized": "1.5.8.0",
-                        "source": {
-                                "type": "git",
-                                "url": "https://github.com/Textalk/websocket-php.git",
-                                "reference": "d05dbaa97500176447ffb1f1800573f23085ab13"
-                        },
-                        "dist": {
-                                "type": "zip",
-                                "url": "https://api.github.com/repos/Textalk/websocket-php/zipball/d05dbaa97500176447ffb1f1800573f23085ab13",
-                                "reference": "d05dbaa97500176447ffb1f1800573f23085ab13",
-                                "shasum": ""
-                        },
-                        "require": {
-                                "php": "^7.2 | ^8.0",
-                                "psr/log": "^1 | ^2 | ^3"
-                        },
-                        "require-dev": {
-                                "php-coveralls/php-coveralls": "^2.0",
-                                "phpunit/phpunit": "^8.0|^9.0",
-                                "squizlabs/php_codesniffer": "^3.5"
-                        },
-                        "time": "2022-04-26T06:28:24+00:00",
-                        "type": "library",
-                        "installation-source": "dist",
-                        "autoload": {
-                                "psr-4": {
-                                        "WebSocket\\": "lib"
-                                }
-                        },
-                        "notification-url": "https://packagist.org/downloads/",
-                        "license": [
-                                "ISC"
-                        ],
-                        "authors": [
-                                {
-                                        "name": "Fredrik Liljegren"
-                                },
-                                {
-                                        "name": "Sören Jensen",
-                                        "email": "soren@abicart.se"
-                                }
-                        ],
-                        "description": "WebSocket client and server",
-                        "support": {
-                                "issues": "https://github.com/Textalk/websocket-php/issues",
-                                "source": "https://github.com/Textalk/websocket-php/tree/1.5.8"
-                        },
-                        "install-path": "../textalk/websocket"
                 }
         ],
         "dev": true,

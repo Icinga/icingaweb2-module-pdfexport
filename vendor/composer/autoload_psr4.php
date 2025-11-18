@@ -6,9 +6,12 @@ $vendorDir = dirname(__DIR__);
 $baseDir = dirname($vendorDir);
 
 return array(
-    'setasign\\Fpdi\\' => array($vendorDir . '/setasign/fpdi/src'),
-    'iio\\libmergepdf\\' => array($vendorDir . '/iio/libmergepdf/src'),
-    'cweagans\\Composer\\' => array($vendorDir . '/cweagans/composer-patches/src'),
-    'WebSocket\\' => array($vendorDir . '/textalk/websocket/lib'),
-    'Psr\\Log\\' => array($vendorDir . '/psr/log/Psr/Log'),
+    'WebSocket\\' => array($vendorDir . '/phrity/websocket/src'),
+    'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
+    'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-factory/src', $vendorDir . '/psr/http-message/src'),
+    'Phrity\\Util\\' => array($vendorDir . '/phrity/util-errorhandler/src'),
+    'Phrity\\Net\\' => array($vendorDir . '/phrity/net-uri/src', $vendorDir . '/phrity/net-stream/src'),
+    'Phrity\\Http\\' => array($vendorDir . '/phrity/http/src'),
+    'Phrity\\Comparison\\' => array($vendorDir . '/phrity/comparison/src'),
+    'Karriere\\PdfMerge\\' => array($vendorDir . '/karriere/pdf-merge/src'),
 );

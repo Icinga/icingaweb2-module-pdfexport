@@ -1,0 +1,7 @@
+vendor/
+coverage/
+tests/output.pdf
+.phpunit.result.cache
+composer.lock
+coverage.xml
+junit.xml

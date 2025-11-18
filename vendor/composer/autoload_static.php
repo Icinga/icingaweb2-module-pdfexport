@@ -7,18 +7,6 @@ namespace Composer\Autoload;
 class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
 {
     public static $prefixLengthsPsr4 = array (
-        's' => 
-        array (
-            'setasign\\Fpdi\\' => 14,
-        ),
-        'i' => 
-        array (
-            'iio\\libmergepdf\\' => 16,
-        ),
-        'c' => 
-        array (
-            'cweagans\\Composer\\' => 18,
-        ),
         'W' => 
         array (
             'WebSocket\\' => 10,
@@ -26,37 +14,60 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
         'P' => 
         array (
             'Psr\\Log\\' => 8,
+            'Psr\\Http\\Message\\' => 17,
+            'Phrity\\Util\\' => 12,
+            'Phrity\\Net\\' => 11,
+            'Phrity\\Http\\' => 12,
+            'Phrity\\Comparison\\' => 18,
+        ),
+        'K' => 
+        array (
+            'Karriere\\PdfMerge\\' => 18,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'setasign\\Fpdi\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/setasign/fpdi/src',
-        ),
-        'iio\\libmergepdf\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/iio/libmergepdf/src',
-        ),
-        'cweagans\\Composer\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/cweagans/composer-patches/src',
-        ),
         'WebSocket\\' => 
         array (
-            0 => __DIR__ . '/..' . '/textalk/websocket/lib',
+            0 => __DIR__ . '/..' . '/phrity/websocket/src',
         ),
         'Psr\\Log\\' => 
         array (
-            0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
+            0 => __DIR__ . '/..' . '/psr/log/src',
+        ),
+        'Psr\\Http\\Message\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-factory/src',
+            1 => __DIR__ . '/..' . '/psr/http-message/src',
+        ),
+        'Phrity\\Util\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phrity/util-errorhandler/src',
+        ),
+        'Phrity\\Net\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phrity/net-uri/src',
+            1 => __DIR__ . '/..' . '/phrity/net-stream/src',
+        ),
+        'Phrity\\Http\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phrity/http/src',
+        ),
+        'Phrity\\Comparison\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/phrity/comparison/src',
+        ),
+        'Karriere\\PdfMerge\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/karriere/pdf-merge/src',
         ),
     );
 
     public static $classMap = array (
         'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
         'Datamatrix' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/datamatrix.php',
-        'FPDF' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/tcpdi.php',
-        'FPDF_TPL' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/fpdf_tpl.php',
+        'FPDF' => __DIR__ . '/..' . '/karriere/pdf-merge/tcpi/tcpdi.php',
+        'FPDF_TPL' => __DIR__ . '/..' . '/karriere/pdf-merge/tcpi/fpdf_tpl.php',
         'PDF417' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/pdf417.php',
         'QRcode' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/barcodes/qrcode.php',
         'TCPDF' => __DIR__ . '/..' . '/tecnickcom/tcpdf/tcpdf.php',
@@ -67,11 +78,9 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
         'TCPDF_FONTS' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/tcpdf_fonts.php',
         'TCPDF_FONT_DATA' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/tcpdf_font_data.php',
         'TCPDF_IMAGES' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/tcpdf_images.php',
-        'TCPDF_IMPORT' => __DIR__ . '/..' . '/tecnickcom/tcpdf/tcpdf_import.php',
-        'TCPDF_PARSER' => __DIR__ . '/..' . '/tecnickcom/tcpdf/tcpdf_parser.php',
         'TCPDF_STATIC' => __DIR__ . '/..' . '/tecnickcom/tcpdf/include/tcpdf_static.php',
-        'TCPDI' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/tcpdi.php',
-        'tcpdi_parser' => __DIR__ . '/..' . '/iio/libmergepdf/tcpdi/tcpdi_parser.php',
+        'TCPDI' => __DIR__ . '/..' . '/karriere/pdf-merge/tcpi/tcpdi.php',
+        'tcpdi_parser' => __DIR__ . '/..' . '/karriere/pdf-merge/tcpi/tcpdi_parser.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
