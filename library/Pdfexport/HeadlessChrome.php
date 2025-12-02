@@ -15,7 +15,7 @@ use React\ChildProcess\Process;
 use React\EventLoop\Loop;
 use React\EventLoop\TimerInterface;
 use React\Promise;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
 use Throwable;
 use WebSocket\Client;
 
@@ -244,9 +244,9 @@ JS;
     /**
      * Generate a PDF raw string asynchronously.
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function asyncToPdf(): ExtendedPromiseInterface
+    public function asyncToPdf(): PromiseInterface
     {
         $deferred = new Promise\Deferred();
         Loop::futureTick(function () use ($deferred) {
@@ -397,9 +397,8 @@ JS;
     public function toPdf()
     {
         $pdf = '';
-        // We don't intend to register any then/otherwise handlers, so call done on that promise
-        // to properly propagate unhandled exceptions to the caller.
-        $this->asyncToPdf()->done(function (string $newPdf) use (&$pdf) {
+
+        $this->asyncToPdf()->then(function (string $newPdf) use (&$pdf) {
             $pdf = $newPdf;
         });
 
