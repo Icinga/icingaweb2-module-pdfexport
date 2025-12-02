@@ -1,8 +1,8 @@
 {
   "require": {
     "php": ">=8.2",
-    "phrity/websocket": "^3.6",
-    "karriere/pdf-merge": "^3.3"
+    "karriere/pdf-merge": "^3.3 || ^3.4",
+    "phrity/websocket": "^3.6"
   },
   "config": {
     "sort-packages": true

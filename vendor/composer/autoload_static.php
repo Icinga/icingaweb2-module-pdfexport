@@ -7,11 +7,11 @@ namespace Composer\Autoload;
 class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
 {
     public static $prefixLengthsPsr4 = array (
-        'W' => 
+        'W' =>
         array (
             'WebSocket\\' => 10,
         ),
-        'P' => 
+        'P' =>
         array (
             'Psr\\Log\\' => 8,
             'Psr\\Http\\Message\\' => 17,
@@ -20,44 +20,44 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
             'Phrity\\Http\\' => 12,
             'Phrity\\Comparison\\' => 18,
         ),
-        'K' => 
+        'K' =>
         array (
             'Karriere\\PdfMerge\\' => 18,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'WebSocket\\' => 
+        'WebSocket\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/websocket/src',
         ),
-        'Psr\\Log\\' => 
+        'Psr\\Log\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
         ),
-        'Psr\\Http\\Message\\' => 
+        'Psr\\Http\\Message\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/http-factory/src',
             1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
-        'Phrity\\Util\\' => 
+        'Phrity\\Util\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/util-errorhandler/src',
         ),
-        'Phrity\\Net\\' => 
+        'Phrity\\Net\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/net-uri/src',
             1 => __DIR__ . '/..' . '/phrity/net-stream/src',
         ),
-        'Phrity\\Http\\' => 
+        'Phrity\\Http\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/http/src',
         ),
-        'Phrity\\Comparison\\' => 
+        'Phrity\\Comparison\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/comparison/src',
         ),
-        'Karriere\\PdfMerge\\' => 
+        'Karriere\\PdfMerge\\' =>
         array (
             0 => __DIR__ . '/..' . '/karriere/pdf-merge/src',
         ),
