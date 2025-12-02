@@ -637,7 +637,7 @@ JS;
         return $response['result'];
     }
 
-    private function waitFor(Client $ws, $eventName, array $expectedParams = null)
+    private function waitFor(Client $ws, $eventName, ?array $expectedParams = null)
     {
         if ($eventName !== self::WAIT_FOR_NETWORK) {
             Logger::debug(
