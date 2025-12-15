@@ -17,7 +17,7 @@ use ipl\Html\ValidHtml;
 class PrintableHtmlDocument extends BaseHtmlElement
 {
     /** @var string */
-    const DEFAULT_HEADER_FOOTER_STYLE = <<<'CSS'
+    public const DEFAULT_HEADER_FOOTER_STYLE = <<<'CSS'
 @font-face {
   font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
 }
