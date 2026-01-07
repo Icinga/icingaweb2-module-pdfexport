@@ -27,13 +27,13 @@ class HeadlessChrome
      *
      * First matching group is the used port and the second one the browser id.
      */
-    const DEBUG_ADDR_PATTERN = '/DevTools listening on ws:\/\/((?>\d+\.?){4}:\d+)\/devtools\/browser\/([\w-]+)/';
+    public const DEBUG_ADDR_PATTERN = '/DevTools listening on ws:\/\/((?>\d+\.?){4}:\d+)\/devtools\/browser\/([\w-]+)/';
 
     /** @var string */
-    const WAIT_FOR_NETWORK = 'wait-for-network';
+    public const WAIT_FOR_NETWORK = 'wait-for-network';
 
     /** @var string Javascript Promise to wait for layout initialization */
-    const WAIT_FOR_LAYOUT = <<<JS
+    public const WAIT_FOR_LAYOUT = <<<JS
 new Promise((fulfill, reject) => {
     let timeoutId = setTimeout(() => reject('fail'), 10000);
 
@@ -519,7 +519,7 @@ JS;
             $parameters,
             ['transferMode' => 'ReturnAsBase64', 'printBackground' => true]
         ));
-        if (isset($result['data']) && !empty($result['data'])) {
+        if (! empty($result['data'])) {
             $pdf = base64_decode($result['data']);
         } else {
             throw new Exception('Expected base64 data. Got instead: ' . json_encode($result));
