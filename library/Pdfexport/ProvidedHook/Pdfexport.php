@@ -14,7 +14,7 @@ use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\HeadlessChrome;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Karriere\PdfMerge\PdfMerge;
-use React\Promise\ExtendedPromiseInterface;
+use React\Promise\PromiseInterface;
 
 class Pdfexport extends PdfexportHook
 {
@@ -98,9 +98,9 @@ class Pdfexport extends PdfexportHook
      *
      * @param PrintableHtmlDocument|string $html
      *
-     * @return ExtendedPromiseInterface
+     * @return PromiseInterface
      */
-    public function asyncHtmlToPdf($html): ExtendedPromiseInterface
+    public function asyncHtmlToPdf($html): PromiseInterface
     {
         // Keep reference to the chrome object because it is using temp files which are automatically removed when
         // the object is destructed
@@ -109,7 +109,7 @@ class Pdfexport extends PdfexportHook
         $pdfPromise = $chrome->fromHtml($html, static::getForceTempStorage())->asyncToPdf();
 
         if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
-            /** @var ExtendedPromiseInterface $pdfPromise */
+            /** @var PromiseInterface $pdfPromise */
             $pdfPromise = $pdfPromise->then(function (string $pdf) use ($chrome, $html, $coverPage) {
                 return $chrome->fromHtml(
                     (new PrintableHtmlDocument())
