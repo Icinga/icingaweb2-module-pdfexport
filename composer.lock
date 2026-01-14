@@ -4,24 +4,24 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5cffa2096256d965b5bbedcd5a7b515b",
+    "content-hash": "8d0710720b1f348fdcff7f454ebc64b5",
     "packages": [
         {
             "name": "karriere/pdf-merge",
-            "version": "v3.3.1",
+            "version": "v3.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/karriereat/pdf-merge.git",
-                "reference": "d524a9d261ea96b18bbbab685b5710a7a0fe3a6e"
+                "reference": "13e6f60fe42c0fac238a65b9e19d69875658379b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/karriereat/pdf-merge/zipball/d524a9d261ea96b18bbbab685b5710a7a0fe3a6e",
-                "reference": "d524a9d261ea96b18bbbab685b5710a7a0fe3a6e",
+                "url": "https://api.github.com/repos/karriereat/pdf-merge/zipball/13e6f60fe42c0fac238a65b9e19d69875658379b",
+                "reference": "13e6f60fe42c0fac238a65b9e19d69875658379b",
                 "shasum": ""
             },
             "require": {
-                "php": "8.1.* | 8.2.* | 8.3.* | 8.4.*",
+                "php": "8.3.* | 8.4.* | 8.5.*",
                 "tecnickcom/tcpdf": "^6.3"
             },
             "require-dev": {
@@ -58,9 +58,9 @@
             ],
             "support": {
                 "issues": "https://github.com/karriereat/pdf-merge/issues",
-                "source": "https://github.com/karriereat/pdf-merge/tree/v3.3.1"
+                "source": "https://github.com/karriereat/pdf-merge/tree/v3.4.0"
             },
-            "time": "2025-02-19T11:02:10+00:00"
+            "time": "2025-11-21T06:15:05+00:00"
         },
         {
             "name": "phrity/comparison",
@@ -654,5 +654,5 @@
         "php": ">=8.2"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
