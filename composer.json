@@ -1,4 +1,10 @@
 {
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/Icinga/pdf-merge"
+    }
+  ],
   "require": {
     "php": ">=8.2",
     "phrity/websocket": "^3.6",
