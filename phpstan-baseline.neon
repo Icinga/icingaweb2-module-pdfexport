@@ -1,321 +1,361 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\Controllers\\\\ConfigController\\:\\:chromeAction\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\Controllers\\ConfigController\:\:chromeAction\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: application/controllers/ConfigController.php
 
 		-
-			message: "#^Cannot call method addError\\(\\) on Zend_Form_Element\\|null\\.$#"
+			message: '#^Cannot call method addError\(\) on Zend_Form_Element\|null\.$#'
+			identifier: method.nonObject
 			count: 4
 			path: application/forms/ChromeBinaryForm.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\Forms\\\\ChromeBinaryForm\\:\\:createElements\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\Forms\\ChromeBinaryForm\:\:createElements\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: application/forms/ChromeBinaryForm.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\Forms\\\\ChromeBinaryForm\\:\\:createElements\\(\\) has parameter \\$formData with no value type specified in iterable type array\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\Forms\\ChromeBinaryForm\:\:createElements\(\) has parameter \$formData with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: application/forms/ChromeBinaryForm.php
 
 		-
-			message: "#^Parameter \\#2 \\$port of method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:setRemote\\(\\) expects int, mixed given\\.$#"
+			message: '#^Parameter \#2 \$port of method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:setRemote\(\) expects int, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: application/forms/ChromeBinaryForm.php
 
 		-
-			message: "#^Access to an undefined property object\\:\\:\\$stderr\\.$#"
+			message: '#^Access to an undefined property object\:\:\$stderr\.$#'
+			identifier: property.notFound
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Access to an undefined property object\\:\\:\\$stdout\\.$#"
+			message: '#^Access to an undefined property object\:\:\$stdout\.$#'
+			identifier: property.notFound
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Cannot access offset 'Browser' on array\\|bool\\.$#"
+			message: '#^Cannot access offset ''Browser'' on array\|bool\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Cannot access offset 'code' on mixed\\.$#"
+			message: '#^Cannot access offset ''code'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Cannot access offset 'error' on mixed\\.$#"
+			message: '#^Cannot access offset ''error'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Cannot access offset 'message' on mixed\\.$#"
+			message: '#^Cannot access offset ''message'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Cannot access offset 'method' on mixed\\.$#"
+			message: '#^Cannot access offset ''method'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Cannot access offset 'result' on mixed\\.$#"
+			message: '#^Cannot access offset ''result'' on mixed\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Cannot call method on\\(\\) on React\\\\Stream\\\\ReadableStreamInterface\\|React\\\\Stream\\\\WritableStreamInterface\\|null\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:communicate\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:asyncToPdf\\(\\) should return React\\\\Promise\\\\ExtendedPromiseInterface but returns React\\\\Promise\\\\PromiseInterface\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:communicate\(\) has parameter \$method with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:communicate\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:communicate\(\) has parameter \$params with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:communicate\\(\\) has parameter \\$method with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:getFileStorage\(\) return type has no value type specified in iterable type Icinga\\File\\Storage\\StorageInterface\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:communicate\\(\\) has parameter \\$params with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:getRemote\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:getFileStorage\\(\\) return type has no value type specified in iterable type Icinga\\\\File\\\\Storage\\\\StorageInterface\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:jsonVersion\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:getRemote\\(\\) return type has no value type specified in iterable type array\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:jsonVersion\(\) should return array\|bool but returns mixed\.$#'
+			identifier: return.type
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:jsonVersion\\(\\) return type has no value type specified in iterable type array\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:parseApiResponse\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:jsonVersion\\(\\) should return array\\|bool but returns mixed\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:printToPDF\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:parseApiResponse\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:printToPDF\(\) has parameter \$browserId with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:parseApiResponse\\(\\) has parameter \\$payload with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:printToPDF\(\) has parameter \$parameters with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:printToPDF\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:printToPDF\(\) has parameter \$socket with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:printToPDF\\(\\) has parameter \\$browserId with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:registerEvent\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:printToPDF\\(\\) has parameter \\$parameters with no value type specified in iterable type array\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:registerEvent\(\) has parameter \$method with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:printToPDF\\(\\) has parameter \\$socket with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:registerEvent\(\) has parameter \$params with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:registerEvent\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:renderApiCall\(\) has parameter \$method with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:registerEvent\\(\\) has parameter \\$method with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:renderApiCall\(\) has parameter \$options with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:registerEvent\\(\\) has parameter \\$params with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:renderArgumentList\(\) has parameter \$arguments with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:renderApiCall\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:setFileStorage\(\) has parameter \$fileStorage with no value type specified in iterable type Icinga\\File\\Storage\\StorageInterface\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:renderApiCall\\(\\) has parameter \\$method with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:waitFor\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:renderApiCall\\(\\) has parameter \\$options with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:waitFor\(\) has parameter \$eventName with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:renderArgumentList\\(\\) has parameter \\$arguments with no value type specified in iterable type array\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:waitFor\(\) has parameter \$expectedParams with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:setFileStorage\\(\\) has parameter \\$fileStorage with no value type specified in iterable type Icinga\\\\File\\\\Storage\\\\StorageInterface\\.$#"
+			message: '#^Parameter \#2 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:waitFor\\(\\) has no return type specified\\.$#"
+			message: '#^Parameter \#3 \.\.\.\$values of function sprintf expects bool\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:waitFor\\(\\) has parameter \\$eventName with no type specified\\.$#"
+			message: '#^Property Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:\$fileStorage type has no value type specified in iterable type Icinga\\File\\Storage\\StorageInterface\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:waitFor\\(\\) has parameter \\$expectedParams with no value type specified in iterable type array\\.$#"
+			message: '#^Property Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:\$interceptedEvents type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Parameter \\#2 \\.\\.\\.\\$values of function sprintf expects bool\\|float\\|int\\|string\\|null, mixed given\\.$#"
+			message: '#^Property Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:\$interceptedRequests type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Parameter \\#3 \\.\\.\\.\\$values of function sprintf expects bool\\|float\\|int\\|string\\|null, mixed given\\.$#"
+			message: '#^Property Icinga\\Module\\Pdfexport\\HeadlessChrome\:\:\$remote type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/HeadlessChrome.php
 
 		-
-			message: "#^Property Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:\\$fileStorage type has no value type specified in iterable type Icinga\\\\File\\\\Storage\\\\StorageInterface\\.$#"
-			count: 1
-			path: library/Pdfexport/HeadlessChrome.php
-
-		-
-			message: "#^Property Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:\\$interceptedEvents type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: library/Pdfexport/HeadlessChrome.php
-
-		-
-			message: "#^Property Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:\\$interceptedRequests type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: library/Pdfexport/HeadlessChrome.php
-
-		-
-			message: "#^Property Icinga\\\\Module\\\\Pdfexport\\\\HeadlessChrome\\:\\:\\$remote type has no value type specified in iterable type array\\.$#"
-			count: 1
-			path: library/Pdfexport/HeadlessChrome.php
-
-		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\PrintStyleSheet\\:\\:collect\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\PrintStyleSheet\:\:collect\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/PrintStyleSheet.php
 
 		-
-			message: "#^Cannot call method getName\\(\\) on mixed\\.$#"
+			message: '#^Cannot call method getName\(\) on mixed\.$#'
+			identifier: method.nonObject
 			count: 3
 			path: library/Pdfexport/PrintableHtmlDocument.php
 
 		-
-			message: "#^Cannot call method getStaticAssetPath\\(\\) on mixed\\.$#"
+			message: '#^Cannot call method getStaticAssetPath\(\) on mixed\.$#'
+			identifier: method.nonObject
 			count: 1
 			path: library/Pdfexport/PrintableHtmlDocument.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\PrintableHtmlDocument\\:\\:assemble\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\PrintableHtmlDocument\:\:assemble\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/PrintableHtmlDocument.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\PrintableHtmlDocument\\:\\:getPrintParameters\\(\\) return type has no value type specified in iterable type array\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\PrintableHtmlDocument\:\:getPrintParameters\(\) return type has no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
 			count: 1
 			path: library/Pdfexport/PrintableHtmlDocument.php
 
 		-
-			message: "#^Parameter \\#1 \\$content of static method ipl\\\\Html\\\\Text\\:\\:create\\(\\) expects string, string\\|null given\\.$#"
+			message: '#^Parameter \#1 \$content of static method ipl\\Html\\Text\:\:create\(\) expects string, string\|null given\.$#'
+			identifier: argument.type
 			count: 1
 			path: library/Pdfexport/PrintableHtmlDocument.php
 
 		-
-			message: "#^Parameter \\#3 \\.\\.\\.\\$content of class ipl\\\\Html\\\\HtmlElement constructor expects ipl\\\\Html\\\\ValidHtml, ipl\\\\Html\\\\ValidHtml\\|null given\\.$#"
+			message: '#^Parameter \#3 \.\.\.\$content of class ipl\\Html\\HtmlElement constructor expects ipl\\Html\\ValidHtml, ipl\\Html\\ValidHtml\|null given\.$#'
+			identifier: argument.type
 			count: 2
 			path: library/Pdfexport/PrintableHtmlDocument.php
 
 		-
-			message: "#^Cannot call method isSupported\\(\\) on mixed\\.$#"
+			message: '#^Cannot call method isSupported\(\) on mixed\.$#'
+			identifier: method.nonObject
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\ProvidedHook\\\\Pdfexport\\:\\:first\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\ProvidedHook\\Pdfexport\:\:first\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\ProvidedHook\\\\Pdfexport\\:\\:getBinary\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\ProvidedHook\\Pdfexport\:\:getBinary\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\ProvidedHook\\\\Pdfexport\\:\\:getForceTempStorage\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\ProvidedHook\\Pdfexport\:\:getForceTempStorage\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\ProvidedHook\\\\Pdfexport\\:\\:getHost\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\ProvidedHook\\Pdfexport\:\:getHost\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\ProvidedHook\\\\Pdfexport\\:\\:getPort\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\ProvidedHook\\Pdfexport\:\:getPort\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\ProvidedHook\\\\Pdfexport\\:\\:htmlToPdf\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\ProvidedHook\\Pdfexport\:\:htmlToPdf\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\ProvidedHook\\\\Pdfexport\\:\\:htmlToPdf\\(\\) has parameter \\$html with no type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\ProvidedHook\\Pdfexport\:\:htmlToPdf\(\) has parameter \$html with no type specified\.$#'
+			identifier: missingType.parameter
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Method Icinga\\\\Module\\\\Pdfexport\\\\ProvidedHook\\\\Pdfexport\\:\\:streamPdfFromHtml\\(\\) has no return type specified\\.$#"
+			message: '#^Method Icinga\\Module\\Pdfexport\\ProvidedHook\\Pdfexport\:\:streamPdfFromHtml\(\) has no return type specified\.$#'
+			identifier: missingType.return
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Parameter \\#1 \\$object of function get_class expects object, mixed given\\.$#"
+			message: '#^Parameter \#1 \$object of function get_class expects object, mixed given\.$#'
+			identifier: argument.type
 			count: 1
 			path: library/Pdfexport/ProvidedHook/Pdfexport.php
 
 		-
-			message: "#^Parameter \\#1 \\$process of function proc_get_status expects resource, resource\\|null given\\.$#"
+			message: '#^Parameter \#1 \$process of function proc_get_status expects resource, resource\|null given\.$#'
+			identifier: argument.type
 			count: 1
 			path: library/Pdfexport/ShellCommand.php
 
 		-
-			message: "#^Property Icinga\\\\Module\\\\Pdfexport\\\\ShellCommand\\:\\:\\$resource \\(resource\\|null\\) does not accept resource\\|false\\.$#"
+			message: '#^Property Icinga\\Module\\Pdfexport\\ShellCommand\:\:\$resource \(resource\|null\) does not accept resource\|false\.$#'
+			identifier: assign.propertyType
 			count: 1
 			path: library/Pdfexport/ShellCommand.php

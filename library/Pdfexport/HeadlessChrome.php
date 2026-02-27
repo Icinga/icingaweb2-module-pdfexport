@@ -18,7 +18,6 @@ use React\Promise;
 use React\Promise\ExtendedPromiseInterface;
 use Throwable;
 use WebSocket\Client;
-use WebSocket\ConnectionException;
 
 class HeadlessChrome
 {
@@ -535,7 +534,7 @@ JS;
 
         try {
             $browser->close();
-        } catch (ConnectionException $e) {
+        } catch (Throwable $e) {
             // For some reason, the browser doesn't send a response
             Logger::debug(sprintf('Failed to close browser connection: ' . $e->getMessage()));
         }
@@ -637,7 +636,7 @@ JS;
         return $response['result'];
     }
 
-    private function waitFor(Client $ws, $eventName, array $expectedParams = null)
+    private function waitFor(Client $ws, $eventName, ?array $expectedParams = null)
     {
         if ($eventName !== self::WAIT_FOR_NETWORK) {
             Logger::debug(
