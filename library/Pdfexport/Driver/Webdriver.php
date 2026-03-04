@@ -9,7 +9,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverWait;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 
-class Webdriver
+class Webdriver implements PfdPrintDriver
 {
     protected RemoteWebDriver $driver;
 
@@ -18,6 +18,11 @@ class Webdriver
         DesiredCapabilities $capabilities
     ) {
         $this->driver = RemoteWebDriver::create($url, $capabilities);
+    }
+
+    function __destruct()
+    {
+        $this->driver->quit();
     }
 
     protected function setContent(PrintableHtmlDocument $document): void
@@ -54,19 +59,10 @@ class Webdriver
         return base64_decode($result);
     }
 
-    public function close(): void
-    {
-        $this->driver->quit();
-    }
-
     public function toPdf(PrintableHtmlDocument $document): string
     {
-        try {
-            $this->setContent($document);
-            $printParameters = $this->getPrintParameters($document);
-            return $this->printToPdf($printParameters);
-        } finally {
-            $this->close();
-        }
+        $this->setContent($document);
+        $printParameters = $this->getPrintParameters($document);
+        return $this->printToPdf($printParameters);
     }
 }
