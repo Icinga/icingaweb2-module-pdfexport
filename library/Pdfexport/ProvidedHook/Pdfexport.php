@@ -12,10 +12,10 @@ use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\Driver\PfdPrintDriver;
-use Icinga\Module\Pdfexport\HeadlessChrome;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\Driver\Webdriver;
 use Icinga\Module\Pdfexport\Driver\Geckodriver;
+use Icinga\Module\Pdfexport\Driver\HeadlessChromeDriver;
 use Icinga\Module\Pdfexport\Driver\Chromedriver;
 use ipl\Html\HtmlString;
 use Karriere\PdfMerge\PdfMerge;
@@ -97,7 +97,7 @@ class Pdfexport extends PdfexportHook
     {
 //        return new Chromedriver('http://selenium-chrome:4444');
 //        return new Geckodriver('http://selenium-firefox:4444');
-        return HeadlessChrome::createLocal(
+        return HeadlessChromeDriver::createLocal(
             Config::module('pdfexport')->get('chrome', 'binary', '/usr/bin/google-chrome')
         );
 //        $serverUrl = 'http://selenium-chrome:4444';

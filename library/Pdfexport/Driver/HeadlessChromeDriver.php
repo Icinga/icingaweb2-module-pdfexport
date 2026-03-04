@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: 2018 Icinga GmbH <https://icinga.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-namespace Icinga\Module\Pdfexport;
+namespace Icinga\Module\Pdfexport\Driver;
 
 use Exception;
 use GuzzleHttp\Client as HttpClient;
@@ -12,13 +12,13 @@ use Icinga\Application\Logger;
 use Icinga\Application\Platform;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
-use Icinga\Module\Pdfexport\Driver\PfdPrintDriver;
+use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use ipl\Html\HtmlString;
 use LogicException;
 use Throwable;
 use WebSocket\Client;
 
-class HeadlessChrome implements PfdPrintDriver
+class HeadlessChromeDriver implements PfdPrintDriver
 {
     /**
      * Line of stderr output identifying the websocket url
