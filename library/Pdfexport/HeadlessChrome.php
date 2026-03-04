@@ -6,21 +6,24 @@
 namespace Icinga\Module\Pdfexport;
 
 use Exception;
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\ServerException;
 use Icinga\Application\Logger;
 use Icinga\Application\Platform;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
+use Icinga\Module\Pdfexport\Driver\PfdPrintDriver;
 use ipl\Html\HtmlString;
 use LogicException;
 use Throwable;
 use WebSocket\Client;
 
-class HeadlessChrome
+class HeadlessChrome implements PfdPrintDriver
 {
     /**
      * Line of stderr output identifying the websocket url
      *
-     * First matching group is the used port and the second one the browser id.
+     * The first matching group is the used port, and the second one the browser id.
      */
     public const DEBUG_ADDR_PATTERN = '/DevTools listening on ws:\/\/((?>\d+\.?){4}:\d+)\/devtools\/browser\/([\w-]+)/';
 
@@ -47,102 +50,167 @@ new Promise((fulfill, reject) => {
 })
 JS;
 
-    /** @var string Path to the Chrome binary */
-    protected $binary;
+    protected ?StorageInterface $fileStorage = null;
 
-    /** @var array Host and port to the remote Chrome */
-    protected $remote;
+    protected ?Client $browser = null;
 
-    /**
-     * The document to print
-     *
-     * @var PrintableHtmlDocument
-     */
-    protected $document;
+    protected ?Client $page = null;
 
-    /** @var string Target Url */
-    protected $url;
+    protected ?string $targetId;
 
-    /** @var StorageInterface */
-    protected $fileStorage;
+    private array $interceptedRequests = [];
 
-    /** @var array */
-    private $interceptedRequests = [];
+    private array $interceptedEvents = [];
 
-    /** @var array */
-    private $interceptedEvents = [];
+    protected $process;
 
-    /**
-     * Get the path to the Chrome binary
-     *
-     * @return  string
-     */
-    public function getBinary()
+    protected array $pipes = [];
+
+    protected ?string $socket = null;
+
+    protected ?string $browserId = null;
+
+    protected ?string $frameId = null;
+
+    public function __destruct()
     {
-        return $this->binary;
+        $this->closeBrowser();
+        $this->closeBrowser();
+        $this->closeLocal();
     }
 
-    /**
-     * Set the path to the Chrome binary
-     *
-     * @param   string  $binary
-     *
-     * @return  $this
-     */
-    public function setBinary($binary)
+    public static function createRemote(string $host, int $port): static
     {
-        $this->binary = $binary;
+        $instance = new self();
+        $instance->socket = "$host:$port";
+        try {
+            $result = $instance->getVersion();
+            if (! is_array($result)) {
+                throw new Exception('Failed to determine remote chrome version via the /json/version endpoint.');
+            }
 
-        return $this;
+            $parts = explode('/', $result['webSocketDebuggerUrl']);
+            $instance->browserId = end($parts);
+        } catch (Exception $e) {
+            Logger::warning(
+                'Failed to connect to remote chrome: %s (%s)',
+                $instance->socket,
+                $e
+            );
+
+            throw $e;
+        }
+
+        return $instance;
     }
 
-    /**
-     * Get host and port combination of the remote chrome
-     *
-     * @return array
-     */
-    public function getRemote()
+    public static function createLocal(string $path): static
     {
-        return $this->remote;
+        $instance = new self();
+
+        $browserHome = $instance->getFileStorage()->resolvePath('HOME');
+        $descriptors = [
+            0 => ['pipe', 'r'],  // stdin
+            1 => ['pipe', 'w'],  // stdout
+            2 => ['pipe', 'w'],  // stderr
+        ];
+
+        $commandLine = join(' ', [
+            escapeshellarg($path),
+            static::renderArgumentList([
+                '--bwsi',
+                '--headless',
+                '--disable-gpu',
+                '--no-sandbox',
+                '--no-first-run',
+                '--disable-dev-shm-usage',
+                '--remote-debugging-port=0',
+                '--homedir='       => $browserHome,
+                '--user-data-dir=' => $browserHome
+            ])
+        ]);
+
+        $env = null;
+        if (Platform::isLinux()) {
+            Logger::debug('Starting browser process: HOME=%s exec %s', $browserHome, $commandLine);
+            $env = array_merge($_ENV, ['HOME' => $browserHome]);
+            $commandLine = 'exec ' . $commandLine;
+        } else {
+            Logger::debug('Starting browser process: %s', $commandLine);
+        }
+
+        $instance->process = proc_open($commandLine, $descriptors, $instance->pipes, null, $env);
+
+        if (! is_resource($instance->process)) {
+            throw new Exception('Could not start browser process.');
+        }
+
+        // Non-blocking mode
+        stream_set_blocking($instance->pipes[2], false);
+
+        $timeoutSeconds = 10;
+        $startTime = time();
+
+        while (true) {
+            $status = proc_get_status($instance->process);
+
+            // Timeout handling
+            if ((time() - $startTime) > $timeoutSeconds) {
+                proc_terminate($instance->process, 6); // SIGABRT
+                Logger::error(
+                    'Browser timed out after %d seconds without the expected output',
+                    $timeoutSeconds
+                );
+
+                throw new Exception(
+                    'Received empty response or none at all from browser.'
+                    . ' Please check the logs for further details.'
+                );
+            }
+
+            $chunkSize = 8192;
+            $streamWaitTime = 200000;
+            $idleTime = 100000;
+            $read = [$instance->pipes[2]];
+            $write = null;
+            $except = null;
+
+            if (stream_select($read, $write, $except, 0, $streamWaitTime)) {
+                $chunk = fread($instance->pipes[2], $chunkSize);
+
+                if ($chunk !== false && $chunk !== '') {
+                    Logger::debug('Caught browser output: %s', $chunk);
+
+                    if (preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
+                        $instance->socket = $matches[1];
+                        $instance->browserId = $matches[2];
+                        break;
+                    }
+                }
+            }
+
+            if (! $status['running']) {
+                break;
+            }
+
+            usleep($idleTime);
+        }
+
+        return $instance;
     }
 
-    /**
-     * Set host and port combination of a remote chrome
-     *
-     * @param string $host
-     * @param int    $port
-     *
-     * @return $this
-     */
-    public function setRemote($host, $port)
+    protected function closeLocal(): void
     {
-        $this->remote = [$host, $port];
+        foreach ($this->pipes as $pipe) {
+            fclose($pipe);
+        }
+        $this->pipes = [];
 
-        return $this;
-    }
-
-    /**
-     * Get the target Url
-     *
-     * @return  string
-     */
-    public function getUrl()
-    {
-        return $this->url;
-    }
-
-    /**
-     * Set the target Url
-     *
-     * @param   string  $url
-     *
-     * @return  $this
-     */
-    public function setUrl($url)
-    {
-        $this->url = $url;
-
-        return $this;
+        if ($this->process !== null) {
+            proc_terminate($this->process);
+            proc_close($this->process);
+            $this->process = null;
+        }
     }
 
     /**
@@ -175,12 +243,8 @@ JS;
 
     /**
      * Render the given argument name-value pairs as shell-escaped string
-     *
-     * @param   array   $arguments
-     *
-     * @return  string
      */
-    public static function renderArgumentList(array $arguments)
+    public static function renderArgumentList(array $arguments): string
     {
         $list = [];
 
@@ -189,7 +253,7 @@ JS;
                 $value = escapeshellarg($value);
 
                 if (! is_int($name)) {
-                    if (substr($name, -1) === '=') {
+                    if (str_ends_with($name, '=')) {
                         $glue = '';
                     } else {
                         $glue = ' ';
@@ -214,7 +278,7 @@ JS;
      * @param bool $asFile
      * @return $this
      */
-    public function fromHtml($html, $asFile = false)
+    public function fromHtml($html, $asFile = false): static
     {
         if ($html instanceof PrintableHtmlDocument) {
             $this->document = $html;
@@ -237,169 +301,24 @@ JS;
         return $this;
     }
 
-    public function toPdf(): string
+    protected function getPrintParameters(PrintableHtmlDocument $document): array
     {
-        switch (true) {
-            case $this->remote !== null:
-                try {
-                    $result = $this->jsonVersion($this->remote[0], $this->remote[1]);
-                    if (is_array($result)) {
-                        $parts = explode('/', $result['webSocketDebuggerUrl']);
-                        $pdf = $this->printToPDF(
-                            join(':', $this->remote),
-                            end($parts),
-                            ! $this->document->isEmpty() ? $this->document->getPrintParameters() : []
-                        );
-                        break;
-                    }
-                } catch (Exception $e) {
-                    Logger::warning(
-                        'Failed to connect to remote chrome: %s:%d (%s)',
-                        $this->remote[0],
-                        $this->remote[1],
-                        $e
-                    );
+        $parameters = [
+            'printBackground' => true,
+            'transferMode' => 'ReturnAsBase64',
+        ];
 
-                    throw $e;
-                }
+        return array_merge(
+            $parameters,
+            $document->getPrintParameters(),
+        );
+    }
 
-                // Reject the promise if we didn't get the expected output from the /json/version endpoint.
-                if ($this->binary === null) {
-                    throw new Exception('Failed to determine remote chrome version via the /json/version endpoint.');
-                }
-
-                break;
-
-            // Fallback to the local binary if a remote chrome is unavailable
-            case $this->binary !== null:
-                $descriptors = [
-                    0 => ['pipe', 'r'],  // stdin
-                    1 => ['pipe', 'w'],  // stdout
-                    2 => ['pipe', 'w'],  // stderr
-                ];
-
-
-                $browserHome = $this->getFileStorage()->resolvePath('HOME');
-                $commandLine = join(' ', [
-                    escapeshellarg($this->getBinary()),
-                    static::renderArgumentList([
-                        '--bwsi',
-                        '--headless',
-                        '--disable-gpu',
-                        '--no-sandbox',
-                        '--no-first-run',
-                        '--disable-dev-shm-usage',
-                        '--remote-debugging-port=0',
-                        '--homedir='       => $browserHome,
-                        '--user-data-dir=' => $browserHome
-                    ])
-                ]);
-
-                $env = null;
-                if (Platform::isLinux()) {
-                    Logger::debug('Starting browser process: HOME=%s exec %s', $browserHome, $commandLine);
-                    $env = array_merge($_ENV, ['HOME' => $browserHome]);
-                    $commandLine = 'exec ' . $commandLine;
-                } else {
-                    Logger::debug('Starting browser process: %s', $commandLine);
-                }
-
-                $process = proc_open($commandLine, $descriptors, $pipes, null, $env);
-
-                if (! is_resource($process)) {
-                    throw new Exception('Could not start browser process.');
-                }
-
-                // Non-blocking mode
-                stream_set_blocking($pipes[2], false);
-
-                $timeoutSeconds = 10;
-                $startTime = time();
-                $pdf = null;
-
-                while (true) {
-                    $status = proc_get_status($process);
-
-                    // Timeout handling
-                    if ((time() - $startTime) > $timeoutSeconds) {
-                        proc_terminate($process, 6); // SIGABRT
-                        Logger::error(
-                            'Browser timed out after %d seconds without the expected output',
-                            $timeoutSeconds
-                        );
-
-                        throw new Exception(
-                            'Received empty response or none at all from browser.'
-                            . ' Please check the logs for further details.'
-                        );
-                    }
-
-                    $chunkSize = 8192;
-                    $streamWaitTime = 200000;
-                    $idleTime = 100000;
-                    $read = [$pipes[2]];
-                    $write = null;
-                    $except = null;
-
-                    if (stream_select($read, $write, $except, 0, $streamWaitTime)) {
-                        $chunk = fread($pipes[2], $chunkSize);
-
-                        if ($chunk !== false && $chunk !== '') {
-                            Logger::debug('Caught browser output: %s', $chunk);
-
-                            if (preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
-
-                                try {
-                                    $pdf = $this->printToPDF(
-                                        $matches[1],
-                                        $matches[2],
-                                        ! $this->document->isEmpty()
-                                            ? $this->document->getPrintParameters()
-                                            : []
-                                    );
-                                } catch (Exception $e) {
-                                    Logger::error('Failed to print PDF. An error occurred: %s', $e->getMessage());
-                                }
-
-                                proc_terminate($process);
-
-                                if (! empty($pdf)) {
-                                    break;
-                                }
-
-                                throw new Exception(
-                                    'Received empty response or none at all from browser.'
-                                    . ' Please check the logs for further details.'
-                                );
-                            }
-                        }
-                    }
-
-                    if (! $status['running']) {
-                        break;
-                    }
-
-                    usleep($idleTime);
-                }
-
-                // Cleanup
-                foreach ($pipes as $pipe) {
-                    fclose($pipe);
-                }
-
-                proc_close($process);
-
-                return $pdf;
-        }
-
-        if (! empty($pdf)) {
-            return $pdf;
-        } else {
-            throw new Exception(
-                'Received empty response or none at all from browser.'
-                . ' Please check the logs for further details.',
-            );
-        }
+    public function toPdf(PrintableHtmlDocument $document): string
+    {
+        $this->setContent($document);
+        $printParameters = $this->getPrintParameters($document);
+        return $this->printToPdf($printParameters);
     }
 
     /**
@@ -420,64 +339,117 @@ JS;
         return $path;
     }
 
-    private function printToPDF($socket, $browserId, array $parameters)
+    protected function getBrowser(): Client
     {
-        $browser = new Client(sprintf('ws://%s/devtools/browser/%s', $socket, $browserId));
+        if ($this->browser === null) {
+            $this->browser = new Client(sprintf('ws://%s/devtools/browser/%s', $this->socket, $this->browserId));
+        }
+        return $this->browser;
+    }
 
-        // Open new tab, get its id
-        $result = $this->communicate($browser, 'Target.createTarget', [
-            'url'   => 'about:blank'
-        ]);
-        if (isset($result['targetId'])) {
-            $targetId = $result['targetId'];
-        } else {
-            throw new Exception('Expected target id. Got instead: ' . json_encode($result));
+    protected function closeBrowser(): void
+    {
+        if ($this->browser === null) {
+            return;
         }
 
-        $page = new Client(sprintf('ws://%s/devtools/page/%s', $socket, $targetId), ['timeout' => 300]);
-
-        // enable various events
-        $this->communicate($page, 'Log.enable');
-        $this->communicate($page, 'Network.enable');
-        $this->communicate($page, 'Page.enable');
+        $this->closePage();
 
         try {
-            $this->communicate($page, 'Console.enable');
-        } catch (Exception $_) {
-            // Deprecated, might fail
+            $this->browser->close();
+            $this->browser = null;
+        } catch (Throwable $e) {
+            // For some reason, the browser doesn't send a response
+            Logger::debug(sprintf('Failed to close browser connection: ' . $e->getMessage()));
         }
+    }
 
-        if (($url = $this->getUrl()) !== null) {
-            // Navigate to target
-            $result = $this->communicate($page, 'Page.navigate', [
-                'url'   => $url
+    public function getPage(): Client
+    {
+        if ($this->page === null) {
+            $browser = $this->getBrowser();
+
+            // Open new tab, get its id
+            $result = $this->communicate($browser, 'Target.createTarget', [
+                'url'   => 'about:blank'
             ]);
-            if (isset($result['frameId'])) {
-                $frameId = $result['frameId'];
+            if (isset($result['targetId'])) {
+                $this->targetId = $result['targetId'];
             } else {
-                throw new Exception('Expected navigation frame. Got instead: ' . json_encode($result));
+                throw new Exception('Expected target id. Got instead: ' . json_encode($result));
             }
 
-            // wait for page to fully load
-            $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $frameId]);
-        } elseif (! $this->document->isEmpty()) {
-            // If there's no url to load transfer the document's content directly
-            $this->communicate($page, 'Page.setDocumentContent', [
-                'frameId'   => $targetId,
-                'html'      => $this->document->render()
-            ]);
+            $this->page = new Client(sprintf('ws://%s/devtools/page/%s', $this->socket, $this->targetId));
 
-            // wait for page to fully load
-            $this->waitFor($page, 'Page.loadEventFired');
-        } else {
+            // enable various events
+            $this->communicate($this->page, 'Log.enable');
+            $this->communicate($this->page, 'Network.enable');
+            $this->communicate($this->page, 'Page.enable');
+
+            try {
+                $this->communicate($this->page, 'Console.enable');
+            } catch (Exception $_) {
+                // Deprecated, might fail
+            }
+        }
+        return $this->page;
+    }
+
+    public function closePage(): void
+    {
+        if ($this->browser === null || $this->page === null) {
+            return;
+        }
+
+        // close tab
+        $result = $this->communicate($this->browser, 'Target.closeTarget', [
+            'targetId' => $this->targetId
+        ]);
+
+        if (! isset($result['success'])) {
+            throw new Exception('Expected close confirmation. Got instead: ' . json_encode($result));
+        }
+
+        $this->page = null;
+        $this->targetId = null;
+    }
+
+    protected function setContent(PrintableHtmlDocument $document): void
+    {
+        $page = $this->getPage();
+
+        // TODO: Reimplement
+//        if (($url = $this->getUrl()) !== null) {
+//            // Navigate to target
+//            $result = $this->communicate($page, 'Page.navigate', [
+//                'url'   => $url
+//            ]);
+//            if (isset($result['frameId'])) {
+//                $frameId = $result['frameId'];
+//            } else {
+//                throw new Exception('Expected navigation frame. Got instead: ' . json_encode($result));
+//            }
+//
+//            // wait for page to fully load
+//            $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $frameId]);
+        if ($document->isEmpty()) {
             throw new LogicException('Nothing to print');
         }
+
+        // Transfer the document's content directly
+        $this->communicate($page, 'Page.setDocumentContent', [
+            'frameId'   => $this->targetId,
+            'html'      => $document->render()
+        ]);
+
+        // wait for the page to fully load
+        $this->waitFor($page, 'Page.loadEventFired');
 
         // Wait for network activity to finish
         $this->waitFor($page, self::WAIT_FOR_NETWORK);
 
-        // Wait for layout to initialize
-        if (! $this->document->isEmpty()) {
+        // Wait for the layout to initialize
+        if (! $document->isEmpty()) {
             // Ensure layout scripts work in the same environment as the pdf printing itself
             $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => 'print']);
 
@@ -489,7 +461,7 @@ JS;
             $promisedResult = $this->communicate($page, 'Runtime.evaluate', [
                 'awaitPromise'  => true,
                 'returnByValue' => true,
-                'timeout'       => 1000, // Failsafe, doesn't apply to `await` it seems
+                'timeout'       => 1000, // Failsafe: doesn't apply to `await` it seems
                 'expression'    => static::WAIT_FOR_LAYOUT
             ]);
             if (isset($promisedResult['exceptionDetails'])) {
@@ -506,31 +478,21 @@ JS;
             // Reset media emulation, this may prevent the real media from coming into effect?
             $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => '']);
         }
+    }
+
+    protected function printToPdf(array $printParameters): string
+    {
+        $page = $this->getPage();
 
         // print pdf
         $result = $this->communicate($page, 'Page.printToPDF', array_merge(
-            $parameters,
+            $printParameters,
             ['transferMode' => 'ReturnAsBase64', 'printBackground' => true]
         ));
         if (! empty($result['data'])) {
             $pdf = base64_decode($result['data']);
         } else {
             throw new Exception('Expected base64 data. Got instead: ' . json_encode($result));
-        }
-
-        // close tab
-        $result = $this->communicate($browser, 'Target.closeTarget', [
-            'targetId' => $targetId
-        ]);
-        if (! isset($result['success'])) {
-            throw new Exception('Expected close confirmation. Got instead: ' . json_encode($result));
-        }
-
-        try {
-            $browser->close();
-        } catch (Throwable $e) {
-            // For some reason, the browser doesn't send a response
-            Logger::debug(sprintf('Failed to close browser connection: ' . $e->getMessage()));
         }
 
         return $pdf;
@@ -684,80 +646,21 @@ JS;
     }
 
     /**
-     * Get the major version number of Chrome or false on failure
-     *
-     * @return  int|false
-     *
-     * @throws  Exception
-     */
-    public function getVersion()
-    {
-        switch (true) {
-            case $this->remote !== null:
-                try {
-                    $result = $this->jsonVersion($this->remote[0], $this->remote[1]);
-                    $version = $result['Browser'];
-                    break;
-                } catch (Exception $e) {
-                    if ($this->binary === null) {
-                        throw $e;
-                    } else {
-                        Logger::warning(
-                            'Failed to connect to remote chrome: %s:%d (%s)',
-                            $this->remote[0],
-                            $this->remote[1],
-                            $e
-                        );
-                    }
-                }
-
-                // Fallback to the local binary if a remote chrome is unavailable
-            case $this->binary !== null:
-                $command = new ShellCommand(
-                    escapeshellarg($this->getBinary()) . ' ' . static::renderArgumentList(['--version']),
-                    false
-                );
-
-                $output = $command->execute();
-
-                if ($command->getExitCode() !== 0) {
-                    throw new \Exception($output->stderr);
-                }
-
-                $version = $output->stdout;
-                break;
-            default:
-                throw new LogicException('Set a binary or remote first');
-        }
-
-        if (preg_match('/(\d+)\.[\d.]+/', $version, $match)) {
-            return (int) $match[1];
-        }
-
-        return false;
-    }
-
-    /**
      * Fetch result from the /json/version API endpoint
-     *
-     * @param string $host
-     * @param int    $port
-     *
-     * @return bool|array
      */
-    protected function jsonVersion($host, $port)
+    protected function getVersion(): bool|array
     {
-        $client = new \GuzzleHttp\Client();
+        $client = new HttpClient();
 
         try {
-            $response = $client->request('GET', sprintf('http://%s:%s/json/version', $host, $port));
-        } catch (\GuzzleHttp\Exception\ServerException $e) {
+            $response = $client->request('GET', sprintf('http://%s/json/version', $this->socket));
+        } catch (ServerException $e) {
             // Check if we've run into the host header security change, and re-run the request with no host header.
             // ref: https://issues.chromium.org/issues/40090537
-            if (strstr($e->getMessage(), 'Host header is specified and is not an IP address or localhost.')) {
+            if (str_contains($e->getMessage(), 'Host header is specified and is not an IP address or localhost.')) {
                 $response = $client->request(
                     'GET',
-                    sprintf('http://%s:%s/json/version', $host, $port),
+                    sprintf('http://%s/json/version', $this->socket),
                     ['headers' => ['Host' => null]]
                 );
             } else {
@@ -770,5 +673,13 @@ JS;
         }
 
         return json_decode($response->getBody(), true);
+    }
+
+    function isSupported(): bool
+    {
+        $version = $this->getVersion();
+        preg_match('/Chrome\/([0-9]+)/', $version['Browser'], $matches);
+        $number = (int)$matches[1];
+        return $number >= 59;
     }
 }
