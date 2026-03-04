@@ -399,17 +399,17 @@ CSS;
         $css = preg_replace_callback(
             '~(?<=url\()[\'"]?([^(\'"]*)[\'"]?(?=\))~',
             function ($matches) use ($app) {
-                if (substr($matches[1], 0, 3) !== '../') {
+                if (! str_starts_with($matches[1], '../')) {
                     return $matches[1];
                 }
 
                 $path = substr($matches[1], 3);
-                if (substr($path, 0, 4) === 'lib/') {
+                if (str_starts_with($path, 'lib/')) {
                     $assetPath = substr($path, 4);
 
                     $library = null;
                     foreach ($app->getLibraries() as $candidate) {
-                        if (substr($assetPath, 0, strlen($candidate->getName())) === $candidate->getName()) {
+                        if (str_starts_with($assetPath, $candidate->getName())) {
                             $library = $candidate;
                             $assetPath = ltrim(substr($assetPath, strlen($candidate->getName())), '/');
                             break;
@@ -421,8 +421,8 @@ CSS;
                     }
 
                     $path = $library->getStaticAssetPath() . DIRECTORY_SEPARATOR . $assetPath;
-                } elseif (substr($matches[1], 0, 14) === '../static/img?') {
-                    list($_, $query) = explode('?', $matches[1], 2);
+                } elseif (str_starts_with($matches[1], '../static/img?')) {
+                    [$_, $query] = explode('?', $matches[1], 2);
                     $params = UrlParams::fromQueryString($query);
                     if (! $app->getModuleManager()->hasEnabled($params->get('module_name'))) {
                         return $matches[1];
