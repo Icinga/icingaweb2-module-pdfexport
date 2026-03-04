@@ -55,98 +55,80 @@ p {
 }
 CSS;
 
-    /** @var string Document title */
-    protected $title;
+    /** Document title */
+    protected ?string $title = null;
 
     /**
      * Paper orientation
      *
      * Defaults to false.
-     *
-     * @var ?bool
      */
-    protected $landscape;
+    protected ?bool $landscape = null;
 
     /**
      * Print background graphics
      *
      * Defaults to false.
-     *
-     * @var ?bool
      */
-    protected $printBackground;
+    protected ?bool $printBackground = null;
 
     /**
      * Scale of the webpage rendering
      *
      * Defaults to 1.
-     *
-     * @var ?float
      */
-    protected $scale;
+    protected ?float $scale = null;
 
     /**
      * Paper width in inches
      *
      * Defaults to 8.5 inches.
-     *
-     * @var ?float
      */
-    protected $paperWidth;
+    protected ?float $paperWidth = null;
 
     /**
      * Paper height in inches
      *
      * Defaults to 11 inches.
-     *
-     * @var ?float
      */
-    protected $paperHeight;
+    protected ?float $paperHeight = null;
 
     /**
      * Top margin in inches
      *
      * Defaults to 1cm (~0.4 inches).
-     *
-     * @var ?float
      */
-    protected $marginTop;
+    protected ?float $marginTop = null;
 
     /**
      * Bottom margin in inches
      *
      * Defaults to 1cm (~0.4 inches).
-     *
-     * @var ?float
      */
-    protected $marginBottom;
+    protected ?float $marginBottom = null;
 
     /**
      * Left margin in inches
      *
      * Defaults to 1cm (~0.4 inches).
-     *
-     * @var ?float
      */
-    protected $marginLeft;
+    protected ?float $marginLeft = null;
 
     /**
      * Right margin in inches
      *
      * Defaults to 1cm (~0.4 inches).
-     *
-     * @var ?float
      */
-    protected $marginRight;
+    protected ?float $marginRight = null;
 
     /**
      * Paper ranges to print, e.g., '1-5, 8, 11-13'
      *
      * Defaults to the empty string, which means print all pages
      *
-     * @var ?string
+     * @var string
      */
-    protected $pageRanges;
+    protected string $pageRanges = "";
 
     /**
      * Page height in pixels
@@ -154,15 +136,13 @@ CSS;
      * Minus the default vertical margins, this is 1035.
      * If the vertical margins are zero, it's 1160.
      * Whether there's a header or footer doesn't matter in any case.
-     *
-     * @var int
      */
-    protected $pagePixelHeight = 1035;
+    protected int $pagePixelHeight = 1035;
 
     /**
      * HTML template for the print header
      *
-     * Should be valid HTML markup with following classes used to inject printing values into them:
+     * Should be valid HTML markup with the following classes used to inject printing values into them:
      *   * date: formatted print date
      *   * title: document title
      *   * url: document location
@@ -174,15 +154,13 @@ CSS;
      * Note that the header cannot exceed a height of 21px regardless of the margin's height or document's scale.
      * With the default style, this height is separated by three lines, each accommodating 7px.
      * Use `span`'s for single line text and `p`'s for multiline text.
-     *
-     * @var ?ValidHtml
      */
-    protected $headerTemplate;
+    protected ?ValidHtml $headerTemplate = null;
 
     /**
      * HTML template for the print footer
      *
-     * Should be valid HTML markup with following classes used to inject printing values into them:
+     * Should be valid HTML markup with the following classes used to inject printing values into them:
      *   * date: formatted print date
      *   * title: document title
      *   * url: document location
@@ -194,26 +172,20 @@ CSS;
      * Note that the footer cannot exceed a height of 21px regardless of the margin's height or document's scale.
      * With the default style, this height is separated by three lines, each accommodating 7px.
      * Use `span`'s for single line text and `p`'s for multiline text.
-     *
-     * @var ?ValidHtml
      */
-    protected $footerTemplate;
+    protected ?ValidHtml $footerTemplate = null;
 
     /**
      * HTML for the cover page
-     *
-     * @var ValidHtml
      */
-    protected $coverPage;
+    protected ?ValidHtml $coverPage = null;
 
     /**
-     * Whether or not to prefer page size as defined by css
+     * Whether to prefer page size as defined by CSS
      *
      * Defaults to false, in which case the content will be scaled to fit the paper size.
-     *
-     * @var ?bool
      */
-    protected $preferCSSPageSize;
+    protected ?bool $preferCSSPageSize = null;
 
     protected $tag = 'body';
 
@@ -222,7 +194,7 @@ CSS;
      *
      * @return string
      */
-    public function getTitle()
+    public function getTitle(): string
     {
         return $this->title;
     }
@@ -234,7 +206,7 @@ CSS;
      *
      * @return $this
      */
-    public function setTitle($title)
+    public function setTitle(string $title): static
     {
         $this->title = $title;
 
@@ -248,7 +220,7 @@ CSS;
      *
      * @return $this
      */
-    public function setHeader(ValidHtml $header)
+    public function setHeader(ValidHtml $header): static
     {
         $this->headerTemplate = $header;
 
@@ -262,7 +234,7 @@ CSS;
      *
      * @return $this
      */
-    public function setFooter(ValidHtml $footer)
+    public function setFooter(ValidHtml $footer): static
     {
         $this->footerTemplate = $footer;
 
@@ -274,7 +246,7 @@ CSS;
      *
      * @return ValidHtml|null
      */
-    public function getCoverPage()
+    public function getCoverPage(): ?ValidHtml
     {
         return $this->coverPage;
     }
@@ -286,7 +258,7 @@ CSS;
      *
      * @return $this
      */
-    public function setCoverPage(ValidHtml $coverPage)
+    public function setCoverPage(ValidHtml $coverPage): static
     {
         $this->coverPage = $coverPage;
 
@@ -298,7 +270,7 @@ CSS;
      *
      * @return $this
      */
-    public function removeMargins()
+    public function removeMargins(): static
     {
         $this->marginBottom = 0;
         $this->marginLeft = 0;
@@ -311,7 +283,7 @@ CSS;
     /**
      * Finalize document to be printed
      */
-    protected function assemble()
+    protected function assemble(): void
     {
         $this->setWrapper(new HtmlElement(
             'html',
@@ -342,7 +314,7 @@ CSS;
      *
      * @return array
      */
-    public function getPrintParameters()
+    public function getPrintParameters(): array
     {
         $parameters = [];
 
