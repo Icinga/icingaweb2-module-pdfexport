@@ -65,4 +65,10 @@ class Webdriver implements PfdPrintDriver
         $printParameters = $this->getPrintParameters($document);
         return $this->printToPdf($printParameters);
     }
+
+    function isSupported(): bool
+    {
+        // TODO: Come up with a check
+        return true;
+    }
 }
