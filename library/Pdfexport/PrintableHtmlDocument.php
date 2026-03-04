@@ -314,6 +314,66 @@ CSS;
      *
      * @return array
      */
+    public function getPrintParametersForWebdriver(): array
+    {
+        $parameters = [];
+
+        if (isset($this->landscape)) {
+            $parameters['landscape'] = $this->landscape ? 'landscape' : 'portrait';
+        }
+
+        if (isset($this->printBackground)) {
+            $parameters['background'] = $this->printBackground;
+        }
+
+        if (isset($this->scale)) {
+            $parameters['scale'] = $this->scale;
+        }
+
+        // TODO: Validate width & height
+        if (isset($this->paperWidth)) {
+            $parameters['paperWidth'] = $this->paperWidth;
+        }
+
+        if (isset($this->paperHeight)) {
+            $parameters['paperHeight'] = $this->paperHeight;
+        }
+
+        // TODO: Validate margins
+        if (isset($this->marginTop)) {
+            $parameters['marginTop'] = $this->marginTop;
+        }
+
+        if (isset($this->marginBottom)) {
+            $parameters['marginBottom'] = $this->marginBottom;
+        }
+
+        if (isset($this->marginLeft)) {
+            $parameters['marginLeft'] = $this->marginLeft;
+        }
+
+        if (isset($this->marginRight)) {
+            $parameters['marginRight'] = $this->marginRight;
+        }
+
+        if (isset($this->pageRanges)) {
+            $parameters['pageRanges'] = explode(',', $this->pageRanges);
+        }
+
+        // Note: Header and footer aren't supported for webdriver
+
+        if (isset($this->preferCSSPageSize)) {
+            $parameters['preferCSSPageSize'] = $this->preferCSSPageSize;
+        }
+
+        return $parameters;
+    }
+
+    /**
+     * Get the parameters for Page.printToPDF
+     *
+     * @return array
+     */
     public function getPrintParameters(): array
     {
         $parameters = [];
