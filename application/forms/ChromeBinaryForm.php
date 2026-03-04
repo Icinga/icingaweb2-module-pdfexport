@@ -7,7 +7,7 @@ namespace Icinga\Module\Pdfexport\Forms;
 
 use Exception;
 use Icinga\Forms\ConfigForm;
-use Icinga\Module\Pdfexport\HeadlessChrome;
+use Icinga\Module\Pdfexport\HeadlessChromeDriver;
 use Zend_Validate_Callback;
 
 class ChromeBinaryForm extends ConfigForm
@@ -24,7 +24,7 @@ class ChromeBinaryForm extends ConfigForm
             'label'       => $this->translate('Local Binary'),
             'placeholder' => '/usr/bin/google-chrome',
             'validators'  => [new Zend_Validate_Callback(function ($value) {
-                $chrome = (new HeadlessChrome())
+                $chrome = (new HeadlessChromeDriver())
                     ->setBinary($value);
 
                 try {
@@ -61,7 +61,7 @@ class ChromeBinaryForm extends ConfigForm
 
                 $port = $this->getValue('chrome_port') ?: 9222;
 
-                $chrome = (new HeadlessChrome())
+                $chrome = (new HeadlessChromeDriver())
                     ->setRemote($value, $port);
 
                 try {
