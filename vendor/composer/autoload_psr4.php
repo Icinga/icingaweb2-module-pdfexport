@@ -7,11 +7,14 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'WebSocket\\' => array($vendorDir . '/phrity/websocket/src'),
+    'Symfony\\Polyfill\\Mbstring\\' => array($vendorDir . '/symfony/polyfill-mbstring'),
+    'Symfony\\Component\\Process\\' => array($vendorDir . '/symfony/process'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
     'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-factory/src', $vendorDir . '/psr/http-message/src'),
     'Phrity\\Util\\' => array($vendorDir . '/phrity/util-errorhandler/src'),
-    'Phrity\\Net\\' => array($vendorDir . '/phrity/net-uri/src', $vendorDir . '/phrity/net-stream/src'),
+    'Phrity\\Net\\' => array($vendorDir . '/phrity/net-stream/src', $vendorDir . '/phrity/net-uri/src'),
     'Phrity\\Http\\' => array($vendorDir . '/phrity/http/src'),
     'Phrity\\Comparison\\' => array($vendorDir . '/phrity/comparison/src'),
     'Karriere\\PdfMerge\\' => array($vendorDir . '/karriere/pdf-merge/src'),
+    'Facebook\\WebDriver\\' => array($vendorDir . '/php-webdriver/webdriver/lib'),
 );
