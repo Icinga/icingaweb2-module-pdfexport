@@ -10,12 +10,15 @@ use Icinga\Application\Config;
 use Icinga\Application\Hook;
 use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
-use Icinga\Application\Web;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
+use Icinga\Module\Pdfexport\Driver\PfdPrintDriver;
 use Icinga\Module\Pdfexport\HeadlessChrome;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
+use Icinga\Module\Pdfexport\Driver\Webdriver;
+use Icinga\Module\Pdfexport\Driver\Geckodriver;
+use Icinga\Module\Pdfexport\Driver\Chromedriver;
+use ipl\Html\HtmlString;
 use Karriere\PdfMerge\PdfMerge;
-use React\Promise\PromiseInterface;
 
 class Pdfexport extends PdfexportHook
 {
@@ -40,102 +43,47 @@ class Pdfexport extends PdfexportHook
         return $pdfexport;
     }
 
-    public static function getBinary()
-    {
-        return Config::module('pdfexport')->get('chrome', 'binary', '/usr/bin/google-chrome');
-    }
-
-    public static function getForceTempStorage()
-    {
-        return (bool) Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0');
-    }
-
-    public static function getHost()
-    {
-        return Config::module('pdfexport')->get('chrome', 'host');
-    }
-
-    public static function getPort()
-    {
-        return Config::module('pdfexport')->get('chrome', 'port', 9222);
-    }
-
-    public function isSupported()
+    public function isSupported(): bool
     {
         try {
-            return $this->chrome()->getVersion() >= 59;
+            // FIXME: This seems very strange
+            $driver = $this->getDriver();
+            return $driver->isSupported();
         } catch (Exception $e) {
             return false;
         }
     }
 
-    public function htmlToPdf($html)
-    {
-        // Keep reference to the chrome object because it is using temp files which are automatically removed when
-        // the object is destructed
-        $chrome = $this->chrome();
-
-        $pdf = $chrome->fromHtml($html, static::getForceTempStorage())->toPdf();
-
-        if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
-            $coverPagePdf = $chrome
-                ->fromHtml(
-                    (new PrintableHtmlDocument())
-                        ->add($coverPage)
-                        ->addAttributes($html->getAttributes())
-                        ->removeMargins(),
-                    static::getForceTempStorage()
-                )
-                ->toPdf();
-
-            $pdf = $this->mergePdfs($coverPagePdf, $pdf);
-        }
-
-        return $pdf;
-    }
-
-    /**
-     * Transforms the given printable html document/string asynchronously to PDF.
-     *
-     * @param PrintableHtmlDocument|string $html
-     *
-     * @return PromiseInterface
-     */
-    public function asyncHtmlToPdf($html): PromiseInterface
-    {
-        // Keep reference to the chrome object because it is using temp files which are automatically removed when
-        // the object is destructed
-        $chrome = $this->chrome();
-
-        $pdfPromise = $chrome->fromHtml($html, static::getForceTempStorage())->asyncToPdf();
-
-        if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
-            /** @var PromiseInterface $pdfPromise */
-            $pdfPromise = $pdfPromise->then(function (string $pdf) use ($chrome, $html, $coverPage) {
-                return $chrome->fromHtml(
-                    (new PrintableHtmlDocument())
-                        ->add($coverPage)
-                        ->addAttributes($html->getAttributes())
-                        ->removeMargins(),
-                    static::getForceTempStorage()
-                )->asyncToPdf()->then(
-                    function (string $coverPagePdf) use ($pdf) {
-                        return $this->mergePdfs($coverPagePdf, $pdf);
-                    }
-                );
-            });
-        }
-
-        return $pdfPromise;
-    }
-
-    public function streamPdfFromHtml($html, $filename)
+    public function streamPdfFromHtml($html, $filename): void
     {
         $filename = basename($filename, '.pdf') . '.pdf';
 
-        // Generate the PDF before changing the response headers to properly handle and display errors in the UI.
-        $pdf = $this->htmlToPdf($html);
+        $document = $this->getPrintableHtmlDocument($html);
 
+        $driver = $this->getDriver();
+
+        $pdf = $driver->toPdf($document);
+
+        if ($html instanceof PrintableHtmlDocument) {
+            $coverPage = $html->getCoverPage();
+            if ($coverPage !== null) {
+                $coverPageDocument = $this->getPrintableHtmlDocument($coverPage);
+                $coverPageDocument->addAttributes($html->getAttributes());
+                $coverPageDocument->removeMargins();
+
+                $coverPagePdf = $driver->toPdf($coverPage);
+
+                $pdf = $this->mergePdfs($coverPagePdf, $pdf);
+            }
+        }
+
+        $this->emit($pdf, $filename);
+
+        exit;
+    }
+
+    protected function emit(string $pdf, string $filename): void
+    {
         /** @var Web $app */
         $app = Icinga::app();
         $app->getResponse()
@@ -143,25 +91,27 @@ class Pdfexport extends PdfexportHook
             ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true)
             ->setBody($pdf)
             ->sendResponse();
-
-        exit;
     }
 
-    /**
-     * Create an instance of HeadlessChrome from configuration
-     *
-     * @return HeadlessChrome
-     */
-    protected function chrome()
+    protected function getDriver(): PfdPrintDriver
     {
-        $chrome = new HeadlessChrome();
-        $chrome->setBinary(static::getBinary());
+//        return new Chromedriver('http://selenium-chrome:4444');
+//        return new Geckodriver('http://selenium-firefox:4444');
+        return HeadlessChrome::createLocal(
+            Config::module('pdfexport')->get('chrome', 'binary', '/usr/bin/google-chrome')
+        );
+//        $serverUrl = 'http://selenium-chrome:4444';
+//        $serverUrl = 'http://chromedriver:9515';
+//        $serverUrl = 'http://selenium-firefox:4444';
+    }
 
-        if (($host = static::getHost()) !== null) {
-            $chrome->setRemote($host, static::getPort());
+    protected function getPrintableHtmlDocument($html): PrintableHtmlDocument
+    {
+        if (! $html instanceof PrintableHtmlDocument) {
+            $html = (new PrintableHtmlDocument())
+                ->setContent(HtmlString::create($html));
         }
-
-        return $chrome;
+        return $html;
     }
 
     protected function mergePdfs(string ...$pdfs): string
