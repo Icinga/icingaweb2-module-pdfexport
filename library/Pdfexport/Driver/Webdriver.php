@@ -14,8 +14,8 @@ class Webdriver implements PfdPrintDriver
     protected RemoteWebDriver $driver;
 
     public function __construct(
-        string $url,
-        DesiredCapabilities $capabilities
+        string              $url,
+        DesiredCapabilities $capabilities,
     ) {
         $this->driver = RemoteWebDriver::create($url, $capabilities);
     }
