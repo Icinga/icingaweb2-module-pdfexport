@@ -1,12 +1,12 @@
 <?php
 
-namespace Icinga\Module\Pdfexport\Driver;
+namespace Icinga\Module\Pdfexport\Backend;
 
 use Facebook\WebDriver\Chrome\ChromeDevToolsDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 
-class Chromedriver extends Webdriver
+class Chromedriver extends WebdriverBackend
 {
     protected ?ChromeDevToolsDriver $dcp = null;
 

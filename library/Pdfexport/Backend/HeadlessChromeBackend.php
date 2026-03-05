@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: 2018 Icinga GmbH <https://icinga.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-namespace Icinga\Module\Pdfexport\Driver;
+namespace Icinga\Module\Pdfexport\Backend;
 
 use Exception;
 use GuzzleHttp\Client as HttpClient;
@@ -18,7 +18,7 @@ use LogicException;
 use Throwable;
 use WebSocket\Client;
 
-class HeadlessChromeDriver implements PfdPrintDriver
+class HeadlessChromeBackend implements PfdPrintBackend
 {
     /** @var int */
     public const MIN_SUPPORTED_CHROME_VERSION = 59;

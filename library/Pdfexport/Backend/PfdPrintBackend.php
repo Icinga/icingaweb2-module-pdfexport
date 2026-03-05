@@ -1,10 +1,10 @@
 <?php
 
-namespace Icinga\Module\Pdfexport\Driver;
+namespace Icinga\Module\Pdfexport\Backend;
 
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 
-interface PfdPrintDriver
+interface PfdPrintBackend
 {
     function toPdf(PrintableHtmlDocument $document): string;
 

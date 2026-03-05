@@ -12,10 +12,10 @@ use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
 use Icinga\Application\Logger;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
-use Icinga\Module\Pdfexport\Driver\Chromedriver;
-use Icinga\Module\Pdfexport\Driver\Geckodriver;
-use Icinga\Module\Pdfexport\Driver\HeadlessChromeDriver;
-use Icinga\Module\Pdfexport\Driver\PfdPrintDriver;
+use Icinga\Module\Pdfexport\Backend\Chromedriver;
+use Icinga\Module\Pdfexport\Backend\Geckodriver;
+use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
+use Icinga\Module\Pdfexport\Backend\PfdPrintBackend;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\WebDriverType;
 use ipl\Html\HtmlString;
@@ -47,7 +47,7 @@ class Pdfexport extends PdfexportHook
     public function isSupported(): bool
     {
         try {
-            $driver = $this->getDriver();
+            $driver = $this->getBackend();
             return $driver->isSupported();
         } catch (Exception $e) {
             return false;
@@ -96,7 +96,7 @@ class Pdfexport extends PdfexportHook
 
         $document = $this->getPrintableHtmlDocument($html);
 
-        $driver = $this->getDriver();
+        $driver = $this->getBackend();
 
         $pdf = $driver->toPdf($document);
 
@@ -129,7 +129,7 @@ class Pdfexport extends PdfexportHook
             ->sendResponse();
     }
 
-    protected function getDriver(): PfdPrintDriver
+    protected function getBackend(): PfdPrintBackend
     {
         try {
             if (($host = $this->getWebDriverHost()) !== null) {
@@ -148,7 +148,7 @@ class Pdfexport extends PdfexportHook
 
         try {
             if (($host = $this->getHost()) !== null) {
-                return HeadlessChromeDriver::createRemote(
+                return HeadlessChromeBackend::createRemote(
                     $host,
                     $this->getPort(),
                 );
@@ -159,7 +159,7 @@ class Pdfexport extends PdfexportHook
 
         try {
             if (($binary = $this->getBinary()) !== null) {
-                return HeadlessChromeDriver::createLocal($binary);
+                return HeadlessChromeBackend::createLocal($binary);
             }
         } catch (Exception $e) {
             Logger::error("Error while creating local HeadlessChrome backend: " . $e->getMessage());
