@@ -6,6 +6,7 @@
 namespace Icinga\Module\Pdfexport\ProvidedHook;
 
 use Exception;
+use Facebook\WebDriver\Firefox\FirefoxDriver;
 use Icinga\Application\Config;
 use Icinga\Application\Hook;
 use Icinga\Application\Hook\PdfexportHook;
@@ -13,10 +14,10 @@ use Icinga\Application\Icinga;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\Driver\PfdPrintDriver;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
-use Icinga\Module\Pdfexport\Driver\Webdriver;
 use Icinga\Module\Pdfexport\Driver\Geckodriver;
 use Icinga\Module\Pdfexport\Driver\HeadlessChromeDriver;
 use Icinga\Module\Pdfexport\Driver\Chromedriver;
+use Icinga\Module\Pdfexport\WebDriverType;
 use ipl\Html\HtmlString;
 use Karriere\PdfMerge\PdfMerge;
 
@@ -52,6 +53,42 @@ class Pdfexport extends PdfexportHook
         } catch (Exception $e) {
             return false;
         }
+    }
+
+    public static function getBinary(): string
+    {
+        return Config::module('pdfexport')->get('chrome', 'binary', '/usr/bin/google-chrome');
+    }
+
+    public static function getForceTempStorage(): bool
+    {
+        return (bool) Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0');
+    }
+
+    public static function getHost(): ?string
+    {
+        return Config::module('pdfexport')->get('chrome', 'host');
+    }
+
+    public static function getPort(): int
+    {
+        return Config::module('pdfexport')->get('chrome', 'port', 9222);
+    }
+
+    public static function getWebDriverHost(): ?string
+    {
+        return Config::module('pdfexport')->get('webdriver', 'host');
+    }
+
+    public static function getWebDriverPort(): int
+    {
+        return (int)Config::module('pdfexport')->get('webdriver', 'port', 4444);
+    }
+
+    public static function getWebDriverType(): WebDriverType
+    {
+        $str = Config::module('pdfexport')->get('webdriver', 'type', 'chrome');
+        return WebDriverType::from($str);
     }
 
     public function streamPdfFromHtml($html, $filename): void
@@ -95,14 +132,29 @@ class Pdfexport extends PdfexportHook
 
     protected function getDriver(): PfdPrintDriver
     {
-//        return new Chromedriver('http://selenium-chrome:4444');
-//        return new Geckodriver('http://selenium-firefox:4444');
-        return HeadlessChromeDriver::createLocal(
-            Config::module('pdfexport')->get('chrome', 'binary', '/usr/bin/google-chrome')
-        );
-//        $serverUrl = 'http://selenium-chrome:4444';
-//        $serverUrl = 'http://chromedriver:9515';
-//        $serverUrl = 'http://selenium-firefox:4444';
+        if (($host = $this->getWebDriverHost()) !== null) {
+            $port = $this->getWebDriverPort();
+            $url = "$host:$port";
+            $type = $this->getWebDriverType();
+            return match ($type) {
+                WebDriverType::Chrome => new Chromedriver($url),
+                WebDriverType::Firefox => new Geckodriver($url),
+                default => throw new Exception("Invalid webdriver type $type->value"),
+            };
+        }
+
+        if (($binary = $this->getBinary()) !== null) {
+            return HeadlessChromeDriver::createLocal($binary);
+        }
+
+        if (($host = $this->getHost()) !== null) {
+            return HeadlessChromeDriver::createRemote(
+                $host,
+                $this->getPort(),
+            );
+        }
+
+        throw new Exception("No PDF print backend available.");
     }
 
     protected function getPrintableHtmlDocument($html): PrintableHtmlDocument
