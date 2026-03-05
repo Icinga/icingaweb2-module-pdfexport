@@ -7,7 +7,7 @@ namespace Icinga\Module\Pdfexport\Forms;
 
 use Exception;
 use Icinga\Forms\ConfigForm;
-use Icinga\Module\Pdfexport\HeadlessChromeDriver;
+use Icinga\Module\Pdfexport\Driver\HeadlessChromeDriver;
 use Zend_Validate_Callback;
 
 class ChromeBinaryForm extends ConfigForm
@@ -24,22 +24,25 @@ class ChromeBinaryForm extends ConfigForm
             'label'       => $this->translate('Local Binary'),
             'placeholder' => '/usr/bin/google-chrome',
             'validators'  => [new Zend_Validate_Callback(function ($value) {
-                $chrome = (new HeadlessChromeDriver())
-                    ->setBinary($value);
+                if (empty($value)) {
+                    return true;
+                }
 
                 try {
+                    $chrome = (HeadlessChromeDriver::createLocal($value));
                     $version = $chrome->getVersion();
                 } catch (Exception $e) {
                     $this->getElement('chrome_binary')->addError($e->getMessage());
                     return true;
                 }
 
-                if ($version < 59) {
+                if ($version < HeadlessChromeDriver::MIN_SUPPORTED_CHROME_VERSION) {
                     $this->getElement('chrome_binary')->addError(sprintf(
                         $this->translate(
                             'Chrome/Chromium supporting headless mode required'
-                            . ' which is provided since version 59. Version detected: %s'
+                            . ' which is provided since version %s. Version detected: %s'
                         ),
+                        HeadlessChromeDriver::MIN_SUPPORTED_CHROME_VERSION,
                         $version
                     ));
                 }
@@ -61,22 +64,21 @@ class ChromeBinaryForm extends ConfigForm
 
                 $port = $this->getValue('chrome_port') ?: 9222;
 
-                $chrome = (new HeadlessChromeDriver())
-                    ->setRemote($value, $port);
-
                 try {
+                    $chrome = HeadlessChromeDriver::createRemote($value, $port);
                     $version = $chrome->getVersion();
                 } catch (Exception $e) {
                     $this->getElement('chrome_host')->addError($e->getMessage());
                     return true;
                 }
 
-                if ($version < 59) {
+                if ($version < HeadlessChromeDriver::MIN_SUPPORTED_CHROME_VERSION) {
                     $this->getElement('chrome_host')->addError(sprintf(
                         $this->translate(
                             'Chrome/Chromium supporting headless mode required'
-                            . ' which is provided since version 59. Version detected: %s'
+                            . ' which is provided since version %s. Version detected: %s'
                         ),
+                        HeadlessChromeDriver::MIN_SUPPORTED_CHROME_VERSION,
                         $version
                     ));
                 }
