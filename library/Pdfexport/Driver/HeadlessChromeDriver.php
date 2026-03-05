@@ -56,7 +56,7 @@ JS;
 
     protected ?Client $page = null;
 
-    protected ?string $targetId;
+    protected ?string $frameId;
 
     private array $interceptedRequests = [];
 
@@ -69,8 +69,6 @@ JS;
     protected ?string $socket = null;
 
     protected ?string $browserId = null;
-
-    protected ?string $frameId = null;
 
     public function __destruct()
     {
@@ -85,6 +83,7 @@ JS;
         $instance->socket = "$host:$port";
         try {
             $result = $instance->getVersion();
+
             if (! is_array($result)) {
                 throw new Exception('Failed to determine remote chrome version via the /json/version endpoint.');
             }
@@ -374,12 +373,12 @@ JS;
                 'url'   => 'about:blank'
             ]);
             if (isset($result['targetId'])) {
-                $this->targetId = $result['targetId'];
+                $this->frameId = $result['targetId'];
             } else {
                 throw new Exception('Expected target id. Got instead: ' . json_encode($result));
             }
 
-            $this->page = new Client(sprintf('ws://%s/devtools/page/%s', $this->socket, $this->targetId));
+            $this->page = new Client(sprintf('ws://%s/devtools/page/%s', $this->socket, $this->frameId));
 
             // enable various events
             $this->communicate($this->page, 'Log.enable');
@@ -403,7 +402,7 @@ JS;
 
         // close tab
         $result = $this->communicate($this->browser, 'Target.closeTarget', [
-            'targetId' => $this->targetId
+            'targetId' => $this->frameId
         ]);
 
         if (! isset($result['success'])) {
@@ -411,7 +410,7 @@ JS;
         }
 
         $this->page = null;
-        $this->targetId = null;
+        $this->frameId = null;
     }
 
     protected function setContent(PrintableHtmlDocument $document): void
@@ -425,20 +424,20 @@ JS;
 //                'url'   => $url
 //            ]);
 //            if (isset($result['frameId'])) {
-//                $frameId = $result['frameId'];
+//                $this->targetId = $result['frameId'];
 //            } else {
 //                throw new Exception('Expected navigation frame. Got instead: ' . json_encode($result));
 //            }
 //
 //            // wait for page to fully load
-//            $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $frameId]);
+//            $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $this->targetId]);
         if ($document->isEmpty()) {
             throw new LogicException('Nothing to print');
         }
 
         // Transfer the document's content directly
         $this->communicate($page, 'Page.setDocumentContent', [
-            'frameId'   => $this->targetId,
+            'frameId'   => $this->frameId,
             'html'      => $document->render()
         ]);
 
