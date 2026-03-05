@@ -2,32 +2,59 @@
 
 namespace Icinga\Module\Pdfexport\Driver;
 
+use Facebook\WebDriver\Chrome\ChromeDevToolsDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 
 class Chromedriver extends Webdriver
 {
+    protected ?ChromeDevToolsDriver $dcp = null;
+
     public function __construct(string $url)
     {
         parent::__construct($url, DesiredCapabilities::chrome());
     }
 
-    protected function setContent(PrintableHtmlDocument $document): void
+    protected function getChromeDeveloperTools(): ChromeDevToolsDriver
     {
-        // TODO: Replace with CDP
-        parent::setContent($document);
+        if ($this->dcp === null) {
+            $this->dcp = new ChromeDevToolsDriver($this->driver);
+        }
+        return $this->dcp;
+    }
+
+//    protected function setContent(PrintableHtmlDocument $document): void
+//    {
+//        $devTools = $this->getChromeDeveloperTools();
+//        $devTools->execute(
+//            'Page.setDocumentContent',
+//            [
+//                'frameId' => 'TODO',
+//                'html' => $document->render()
+//            ]
+//        );
+//    }
+
+    protected function getPrintParameters(PrintableHtmlDocument $document): array
+    {
+        $parameters = [
+            'printBackground' => true,
+        ];
+
+        return array_merge(
+            $parameters,
+            $document->getPrintParameters(),
+        );
     }
 
     protected function printToPdf(array $printParameters): string
     {
-        // TODO: Implement
-//        // This only works for chrome
-//        $devTools = new ChromeDevToolsDriver($driver);
-//        $result = $devTools->execute(
-//            'Page.printToPDF',
-//        );
-//
-//        return base64_decode($result['data']);
-        return parent::printToPdf($printParameters);
+        $devTools = $this->getChromeDeveloperTools();
+        $result = $devTools->execute(
+            'Page.printToPDF',
+            $printParameters,
+        );
+
+        return base64_decode($result['data']);
     }
 }
