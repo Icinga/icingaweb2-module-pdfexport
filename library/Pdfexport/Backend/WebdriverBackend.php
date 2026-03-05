@@ -1,6 +1,6 @@
 <?php
 
-namespace Icinga\Module\Pdfexport\Driver;
+namespace Icinga\Module\Pdfexport\Backend;
 
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 use Facebook\WebDriver\Remote\RemoteWebDriver;
@@ -9,7 +9,7 @@ use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverWait;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 
-class Webdriver implements PfdPrintDriver
+class WebdriverBackend implements PfdPrintBackend
 {
     protected RemoteWebDriver $driver;
 
