@@ -54,6 +54,8 @@ JS;
 
     protected ?StorageInterface $fileStorage = null;
 
+    protected bool $useFilesystemTransfer = false;
+
     protected ?Client $browser = null;
 
     protected ?Client $page = null;
@@ -105,9 +107,10 @@ JS;
         return $instance;
     }
 
-    public static function createLocal(string $path): static
+    public static function createLocal(string $path, bool $useFile = false): static
     {
         $instance = new self();
+        $instance->useFilesystemTransfer = $useFile;
 
         $browserHome = $instance->getFileStorage()->resolvePath('HOME');
         $descriptors = [
@@ -230,20 +233,6 @@ JS;
         }
 
         return $this->fileStorage;
-    }
-
-    /**
-     * Set the file storage
-     *
-     * @param StorageInterface $fileStorage
-     *
-     * @return  $this
-     */
-    public function setFileStorage($fileStorage)
-    {
-        $this->fileStorage = $fileStorage;
-
-        return $this;
     }
 
     /**
@@ -424,29 +413,53 @@ JS;
     {
         $page = $this->getPage();
 
-        // TODO: Reimplement
-//        if (($url = $this->getUrl()) !== null) {
-//            // Navigate to target
-//            $result = $this->communicate($page, 'Page.navigate', [
-//                'url'   => $url
-//            ]);
-//            if (isset($result['frameId'])) {
-//                $this->targetId = $result['frameId'];
-//            } else {
-//                throw new Exception('Expected navigation frame. Got instead: ' . json_encode($result));
-//            }
-//
-//            // wait for page to fully load
-//            $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $this->targetId]);
         if ($document->isEmpty()) {
             throw new LogicException('Nothing to print');
         }
 
-        // Transfer the document's content directly
-        $this->communicate($page, 'Page.setDocumentContent', [
-            'frameId' => $this->frameId,
-            'html'    => $document->render(),
-        ]);
+        if ($this->useFilesystemTransfer) {
+            $path = uniqid('icingaweb2-pdfexport-') . '.html';
+            $storage = $this->getFileStorage();
+
+            $storage->create($path, $document->render());
+
+            $absPath = $storage->resolvePath($path, true);
+
+            Logger::debug('Using filesystem transfer to local chrome instance. Path: ' . $absPath);
+
+            $url = "file://$absPath";
+
+            // Navigate to target
+            $result = $this->communicate($page, 'Page.navigate', [
+                'url' => $url,
+            ]);
+
+            if (isset($result['frameId'])) {
+                $this->frameId = $result['frameId'];
+            } else {
+                throw new Exception('Expected navigation frame. Got instead: ' . json_encode($result));
+            }
+
+            // wait for the page to fully load
+            $this->waitFor(
+                $page,
+                'Page.frameStoppedLoading',
+                [
+                    'frameId' => $this->frameId
+                ],
+            );
+
+            try {
+                $storage->delete($path);
+            } catch (Exception $e) {
+                Logger::warning('Failed to delete file: ' . $e->getMessage());
+            }
+        } else {
+            $this->communicate($page, 'Page.setDocumentContent', [
+                'frameId' => $this->frameId,
+                'html'    => $document->render(),
+            ]);
+        }
 
         // wait for the page to fully load
         $this->waitFor($page, 'Page.loadEventFired');
