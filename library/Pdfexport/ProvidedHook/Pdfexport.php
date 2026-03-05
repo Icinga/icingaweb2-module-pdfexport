@@ -159,7 +159,10 @@ class Pdfexport extends PdfexportHook
 
         try {
             if (($binary = $this->getBinary()) !== null) {
-                return HeadlessChromeBackend::createLocal($binary);
+                return HeadlessChromeBackend::createLocal(
+                    $binary,
+                    $this->getForceTempStorage(),
+                );
             }
         } catch (Exception $e) {
             Logger::error("Error while creating local HeadlessChrome backend: " . $e->getMessage());
