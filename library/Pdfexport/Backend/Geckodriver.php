@@ -1,10 +1,10 @@
 <?php
 
-namespace Icinga\Module\Pdfexport\Driver;
+namespace Icinga\Module\Pdfexport\Backend;
 
 use Facebook\WebDriver\Remote\DesiredCapabilities;
 
-class Geckodriver extends Webdriver
+class Geckodriver extends WebdriverBackend
 {
     public function __construct(string $rul)
     {
