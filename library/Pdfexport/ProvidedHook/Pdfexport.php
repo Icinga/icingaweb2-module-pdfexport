@@ -47,7 +47,6 @@ class Pdfexport extends PdfexportHook
     public function isSupported(): bool
     {
         try {
-            // FIXME: This seems very strange
             $driver = $this->getDriver();
             return $driver->isSupported();
         } catch (Exception $e) {
