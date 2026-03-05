@@ -294,11 +294,11 @@ CSS;
                 new HtmlElement(
                     'title',
                     null,
-                    Text::create($this->title)
+                    Text::create($this->title),
                 ),
                 $this->createStylesheet(),
-                $this->createLayoutScript()
-            )
+                $this->createLayoutScript(),
+            ),
         ));
 
         $this->getAttributes()->registerAttributeCallback('data-content-height', function () {
@@ -511,7 +511,7 @@ CSS;
 
                 return "'data:$mimeType; base64, " . base64_encode($fileContent) . "'";
             },
-            (new PrintStyleSheet())->render(true)
+            (new PrintStyleSheet())->render(true),
         );
 
         return new HtmlElement('style', null, HtmlString::create($css));
@@ -537,7 +537,7 @@ CSS;
         return new HtmlElement(
             'script',
             Attributes::create(['type' => 'application/javascript']),
-            HtmlString::create($layoutJS)
+            HtmlString::create($layoutJS),
         );
     }
 
@@ -551,9 +551,9 @@ CSS;
         return (new HtmlDocument())
             ->addHtml(
                 new HtmlElement('style', null, HtmlString::create(
-                    static::DEFAULT_HEADER_FOOTER_STYLE
+                    static::DEFAULT_HEADER_FOOTER_STYLE,
                 )),
-                new HtmlElement('header', null, $this->headerTemplate)
+                new HtmlElement('header', null, $this->headerTemplate),
             );
     }
 
@@ -567,9 +567,9 @@ CSS;
         return (new HtmlDocument())
             ->addHtml(
                 new HtmlElement('style', null, HtmlString::create(
-                    static::DEFAULT_HEADER_FOOTER_STYLE
+                    static::DEFAULT_HEADER_FOOTER_STYLE,
                 )),
-                new HtmlElement('footer', null, $this->footerTemplate)
+                new HtmlElement('footer', null, $this->footerTemplate),
             );
     }
 }

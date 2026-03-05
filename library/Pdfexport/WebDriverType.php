@@ -2,8 +2,8 @@
 
 namespace Icinga\Module\Pdfexport;
 
-enum WebDriverType : string
+enum WebDriverType: string
 {
-    case Chrome = 'chrome';
+    case Chrome  = 'chrome';
     case Firefox = 'firefox';
 }

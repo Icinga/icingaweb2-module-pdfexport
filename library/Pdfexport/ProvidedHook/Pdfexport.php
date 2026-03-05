@@ -6,18 +6,17 @@
 namespace Icinga\Module\Pdfexport\ProvidedHook;
 
 use Exception;
-use Facebook\WebDriver\Firefox\FirefoxDriver;
 use Icinga\Application\Config;
 use Icinga\Application\Hook;
 use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
 use Icinga\Application\Logger;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
-use Icinga\Module\Pdfexport\Driver\PfdPrintDriver;
-use Icinga\Module\Pdfexport\PrintableHtmlDocument;
+use Icinga\Module\Pdfexport\Driver\Chromedriver;
 use Icinga\Module\Pdfexport\Driver\Geckodriver;
 use Icinga\Module\Pdfexport\Driver\HeadlessChromeDriver;
-use Icinga\Module\Pdfexport\Driver\Chromedriver;
+use Icinga\Module\Pdfexport\Driver\PfdPrintDriver;
+use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\WebDriverType;
 use ipl\Html\HtmlString;
 use Karriere\PdfMerge\PdfMerge;
@@ -33,7 +32,7 @@ class Pdfexport extends PdfexportHook
 
             if (! $pdfexport->isSupported()) {
                 throw new Exception(
-                    sprintf("Can't export: %s does not support exporting PDFs", get_class($pdfexport))
+                    sprintf("Can't export: %s does not support exporting PDFs", get_class($pdfexport)),
                 );
             }
         }
@@ -62,7 +61,7 @@ class Pdfexport extends PdfexportHook
 
     public static function getForceTempStorage(): bool
     {
-        return (bool) Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0');
+        return (bool)Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0');
     }
 
     public static function getHost(): ?string

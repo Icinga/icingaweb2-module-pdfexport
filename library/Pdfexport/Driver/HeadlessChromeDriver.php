@@ -96,7 +96,7 @@ JS;
             Logger::warning(
                 'Failed to connect to remote chrome: %s (%s)',
                 $instance->socket,
-                $e
+                $e,
             );
 
             throw $e;
@@ -127,8 +127,8 @@ JS;
                 '--disable-dev-shm-usage',
                 '--remote-debugging-port=0',
                 '--homedir='       => $browserHome,
-                '--user-data-dir=' => $browserHome
-            ])
+                '--user-data-dir=' => $browserHome,
+            ]),
         ]);
 
         $env = null;
@@ -160,12 +160,12 @@ JS;
                 proc_terminate($instance->process, 6); // SIGABRT
                 Logger::error(
                     'Browser timed out after %d seconds without the expected output',
-                    $timeoutSeconds
+                    $timeoutSeconds,
                 );
 
                 throw new Exception(
                     'Received empty response or none at all from browser.'
-                    . ' Please check the logs for further details.'
+                    . ' Please check the logs for further details.',
                 );
             }
 
@@ -235,7 +235,7 @@ JS;
     /**
      * Set the file storage
      *
-     * @param   StorageInterface  $fileStorage
+     * @param StorageInterface $fileStorage
      *
      * @return  $this
      */
@@ -281,6 +281,7 @@ JS;
      *
      * @param string|PrintableHtmlDocument $html
      * @param bool $asFile
+     *
      * @return $this
      */
     public function fromHtml($html, $asFile = false): static
@@ -310,7 +311,7 @@ JS;
     {
         $parameters = [
             'printBackground' => true,
-            'transferMode' => 'ReturnAsBase64',
+            'transferMode'    => 'ReturnAsBase64',
         ];
 
         return array_merge(
@@ -365,7 +366,7 @@ JS;
             $this->browser = null;
         } catch (Throwable $e) {
             // For some reason, the browser doesn't send a response
-            Logger::debug(sprintf('Failed to close browser connection: ' . $e->getMessage()));
+            Logger::debug('Failed to close browser connection: ' . $e->getMessage());
         }
     }
 
@@ -376,7 +377,7 @@ JS;
 
             // Open new tab, get its id
             $result = $this->communicate($browser, 'Target.createTarget', [
-                'url'   => 'about:blank'
+                'url' => 'about:blank',
             ]);
             if (isset($result['targetId'])) {
                 $this->frameId = $result['targetId'];
@@ -408,7 +409,7 @@ JS;
 
         // close tab
         $result = $this->communicate($this->browser, 'Target.closeTarget', [
-            'targetId' => $this->frameId
+            'targetId' => $this->frameId,
         ]);
 
         if (! isset($result['success'])) {
@@ -443,8 +444,8 @@ JS;
 
         // Transfer the document's content directly
         $this->communicate($page, 'Page.setDocumentContent', [
-            'frameId'   => $this->frameId,
-            'html'      => $document->render()
+            'frameId' => $this->frameId,
+            'html'    => $document->render(),
         ]);
 
         // wait for the page to fully load
@@ -459,21 +460,21 @@ JS;
             $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => 'print']);
 
             $this->communicate($page, 'Runtime.evaluate', [
-                'timeout'       => 1000,
-                'expression'    => 'setTimeout(() => new Layout().apply(), 0)'
+                'timeout'    => 1000,
+                'expression' => 'setTimeout(() => new Layout().apply(), 0)',
             ]);
 
             $promisedResult = $this->communicate($page, 'Runtime.evaluate', [
                 'awaitPromise'  => true,
                 'returnByValue' => true,
                 'timeout'       => 1000, // Failsafe: doesn't apply to `await` it seems
-                'expression'    => static::WAIT_FOR_LAYOUT
+                'expression'    => static::WAIT_FOR_LAYOUT,
             ]);
             if (isset($promisedResult['exceptionDetails'])) {
                 if (isset($promisedResult['exceptionDetails']['exception']['description'])) {
                     Logger::error(
                         'PDF layout failed to initialize: %s',
-                        $promisedResult['exceptionDetails']['exception']['description']
+                        $promisedResult['exceptionDetails']['exception']['description'],
                     );
                 } else {
                     Logger::warning('PDF layout failed to initialize. Pages might look skewed.');
@@ -492,7 +493,7 @@ JS;
         // print pdf
         $result = $this->communicate($page, 'Page.printToPDF', array_merge(
             $printParameters,
-            ['transferMode' => 'ReturnAsBase64', 'printBackground' => true]
+            ['transferMode' => 'ReturnAsBase64', 'printBackground' => true],
         ));
         if (! empty($result['data'])) {
             $pdf = base64_decode($result['data']);
@@ -506,9 +507,9 @@ JS;
     private function renderApiCall($method, $options = null): string
     {
         $data = [
-            'id' => time(),
+            'id'     => time(),
             'method' => $method,
-            'params' => $options ?: []
+            'params' => $options ?: [],
         ];
 
         return json_encode($data, JSON_FORCE_OBJECT);
@@ -523,7 +524,7 @@ JS;
             throw new Exception(sprintf(
                 'Error response (%s): %s',
                 $data['error']['code'],
-                $data['error']['message']
+                $data['error']['message'],
             ));
         } else {
             throw new Exception(sprintf('Unknown response received: %s', $payload));
@@ -554,7 +555,7 @@ JS;
                 $method,
                 join(',', array_map(function ($param) use ($shortenedParams) {
                     return $param . '=' . json_encode($shortenedParams[$param]);
-                }, array_keys($shortenedParams)))
+                }, array_keys($shortenedParams))),
             );
         }
 
@@ -569,7 +570,7 @@ JS;
             Logger::error(
                 'Headless Chrome was unable to complete a request to "%s". Error: %s',
                 $requestData['request']['url'],
-                $params['errorText']
+                $params['errorText'],
             );
         } else {
             $this->interceptedEvents[] = ['method' => $method, 'params' => $params];
@@ -603,7 +604,7 @@ JS;
             Logger::debug(
                 'Awaiting CDP event: %s(%s)',
                 $eventName,
-                $expectedParams ? join(',', array_keys($expectedParams)) : ''
+                $expectedParams ? join(',', array_keys($expectedParams)) : '',
             );
         } elseif (empty($this->interceptedRequests)) {
             return null;
@@ -653,7 +654,7 @@ JS;
     /**
      * Fetch result from the /json/version API endpoint
      */
-    protected function getVersion(): bool|array
+    protected function getJsonVersion(): bool|array
     {
         $client = new HttpClient();
 
@@ -666,7 +667,7 @@ JS;
                 $response = $client->request(
                     'GET',
                     sprintf('http://%s/json/version', $this->socket),
-                    ['headers' => ['Host' => null]]
+                    ['headers' => ['Host' => null]],
                 );
             } else {
                 throw $e;
