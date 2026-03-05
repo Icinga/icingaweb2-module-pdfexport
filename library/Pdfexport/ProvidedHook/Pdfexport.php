@@ -108,7 +108,7 @@ class Pdfexport extends PdfexportHook
                 $coverPageDocument->addAttributes($html->getAttributes());
                 $coverPageDocument->removeMargins();
 
-                $coverPagePdf = $driver->toPdf($coverPage);
+                $coverPagePdf = $driver->toPdf($coverPageDocument);
 
                 $pdf = $this->mergePdfs($coverPagePdf, $pdf);
             }
@@ -159,11 +159,11 @@ class Pdfexport extends PdfexportHook
 
     protected function getPrintableHtmlDocument($html): PrintableHtmlDocument
     {
-        if (! $html instanceof PrintableHtmlDocument) {
-            $html = (new PrintableHtmlDocument())
-                ->setContent(HtmlString::create($html));
+        if ($html instanceof PrintableHtmlDocument) {
+            return $html;
         }
-        return $html;
+        return (new PrintableHtmlDocument())
+            ->setContent(HtmlString::create($html));
     }
 
     protected function mergePdfs(string ...$pdfs): string
