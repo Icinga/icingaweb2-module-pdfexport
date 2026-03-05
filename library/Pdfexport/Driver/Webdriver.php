@@ -30,7 +30,10 @@ class Webdriver implements PfdPrintDriver
         // This is horribly ugly, but it works for all browser backends
         $encoded = base64_encode($document);
         $this->driver->executeScript("document.body.innerHTML = atob('$encoded');");
+    }
 
+    protected function waitForPageLoad(): void
+    {
         // Wait for the body element to ensure the page has fully loaded
         $wait = new WebDriverWait($this->driver, 10);
         $wait->until(WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body')));
@@ -62,7 +65,9 @@ class Webdriver implements PfdPrintDriver
     public function toPdf(PrintableHtmlDocument $document): string
     {
         $this->setContent($document);
+        $this->waitForPageLoad();
         $printParameters = $this->getPrintParameters($document);
+
         return $this->printToPdf($printParameters);
     }
 
