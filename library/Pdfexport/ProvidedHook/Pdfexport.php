@@ -11,6 +11,7 @@ use Icinga\Application\Config;
 use Icinga\Application\Hook;
 use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
+use Icinga\Application\Logger;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\Driver\PfdPrintDriver;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
@@ -131,26 +132,38 @@ class Pdfexport extends PdfexportHook
 
     protected function getDriver(): PfdPrintDriver
     {
-        if (($host = $this->getWebDriverHost()) !== null) {
-            $port = $this->getWebDriverPort();
-            $url = "$host:$port";
-            $type = $this->getWebDriverType();
-            return match ($type) {
-                WebDriverType::Chrome => new Chromedriver($url),
-                WebDriverType::Firefox => new Geckodriver($url),
-                default => throw new Exception("Invalid webdriver type $type->value"),
-            };
+        try {
+            if (($host = $this->getWebDriverHost()) !== null) {
+                $port = $this->getWebDriverPort();
+                $url = "$host:$port";
+                $type = $this->getWebDriverType();
+                return match ($type) {
+                    WebDriverType::Chrome => new Chromedriver($url),
+                    WebDriverType::Firefox => new Geckodriver($url),
+                    default => throw new Exception("Invalid webdriver type $type->value"),
+                };
+            }
+        } catch (Exception $e) {
+            Logger::error("Error while creating WebDriver backend: " . $e->getMessage());
         }
 
-        if (($binary = $this->getBinary()) !== null) {
-            return HeadlessChromeDriver::createLocal($binary);
+        try {
+            if (($host = $this->getHost()) !== null) {
+                return HeadlessChromeDriver::createRemote(
+                    $host,
+                    $this->getPort(),
+                );
+            }
+        } catch (Exception $e) {
+            Logger::error("Error while creating remote HeadlessChrome backend: " . $e->getMessage());
         }
 
-        if (($host = $this->getHost()) !== null) {
-            return HeadlessChromeDriver::createRemote(
-                $host,
-                $this->getPort(),
-            );
+        try {
+            if (($binary = $this->getBinary()) !== null) {
+                return HeadlessChromeDriver::createLocal($binary);
+            }
+        } catch (Exception $e) {
+            Logger::error("Error while creating local HeadlessChrome backend: " . $e->getMessage());
         }
 
         throw new Exception("No PDF print backend available.");
