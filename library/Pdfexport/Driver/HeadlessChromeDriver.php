@@ -20,6 +20,8 @@ use WebSocket\Client;
 
 class HeadlessChromeDriver implements PfdPrintDriver
 {
+    /** @var int */
+    public const MIN_SUPPORTED_CHROME_VERSION = 59;
     /**
      * Line of stderr output identifying the websocket url
      *
@@ -82,7 +84,7 @@ JS;
         $instance = new self();
         $instance->socket = "$host:$port";
         try {
-            $result = $instance->getVersion();
+            $result = $instance->getJsonVersion();
 
             if (! is_array($result)) {
                 throw new Exception('Failed to determine remote chrome version via the /json/version endpoint.');
@@ -193,6 +195,10 @@ JS;
             }
 
             usleep($idleTime);
+        }
+
+        if ($instance->socket === null || $instance->browserId === null) {
+            throw new Exception('Could not start browser process.');
         }
 
         return $instance;
@@ -674,11 +680,25 @@ JS;
         return json_decode($response->getBody(), true);
     }
 
+    public function getVersion(): int
+    {
+        $version = $this->getJsonVersion();
+
+        if (! isset($version['Browser'])) {
+            throw new Exception("Invalid Version Json");
+        }
+
+        preg_match('/Chrome\/([0-9]+)/', $version['Browser'], $matches);
+
+        if (! isset($matches[1])) {
+            throw new Exception("Malformed Chrome Version String: " . $version['Browser']);
+        }
+
+        return (int)$matches[1];
+    }
+
     function isSupported(): bool
     {
-        $version = $this->getVersion();
-        preg_match('/Chrome\/([0-9]+)/', $version['Browser'], $matches);
-        $number = (int)$matches[1];
-        return $number >= 59;
+        return $this->getVersion() >= self::MIN_SUPPORTED_CHROME_VERSION;
     }
 }
