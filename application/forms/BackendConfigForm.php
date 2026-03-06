@@ -10,7 +10,6 @@ use Icinga\Module\Pdfexport\Backend\Chromedriver;
 use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
 use Icinga\Module\Pdfexport\Form\ConfigForm;
-use Icinga\Module\Pdfexport\WebDriverType;
 use ipl\Html\Html;
 use ipl\Html\HtmlElement;
 use ipl\Validator\CallbackValidator;
@@ -47,9 +46,9 @@ class BackendConfigForm extends ConfigForm
 
                 try {
                     $url = "$value:$port";
-                    $backend = match (WebDriverType::from($type)) {
-                        WebDriverType::Chrome => new Chromedriver($url),
-                        WebDriverType::Firefox => new Geckodriver($url),
+                    $backend = match ($type) {
+                        'chrome' => new Chromedriver($url),
+                        'firefox' => new Geckodriver($url),
                         default => throw new Exception("Invalid webdriver type $type"),
                     };
 
