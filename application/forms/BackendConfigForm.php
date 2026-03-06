@@ -11,84 +11,17 @@ use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
 use Icinga\Module\Pdfexport\Form\ConfigForm;
 use Icinga\Module\Pdfexport\WebDriverType;
+use ipl\Html\Html;
 use ipl\Validator\CallbackValidator;
 
 class BackendConfigForm extends ConfigForm
 {
-    public function assemble()
+    public function assemble(): void
     {
-        $this->addElement('text', 'chrome_binary', [
-            'label'       => $this->translate('Local Binary'),
-            'placeholder' => '/usr/bin/google-chrome',
-            'validators' => [
-                new CallbackValidator(function ($value, CallbackValidator $validator) {
-                    if (empty($value)) {
-                        return true;
-                    }
-
-                    try {
-                        $chrome = (HeadlessChromeBackend::createLocal($value));
-                        $version = $chrome->getVersion();
-                    } catch (Exception $e) {
-                        $validator->addMessage($e->getMessage());
-                        return false;
-                    }
-
-                    if ($version < HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION) {
-                        $validator->addMessage(t(
-                            'Chrome/Chromium supporting headless mode required'
-                            . ' which is provided since version %s. Version detected: %s'
-                        ));
-                    }
-
-                    return true;
-                }),
-            ],
-        ]);
-
-        $this->addElement('checkbox', 'chrome_force_temp_storage', [
-            'label'     => $this->translate('Force local temp storage')
-        ]);
-
-        $this->addElement('text', 'chrome_host', [
-            'label'         => $this->translate('Remote Host'),
-            'validators'    => [
-                new CallbackValidator(function ($value, CallbackValidator $validator) {
-                if ($value === null) {
-                    return true;
-                }
-
-                $port = $this->getValue('chrome_port') ?: 9222;
-
-                try {
-                    $chrome = HeadlessChromeBackend::createRemote($value, $port);
-                    $version = $chrome->getVersion();
-                } catch (Exception $e) {
-                    $validator->addMessage($e->getMessage());
-                    return false;
-                }
-
-                if ($version < HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION) {
-                    $validator->addMessage(t(
-                        'Chrome/Chromium supporting headless mode required'
-                        . ' which is provided since version %s. Version detected: %s'
-                    ));
-                    return false;
-                }
-
-                return true;
-            })]
-        ]);
-
-        $this->addElement('number', 'chrome_port', [
-            'label'         => $this->translate('Remote Port'),
-            'placeholder'   => 9222,
-            'min'           => 1,
-            'max'           => 65535
-        ]);
+        $this->add(Html::tag('h2', t("WebDriver")));
 
         $this->addElement('text', 'webdriver_host', [
-            'label'         => $this->translate('WebDriver Host'),
+            'label'         => $this->translate('Host'),
             'validators'    => [new CallbackValidator(function ($value, CallbackValidator $validator) {
                 if ($value === null) {
                     return true;
@@ -119,14 +52,14 @@ class BackendConfigForm extends ConfigForm
         ]);
 
         $this->addElement('number', 'webdriver_port', [
-            'label'         => $this->translate('WebDriver Port'),
-            'placeholder'   => 4444,
-            'min'           => 1,
-            'max'           => 65535,
+            'label'       => $this->translate('Port'),
+            'placeholder' => 4444,
+            'min'         => 1,
+            'max'         => 65535,
         ]);
 
         $this->addElement('select', 'webdriver_type', [
-            'label'         => $this->translate('WebDriver Type'),
+            'label'         => $this->translate('Type'),
             'multiOptions'  => array_merge(
                 ['' => sprintf(' - %s - ', t('Please choose'))],
                 [
@@ -134,6 +67,80 @@ class BackendConfigForm extends ConfigForm
                     'chrome' => t('Chrome'),
                 ],
             ),
+        ]);
+
+        $this->add(Html::tag('h2', t("Remote Chrome")));
+
+        $this->addElement('text', 'chrome_host', [
+            'label'         => $this->translate('Host'),
+            'validators'    => [
+                new CallbackValidator(function ($value, CallbackValidator $validator) {
+                if ($value === null) {
+                    return true;
+                }
+
+                $port = $this->getValue('chrome_port') ?: 9222;
+
+                try {
+                    $chrome = HeadlessChromeBackend::createRemote($value, $port);
+                    $version = $chrome->getVersion();
+                } catch (Exception $e) {
+                    $validator->addMessage($e->getMessage());
+                    return false;
+                }
+
+                if ($version < HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION) {
+                    $validator->addMessage(t(
+                        'Chrome/Chromium supporting headless mode required'
+                        . ' which is provided since version %s. Version detected: %s'
+                    ));
+                    return false;
+                }
+
+                return true;
+            })]
+        ]);
+
+        $this->addElement('number', 'chrome_port', [
+            'label'       => $this->translate('Port'),
+            'placeholder' => 9222,
+            'min'         => 1,
+            'max'         => 65535
+        ]);
+
+        $this->add(Html::tag('h2', t("Local Chrome")));
+
+        $this->addElement('text', 'chrome_binary', [
+            'label'       => $this->translate('Binary'),
+            'placeholder' => '/usr/bin/google-chrome',
+            'validators' => [
+                new CallbackValidator(function ($value, CallbackValidator $validator) {
+                    if (empty($value)) {
+                        return true;
+                    }
+
+                    try {
+                        $chrome = (HeadlessChromeBackend::createLocal($value));
+                        $version = $chrome->getVersion();
+                    } catch (Exception $e) {
+                        $validator->addMessage($e->getMessage());
+                        return false;
+                    }
+
+                    if ($version < HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION) {
+                        $validator->addMessage(t(
+                            'Chrome/Chromium supporting headless mode required'
+                            . ' which is provided since version %s. Version detected: %s'
+                        ));
+                    }
+
+                    return true;
+                }),
+            ],
+        ]);
+
+        $this->addElement('checkbox', 'chrome_force_temp_storage', [
+            'label' => $this->translate('Use temp storage')
         ]);
 
         $this->addElement('submit', 'submit', [
