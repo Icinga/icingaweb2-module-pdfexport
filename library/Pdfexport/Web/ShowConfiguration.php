@@ -1,5 +1,7 @@
 <?php
 
+/* Icinga PDF Export | (c) 2026 Icinga GmbH | GPLv2 */
+
 namespace Icinga\Module\Pdfexport\Web;
 
 use Icinga\Application\Config;
