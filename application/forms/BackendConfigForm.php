@@ -7,10 +7,13 @@ namespace Icinga\Module\Pdfexport\Forms;
 
 use Exception;
 use Icinga\Forms\ConfigForm;
+use Icinga\Module\Pdfexport\Backend\Chromedriver;
+use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
+use Icinga\Module\Pdfexport\WebDriverType;
 use Zend_Validate_Callback;
 
-class ChromeBinaryForm extends ConfigForm
+class BackendConfigForm extends ConfigForm
 {
     public function init()
     {
@@ -81,6 +84,7 @@ class ChromeBinaryForm extends ConfigForm
                         HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION,
                         $version
                     ));
+                    return true;
                 }
 
                 return true;
@@ -92,6 +96,58 @@ class ChromeBinaryForm extends ConfigForm
             'placeholder'   => 9222,
             'min'           => 1,
             'max'           => 65535
+        ]);
+
+        $this->addElement('text', 'webdriver_host', [
+            'label'         => $this->translate('WebDriver Host'),
+            'validators'    => [new Zend_Validate_Callback(function ($value) {
+                if ($value === null) {
+                    return true;
+                }
+
+                $port = $this->getValue('webdriver_port') ?: 4444;
+                $type = $this->getValue('webdriver_type') ?: 'chrome';
+
+                try {
+                    $url = "$value:$port";
+                    $backend = match (WebDriverType::from($type)) {
+                        WebDriverType::Chrome => new Chromedriver($url),
+                        WebDriverType::Firefox => new Geckodriver($url),
+                        default => throw new Exception("Invalid webdriver type $type"),
+                    };
+
+                    if (! $backend->isSupported()) {
+                        $this->getElement('webdriver_host')
+                            ->addError($this->translate(
+                                'The webdriver server reports that it is unable to generate PDFs'
+                            ));
+                        return false;
+                    }
+
+                } catch (Exception $e) {
+                    $this->getElement('webdriver_host')->addError($e->getMessage());
+                    return false;
+                }
+                return true;
+            })]
+        ]);
+
+        $this->addElement('number', 'webdriver_port', [
+            'label'         => $this->translate('WebDriver Port'),
+            'placeholder'   => 4444,
+            'min'           => 1,
+            'max'           => 65535,
+        ]);
+
+        $this->addElement('select', 'webdriver_type', [
+            'label'         => $this->translate('WebDriver Type'),
+            'multiOptions'  => array_merge(
+                ['' => sprintf(' - %s - ', t('Please choose'))],
+                [
+                    'firefox' => t('Firefox'),
+                    'chrome' => t('Chrome'),
+                ],
+            ),
         ]);
     }
 }
