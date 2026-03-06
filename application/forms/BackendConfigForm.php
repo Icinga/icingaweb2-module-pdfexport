@@ -12,16 +12,31 @@ use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
 use Icinga\Module\Pdfexport\Form\ConfigForm;
 use Icinga\Module\Pdfexport\WebDriverType;
 use ipl\Html\Html;
+use ipl\Html\HtmlElement;
 use ipl\Validator\CallbackValidator;
 
 class BackendConfigForm extends ConfigForm
 {
     public function assemble(): void
     {
+        $this->add(HtmlElement::create(
+            'div',
+            ['class' => 'note'],
+            t(
+                'The precedence for the chosen backend is the same as in this configuration form. ' .
+                'Backends that are not configured are skipped and backends further down the list act as a fallback.'
+            ),
+        ));
+
         $this->add(Html::tag('h2', t("WebDriver")));
+        $this->add(Html::tag('p', t(
+            'WebDriver is a API that allows software to automatically control and interact with a web browser, ' .
+            'commonly used for automating website testing through tools like Selenium WebDriver.'
+        )));
 
         $this->addElement('text', 'webdriver_host', [
             'label'         => $this->translate('Host'),
+            'description'   => $this->translate('Host address of the webdriver server'),
             'validators'    => [new CallbackValidator(function ($value, CallbackValidator $validator) {
                 if ($value === null) {
                     return true;
@@ -53,6 +68,7 @@ class BackendConfigForm extends ConfigForm
 
         $this->addElement('number', 'webdriver_port', [
             'label'       => $this->translate('Port'),
+            'description' => $this->translate('Port of the webdriver instance. (Default: 4444)'),
             'placeholder' => 4444,
             'min'         => 1,
             'max'         => 65535,
@@ -60,6 +76,7 @@ class BackendConfigForm extends ConfigForm
 
         $this->addElement('select', 'webdriver_type', [
             'label'         => $this->translate('Type'),
+            'description'   => $this->translate('The type of webdriver server.'),
             'multiOptions'  => array_merge(
                 ['' => sprintf(' - %s - ', t('Please choose'))],
                 [
@@ -70,9 +87,13 @@ class BackendConfigForm extends ConfigForm
         ]);
 
         $this->add(Html::tag('h2', t("Remote Chrome")));
+        $this->add(Html::tag('p', t(
+            'A remote chrome instance and it\'s debug interface can be used to create PDFs.'
+        )));
 
         $this->addElement('text', 'chrome_host', [
             'label'         => $this->translate('Host'),
+            'description'   => $this->translate('Host address of the server with the running web browser.'),
             'validators'    => [
                 new CallbackValidator(function ($value, CallbackValidator $validator) {
                 if ($value === null) {
@@ -103,16 +124,21 @@ class BackendConfigForm extends ConfigForm
 
         $this->addElement('number', 'chrome_port', [
             'label'       => $this->translate('Port'),
+            'description' => $this->translate('Port of the chrome developer tools. (Default: 9222)'),
             'placeholder' => 9222,
             'min'         => 1,
             'max'         => 65535
         ]);
 
         $this->add(Html::tag('h2', t("Local Chrome")));
+        $this->add(Html::tag('p', t(
+            'Start a chrome instance on the same server as icingaweb2. This is always attempted as a fallback.',
+        )));
 
         $this->addElement('text', 'chrome_binary', [
             'label'       => $this->translate('Binary'),
             'placeholder' => '/usr/bin/google-chrome',
+            'description' => $this->translate('Path to the binary of the web browser.'),
             'validators' => [
                 new CallbackValidator(function ($value, CallbackValidator $validator) {
                     if (empty($value)) {
@@ -140,7 +166,8 @@ class BackendConfigForm extends ConfigForm
         ]);
 
         $this->addElement('checkbox', 'chrome_force_temp_storage', [
-            'label' => $this->translate('Use temp storage')
+            'label' => $this->translate('Use temp storage'),
+            'description' => $this->translate('Use temp storage to transfer the html to the local chrome instance.'),
         ]);
 
         $this->addElement('submit', 'submit', [
