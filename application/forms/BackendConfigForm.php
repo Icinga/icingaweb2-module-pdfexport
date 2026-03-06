@@ -6,52 +6,44 @@
 namespace Icinga\Module\Pdfexport\Forms;
 
 use Exception;
-use Icinga\Forms\ConfigForm;
 use Icinga\Module\Pdfexport\Backend\Chromedriver;
 use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
+use Icinga\Module\Pdfexport\Form\ConfigForm;
 use Icinga\Module\Pdfexport\WebDriverType;
-use Zend_Validate_Callback;
+use ipl\Validator\CallbackValidator;
 
 class BackendConfigForm extends ConfigForm
 {
-    public function init()
-    {
-        $this->setName('pdfexport_binary');
-        $this->setSubmitLabel($this->translate('Save Changes'));
-    }
-
-    public function createElements(array $formData)
+    public function assemble()
     {
         $this->addElement('text', 'chrome_binary', [
             'label'       => $this->translate('Local Binary'),
             'placeholder' => '/usr/bin/google-chrome',
-            'validators'  => [new Zend_Validate_Callback(function ($value) {
-                if (empty($value)) {
-                    return true;
-                }
+            'validators' => [
+                new CallbackValidator(function ($value, CallbackValidator $validator) {
+                    if (empty($value)) {
+                        return true;
+                    }
 
-                try {
-                    $chrome = (HeadlessChromeBackend::createLocal($value));
-                    $version = $chrome->getVersion();
-                } catch (Exception $e) {
-                    $this->getElement('chrome_binary')->addError($e->getMessage());
-                    return true;
-                }
+                    try {
+                        $chrome = (HeadlessChromeBackend::createLocal($value));
+                        $version = $chrome->getVersion();
+                    } catch (Exception $e) {
+                        $validator->addMessage($e->getMessage());
+                        return false;
+                    }
 
-                if ($version < HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION) {
-                    $this->getElement('chrome_binary')->addError(sprintf(
-                        $this->translate(
+                    if ($version < HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION) {
+                        $validator->addMessage(t(
                             'Chrome/Chromium supporting headless mode required'
                             . ' which is provided since version %s. Version detected: %s'
-                        ),
-                        HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION,
-                        $version
-                    ));
-                }
+                        ));
+                    }
 
-                return true;
-            })]
+                    return true;
+                }),
+            ],
         ]);
 
         $this->addElement('checkbox', 'chrome_force_temp_storage', [
@@ -60,7 +52,8 @@ class BackendConfigForm extends ConfigForm
 
         $this->addElement('text', 'chrome_host', [
             'label'         => $this->translate('Remote Host'),
-            'validators'    => [new Zend_Validate_Callback(function ($value) {
+            'validators'    => [
+                new CallbackValidator(function ($value, CallbackValidator $validator) {
                 if ($value === null) {
                     return true;
                 }
@@ -71,20 +64,16 @@ class BackendConfigForm extends ConfigForm
                     $chrome = HeadlessChromeBackend::createRemote($value, $port);
                     $version = $chrome->getVersion();
                 } catch (Exception $e) {
-                    $this->getElement('chrome_host')->addError($e->getMessage());
-                    return true;
+                    $validator->addMessage($e->getMessage());
+                    return false;
                 }
 
                 if ($version < HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION) {
-                    $this->getElement('chrome_host')->addError(sprintf(
-                        $this->translate(
-                            'Chrome/Chromium supporting headless mode required'
-                            . ' which is provided since version %s. Version detected: %s'
-                        ),
-                        HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION,
-                        $version
+                    $validator->addMessage(t(
+                        'Chrome/Chromium supporting headless mode required'
+                        . ' which is provided since version %s. Version detected: %s'
                     ));
-                    return true;
+                    return false;
                 }
 
                 return true;
@@ -100,7 +89,7 @@ class BackendConfigForm extends ConfigForm
 
         $this->addElement('text', 'webdriver_host', [
             'label'         => $this->translate('WebDriver Host'),
-            'validators'    => [new Zend_Validate_Callback(function ($value) {
+            'validators'    => [new CallbackValidator(function ($value, CallbackValidator $validator) {
                 if ($value === null) {
                     return true;
                 }
@@ -117,15 +106,12 @@ class BackendConfigForm extends ConfigForm
                     };
 
                     if (! $backend->isSupported()) {
-                        $this->getElement('webdriver_host')
-                            ->addError($this->translate(
-                                'The webdriver server reports that it is unable to generate PDFs'
-                            ));
+                        $validator->addMessage(t('The webdriver server reports that it is unable to generate PDFs'));
                         return false;
                     }
 
                 } catch (Exception $e) {
-                    $this->getElement('webdriver_host')->addError($e->getMessage());
+                    $validator->addMessage($e->getMessage());
                     return false;
                 }
                 return true;
@@ -148,6 +134,10 @@ class BackendConfigForm extends ConfigForm
                     'chrome' => t('Chrome'),
                 ],
             ),
+        ]);
+
+        $this->addElement('submit', 'submit', [
+            'label' => $this->translate('Store')
         ]);
     }
 }
