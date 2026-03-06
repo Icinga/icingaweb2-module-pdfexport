@@ -34,7 +34,7 @@ class BackendConfigForm extends ConfigForm
             'commonly used for automating website testing through tools like Selenium WebDriver.'
         )));
 
-        $this->addElement('text', 'webdriver_host', [
+        $this->addElement('text', 'webdriver__host', [
             'label'         => $this->translate('Host'),
             'description'   => $this->translate('Host address of the webdriver server'),
             'validators'    => [new CallbackValidator(function ($value, CallbackValidator $validator) {
@@ -42,8 +42,8 @@ class BackendConfigForm extends ConfigForm
                     return true;
                 }
 
-                $port = $this->getValue('webdriver_port') ?: 4444;
-                $type = $this->getValue('webdriver_type') ?: 'chrome';
+                $port = $this->getValue('webdriver__port') ?: 4444;
+                $type = $this->getValue('webdriver__type') ?: 'chrome';
 
                 try {
                     $url = "$value:$port";
@@ -66,7 +66,7 @@ class BackendConfigForm extends ConfigForm
             })]
         ]);
 
-        $this->addElement('number', 'webdriver_port', [
+        $this->addElement('number', 'webdriver__port', [
             'label'       => $this->translate('Port'),
             'description' => $this->translate('Port of the webdriver instance. (Default: 4444)'),
             'placeholder' => 4444,
@@ -74,7 +74,7 @@ class BackendConfigForm extends ConfigForm
             'max'         => 65535,
         ]);
 
-        $this->addElement('select', 'webdriver_type', [
+        $this->addElement('select', 'webdriver__type', [
             'label'         => $this->translate('Type'),
             'description'   => $this->translate('The type of webdriver server.'),
             'multiOptions'  => array_merge(
@@ -91,7 +91,7 @@ class BackendConfigForm extends ConfigForm
             'A remote chrome instance and it\'s debug interface can be used to create PDFs.'
         )));
 
-        $this->addElement('text', 'chrome_host', [
+        $this->addElement('text', 'remote_chrome_host', [
             'label'         => $this->translate('Host'),
             'description'   => $this->translate('Host address of the server with the running web browser.'),
             'validators'    => [
@@ -100,7 +100,7 @@ class BackendConfigForm extends ConfigForm
                     return true;
                 }
 
-                $port = $this->getValue('chrome_port') ?: 9222;
+                $port = $this->getValue('remote_chrome__port') ?: 9222;
 
                 try {
                     $chrome = HeadlessChromeBackend::createRemote($value, $port);
@@ -122,7 +122,7 @@ class BackendConfigForm extends ConfigForm
             })]
         ]);
 
-        $this->addElement('number', 'chrome_port', [
+        $this->addElement('number', 'remote_chrome__port', [
             'label'       => $this->translate('Port'),
             'description' => $this->translate('Port of the chrome developer tools. (Default: 9222)'),
             'placeholder' => 9222,
@@ -135,7 +135,7 @@ class BackendConfigForm extends ConfigForm
             'Start a chrome instance on the same server as icingaweb2. This is always attempted as a fallback.',
         )));
 
-        $this->addElement('text', 'chrome_binary', [
+        $this->addElement('text', 'local_chrome__binary', [
             'label'       => $this->translate('Binary'),
             'placeholder' => '/usr/bin/google-chrome',
             'description' => $this->translate('Path to the binary of the web browser.'),
@@ -165,7 +165,7 @@ class BackendConfigForm extends ConfigForm
             ],
         ]);
 
-        $this->addElement('checkbox', 'chrome_force_temp_storage', [
+        $this->addElement('checkbox', 'local_chrome__force_temp_storage', [
             'label' => $this->translate('Use temp storage'),
             'description' => $this->translate('Use temp storage to transfer the html to the local chrome instance.'),
         ]);

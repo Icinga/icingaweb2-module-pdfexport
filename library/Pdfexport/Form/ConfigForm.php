@@ -47,7 +47,7 @@ class ConfigForm extends CompatForm
             return [$this->section, $name];
         }
 
-        $parts = explode('_', $name, 2);
+        $parts = explode('__', $name, 2);
         if (count($parts) !== 2) {
             return [null, null];
         }
