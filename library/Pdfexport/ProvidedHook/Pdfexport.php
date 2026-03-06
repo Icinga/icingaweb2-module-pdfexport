@@ -61,7 +61,8 @@ class Pdfexport extends PdfexportHook
 
     public static function getForceTempStorage(): bool
     {
-        return (bool)Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0');
+        $value = Config::module('pdfexport')->get('chrome', 'force_temp_storage', 'n');
+        return in_array($value, ['1', 'y']);
     }
 
     public static function getHost(): ?string

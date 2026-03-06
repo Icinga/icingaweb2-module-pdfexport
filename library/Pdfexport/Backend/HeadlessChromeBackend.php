@@ -112,6 +112,10 @@ JS;
         $instance = new self();
         $instance->useFilesystemTransfer = $useFile;
 
+        if (! file_exists($path)) {
+            throw new Exception('Local chrome binary not found: ' . $path);
+        }
+
         $browserHome = $instance->getFileStorage()->resolvePath('HOME');
         $descriptors = [
             0 => ['pipe', 'r'],  // stdin
