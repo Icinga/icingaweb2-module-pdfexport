@@ -9,6 +9,7 @@ use Facebook\WebDriver\Remote\RemoteWebDriver;
 use Facebook\WebDriver\WebDriverBy;
 use Facebook\WebDriver\WebDriverExpectedCondition;
 use Facebook\WebDriver\WebDriverWait;
+use Icinga\Application\Logger;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 
 class WebdriverBackend implements PfdPrintBackend
@@ -31,7 +32,7 @@ class WebdriverBackend implements PfdPrintBackend
     {
         // This is horribly ugly, but it works for all browser backends
         $encoded = base64_encode($document);
-        $this->driver->executeScript("document.body.innerHTML = atob('$encoded');");
+        $this->driver->executeScript("document.body.outerHTML = atob('$encoded');");
     }
 
     protected function waitForPageLoad(): void
