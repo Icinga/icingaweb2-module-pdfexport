@@ -269,37 +269,6 @@ JS;
         return implode(' ', $list);
     }
 
-    /**
-     * Use the given HTML as input
-     *
-     * @param string|PrintableHtmlDocument $html
-     * @param bool $asFile
-     *
-     * @return $this
-     */
-    public function fromHtml($html, $asFile = false): static
-    {
-        if ($html instanceof PrintableHtmlDocument) {
-            $this->document = $html;
-        } else {
-            $this->document = (new PrintableHtmlDocument())
-                ->setContent(HtmlString::create($html));
-        }
-
-        if ($asFile) {
-            $path = uniqid('icingaweb2-pdfexport-') . '.html';
-            $storage = $this->getFileStorage();
-
-            $storage->create($path, $this->document->render());
-
-            $path = $storage->resolvePath($path, true);
-
-            $this->setUrl("file://$path");
-        }
-
-        return $this;
-    }
-
     protected function getPrintParameters(PrintableHtmlDocument $document): array
     {
         $parameters = [
@@ -318,24 +287,6 @@ JS;
         $this->setContent($document);
         $printParameters = $this->getPrintParameters($document);
         return $this->printToPdf($printParameters);
-    }
-
-    /**
-     * Export to PDF and save as file on disk
-     *
-     * @return string The path to the file on disk
-     */
-    public function savePdf()
-    {
-        $path = uniqid('icingaweb2-pdfexport-') . '.pdf';
-
-        $storage = $this->getFileStorage();
-        $storage->create($path, '');
-
-        $path = $storage->resolvePath($path, true);
-        file_put_contents($path, $this->toPdf());
-
-        return $path;
     }
 
     protected function getBrowser(): Client
