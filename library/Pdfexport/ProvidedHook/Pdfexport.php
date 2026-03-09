@@ -75,9 +75,14 @@ class Pdfexport extends PdfexportHook
 
                 $coverPagePdf = $backend->toPdf($coverPageDocument);
 
+                $backend->close();
+
                 $pdf = $this->mergePdfs($coverPagePdf, $pdf);
             }
         }
+
+        $backend->close();
+        unset($coverPage);
 
         $this->emit($pdf, $filename);
 

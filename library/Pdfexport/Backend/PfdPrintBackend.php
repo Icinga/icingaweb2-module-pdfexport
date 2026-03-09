@@ -11,4 +11,6 @@ interface PfdPrintBackend
     function toPdf(PrintableHtmlDocument $document): string;
 
     function isSupported(): bool;
+
+    function close(): void;
 }
