@@ -13,7 +13,6 @@ use Icinga\Application\Platform;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
-use ipl\Html\HtmlString;
 use LogicException;
 use Throwable;
 use WebSocket\Client;
@@ -76,9 +75,7 @@ JS;
 
     public function __destruct()
     {
-        $this->closeBrowser();
-        $this->closeBrowser();
-        $this->closeLocal();
+        $this->close();
     }
 
     public static function createRemote(string $host, int $port): static
@@ -669,5 +666,12 @@ JS;
     function isSupported(): bool
     {
         return $this->getVersion() >= self::MIN_SUPPORTED_CHROME_VERSION;
+    }
+
+    function close(): void
+    {
+        $this->closeBrowser();
+        $this->closeBrowser();
+        $this->closeLocal();
     }
 }

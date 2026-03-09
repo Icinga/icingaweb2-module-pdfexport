@@ -25,7 +25,7 @@ class WebdriverBackend implements PfdPrintBackend
 
     function __destruct()
     {
-        $this->driver->quit();
+        $this->close();
     }
 
     protected function setContent(PrintableHtmlDocument $document): void
@@ -78,5 +78,10 @@ class WebdriverBackend implements PfdPrintBackend
     {
         // TODO: Come up with a check
         return true;
+    }
+
+    function close(): void
+    {
+        $this->driver->quit();
     }
 }
