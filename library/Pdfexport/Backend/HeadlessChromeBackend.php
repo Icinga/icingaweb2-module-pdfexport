@@ -220,6 +220,14 @@ JS;
             proc_close($this->process);
             $this->process = null;
         }
+
+        try {
+            if ($this->fileStorage !== null) {
+                $this->fileStorage = null;
+            }
+        } catch (Exception $exception) {
+            Logger::error("Failed to close local temporary file storage: " . $exception->getMessage());
+        }
     }
 
     /**
