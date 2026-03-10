@@ -217,6 +217,27 @@ JS;
 
         if ($this->process !== null) {
             proc_terminate($this->process);
+
+            $start = time();
+            $running = true;
+
+            while ($running && (time() - $start) < 5) {
+                $status = proc_get_status($this->process);
+                $running = $status['running'];
+
+                if ($running) {
+                    usleep(100000);
+                }
+            }
+
+            // If still running after 5 seconds, force kills the entire process group
+            if ($running) {
+                $status = proc_get_status($this->process);
+                if (! empty($status['pid'])) {
+                    posix_kill(-$status['pid'], SIGKILL);
+                }
+            }
+
             proc_close($this->process);
             $this->process = null;
         }
