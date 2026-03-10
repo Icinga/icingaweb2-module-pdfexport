@@ -21,6 +21,22 @@ class HeadlessChromeBackend implements PfdPrintBackend
 {
     /** @var int */
     public const MIN_SUPPORTED_CHROME_VERSION = 59;
+
+    /** @var int */
+    protected const CHROME_START_MAX_WAIT_TIME = 10;
+
+    /** @var int */
+    protected const CHROME_CLOSE_MAX_WAIT_TIME = 5;
+
+    /** @var int */
+    protected const PROCESS_IDLE_TIME = 100000;
+
+    /** @var int */
+    protected const STREAM_WAIT_TIME = 200000;
+
+    /** @var int */
+    protected const STREAM_CHUNK_SIZE = 8192;
+
     /**
      * Line of stderr output identifying the websocket url
      *
@@ -153,18 +169,17 @@ JS;
         // Non-blocking mode
         stream_set_blocking($instance->pipes[2], false);
 
-        $timeoutSeconds = 10;
         $startTime = time();
 
         while (true) {
             $status = proc_get_status($instance->process);
 
             // Timeout handling
-            if ((time() - $startTime) > $timeoutSeconds) {
+            if ((time() - $startTime) > self::CHROME_START_MAX_WAIT_TIME) {
                 proc_terminate($instance->process, 6); // SIGABRT
                 Logger::error(
                     'Browser timed out after %d seconds without the expected output',
-                    $timeoutSeconds,
+                    self::CHROME_CLOSE_MAX_WAIT_TIME,
                 );
 
                 throw new Exception(
@@ -173,15 +188,12 @@ JS;
                 );
             }
 
-            $chunkSize = 8192;
-            $streamWaitTime = 200000;
-            $idleTime = 100000;
             $read = [$instance->pipes[2]];
             $write = null;
             $except = null;
 
-            if (stream_select($read, $write, $except, 0, $streamWaitTime)) {
-                $chunk = fread($instance->pipes[2], $chunkSize);
+            if (stream_select($read, $write, $except, 0, self::STREAM_WAIT_TIME)) {
+                $chunk = fread($instance->pipes[2], self::STREAM_CHUNK_SIZE);
 
                 if ($chunk !== false && $chunk !== '') {
                     Logger::debug('Caught browser output: %s', $chunk);
@@ -198,7 +210,7 @@ JS;
                 break;
             }
 
-            usleep($idleTime);
+            usleep(self::PROCESS_IDLE_TIME);
         }
 
         if ($instance->socket === null || $instance->browserId === null) {
@@ -221,16 +233,16 @@ JS;
             $start = time();
             $running = true;
 
-            while ($running && (time() - $start) < 5) {
+            while ($running && (time() - $start) < self::CHROME_CLOSE_MAX_WAIT_TIME) {
                 $status = proc_get_status($this->process);
                 $running = $status['running'];
 
                 if ($running) {
-                    usleep(100000);
+                    usleep(self::PROCESS_IDLE_TIME);
                 }
             }
 
-            // If still running after 5 seconds, force kills the entire process group
+            // If still running after wait time seconds, force kills the entire process group
             if ($running) {
                 $status = proc_get_status($this->process);
                 if (! empty($status['pid'])) {
@@ -254,10 +266,8 @@ JS;
 
     /**
      * Get the file storage
-     *
-     * @return  StorageInterface
      */
-    public function getFileStorage()
+    public function getFileStorage(): StorageInterface
     {
         if ($this->fileStorage === null) {
             $this->fileStorage = new TemporaryLocalFileStorage();
