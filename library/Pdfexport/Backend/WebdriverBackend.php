@@ -32,6 +32,7 @@ class WebdriverBackend implements PfdPrintBackend
     {
         // This is horribly ugly, but it works for all browser backends
         $encoded = base64_encode($document);
+        $this->driver->executeScript('document.head.remove()');
         $this->driver->executeScript("document.body.outerHTML = atob('$encoded');");
     }
 
