@@ -41,6 +41,7 @@ class Chromedriver extends WebdriverBackend
     {
         $parameters = [
             'printBackground' => true,
+            'transferMode'    => 'ReturnAsBase64',
         ];
 
         return array_merge(
