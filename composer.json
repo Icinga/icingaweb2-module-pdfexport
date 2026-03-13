@@ -8,6 +8,7 @@
   "require": {
     "php": ">=8.2",
     "karriere/pdf-merge": "dev-master",
+    "php-webdriver/webdriver": "1.15.2",
     "phrity/websocket": "^3.6"
   },
   "config": {
