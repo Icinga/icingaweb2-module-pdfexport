@@ -437,7 +437,7 @@ JS;
                 $page,
                 'Page.frameStoppedLoading',
                 [
-                    'frameId' => $this->frameId
+                    'frameId' => $this->frameId,
                 ],
             );
 
@@ -700,15 +700,15 @@ JS;
             throw new Exception("Malformed Chrome Version String: " . $version['Browser']);
         }
 
-        return (int)$matches[1];
+        return (int) $matches[1];
     }
 
-    function isSupported(): bool
+    public function isSupported(): bool
     {
         return $this->getVersion() >= self::MIN_SUPPORTED_CHROME_VERSION;
     }
 
-    function close(): void
+    public function close(): void
     {
         $this->closeBrowser();
         $this->closeBrowser();

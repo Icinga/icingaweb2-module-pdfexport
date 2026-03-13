@@ -24,7 +24,7 @@ class WebdriverBackend implements PfdPrintBackend
         $this->driver = RemoteWebDriver::create($url, $capabilities);
     }
 
-    function __destruct()
+    protected function __destruct()
     {
         $this->close();
     }
@@ -33,7 +33,7 @@ class WebdriverBackend implements PfdPrintBackend
     {
         // This is horribly ugly, but it works for all browser backends
         $encoded = base64_encode($document);
-        $this->driver->executeScript('document.head.remove()');
+        $this->driver->executeScript('document.head.remove();');
         $this->driver->executeScript("document.body.outerHTML = atob('$encoded');");
     }
 
@@ -76,13 +76,13 @@ class WebdriverBackend implements PfdPrintBackend
         return $this->printToPdf($printParameters);
     }
 
-    function isSupported(): bool
+    public function isSupported(): bool
     {
         // TODO: Come up with a check
         return true;
     }
 
-    function close(): void
+    public function close(): void
     {
         $this->driver->quit();
     }
