@@ -17,14 +17,15 @@ class WebdriverBackend implements PfdPrintBackend
 {
     protected RemoteWebDriver $driver;
 
+
     public function __construct(
-        string              $url,
+        string $url,
         DesiredCapabilities $capabilities,
     ) {
         $this->driver = RemoteWebDriver::create($url, $capabilities);
     }
 
-    protected function __destruct()
+    public function __destruct()
     {
         $this->close();
     }
@@ -71,6 +72,11 @@ class WebdriverBackend implements PfdPrintBackend
     {
         $this->setContent($document);
         $this->waitForPageLoad();
+
+        $path = '/tmp/chromedriver-' . time() . '.html';
+        file_put_contents($path, $this->driver->getPageSource());
+        Logger::info("Printing page $path.");
+
         $printParameters = $this->getPrintParameters($document);
 
         return $this->printToPdf($printParameters);

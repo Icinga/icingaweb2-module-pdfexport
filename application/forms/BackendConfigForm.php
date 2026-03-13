@@ -59,7 +59,6 @@ class BackendConfigForm extends ConfigForm
                             );
                             return false;
                         }
-
                     } catch (Exception $e) {
                         $validator->addMessage($e->getMessage());
                         return false;
