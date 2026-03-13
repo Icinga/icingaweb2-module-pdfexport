@@ -9,9 +9,9 @@ use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 
 interface PfdPrintBackend
 {
-    function toPdf(PrintableHtmlDocument $document): string;
+    public function toPdf(PrintableHtmlDocument $document): string;
 
-    function isSupported(): bool;
+    public function isSupported(): bool;
 
-    function close(): void;
+    public function close(): void;
 }
