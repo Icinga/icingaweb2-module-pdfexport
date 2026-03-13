@@ -11,20 +11,21 @@ use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
 use Icinga\Module\Pdfexport\Form\ConfigForm;
 use ipl\Html\Html;
-use ipl\Html\HtmlElement;
 use ipl\Validator\CallbackValidator;
+use ipl\Web\Common\CalloutType;
+use ipl\Web\Widget\Callout;
 
 class BackendConfigForm extends ConfigForm
 {
     public function assemble(): void
     {
-        $this->add(HtmlElement::create(
-            'div',
-            ['class' => 'note'],
+        $this->addHtml(new Callout(
+            CalloutType::Info,
             t(
-                'The precedence for the chosen backend is the same as in this configuration form. ' .
-                'Backends that are not configured are skipped and backends further down the list act as a fallback.',
+                'Backends are chosen in the order of this from.'
+                . ' Backends that are not configured are skipped and ones further down the list act as a fallback.',
             ),
+            t('Info: Backend precedence'),
         ));
 
         $this->add(Html::tag('h2', t("WebDriver")));
