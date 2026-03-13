@@ -5,8 +5,10 @@
 
 namespace Icinga\Module\Pdfexport\Backend;
 
+use Exception;
 use Facebook\WebDriver\Chrome\ChromeDevToolsDriver;
 use Facebook\WebDriver\Remote\DesiredCapabilities;
+use Icinga\Application\Logger;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 
 class Chromedriver extends WebdriverBackend
@@ -54,6 +56,24 @@ class Chromedriver extends WebdriverBackend
     protected function printToPdf(array $printParameters): string
     {
         $devTools = $this->getChromeDeveloperTools();
+
+        $png = base64_decode($devTools->execute(
+            'Page.captureScreenshot',
+            [
+                'format' => 'png',
+            ],
+        )['data']);
+
+        $path = '/tmp/png-' . time() . '.png';
+        file_put_contents($path, $png);
+        Logger::debug("Wrote PNG: " . $path);
+
+        try {
+            $devTools->execute('Console.enable');
+        } catch (Exception $_) {
+            // Deprecated, might fail
+        }
+
         $result = $devTools->execute(
             'Page.printToPDF',
             $printParameters,

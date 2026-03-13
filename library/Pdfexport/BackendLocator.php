@@ -68,7 +68,9 @@ class BackendLocator
             Logger::info("Connected WebDriver Backend: $section");
             return $backend;
         } catch (Exception $e) {
-            Logger::warning("Error while creating remote HeadlessChrome! backend: $section, error: " . $e->getMessage());
+            Logger::warning(
+                "Error while creating remote HeadlessChrome! backend: $section, error: " . $e->getMessage(),
+            );
         }
         return null;
     }
@@ -104,7 +106,7 @@ class BackendLocator
 
         Logger::info("Connecting to backend $section.");
 
-        $backend = match($section) {
+        $backend = match ($section) {
             'local_chrome' => $this->connectToLocalChrome($section),
             'remote_chrome' => $this->connectToRemoteChrome($section),
             default => $this->connectToWebDriver($section),

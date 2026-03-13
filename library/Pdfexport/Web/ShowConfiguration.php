@@ -64,7 +64,7 @@ class ShowConfiguration extends BaseHtmlElement
             [
                 t(
                     'Details can be found in the application log. ' .
-                    "(If you don't have access to this log, call your administrator in this case)"
+                    "(If you don't have access to this log, call your administrator in this case)",
                 ),
                 HtmlString::create('<br>'),
                 t('In case you can access the file by yourself, you can open it and insert the config manually:'),
@@ -81,7 +81,7 @@ class ShowConfiguration extends BaseHtmlElement
                     HtmlElement::create(
                         'code',
                         null,
-                        (string)$this->config,
+                        (string) $this->config,
                     ),
                 ),
             ),

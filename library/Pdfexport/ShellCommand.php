@@ -24,7 +24,7 @@ class ShellCommand
      */
     public function __construct($command, $escape = true)
     {
-        $command = (string)$command;
+        $command = (string) $command;
 
         $this->command = $escape ? escapeshellcmd($command) : $command;
     }
@@ -46,7 +46,7 @@ class ShellCommand
      */
     public function getStatus()
     {
-        $status = (object)proc_get_status($this->resource);
+        $status = (object) proc_get_status($this->resource);
         if ($status->running === false && $this->exitCode === null) {
             // The exit code is only valid the first time proc_get_status is
             // called in terms of running false, hence we capture it
@@ -88,7 +88,7 @@ class ShellCommand
             ));
         }
 
-        $namedpipes = (object)[
+        $namedpipes = (object) [
             'stdin'  => &$pipes[0],
             'stdout' => &$pipes[1],
             'stderr' => &$pipes[2],
@@ -141,7 +141,7 @@ class ShellCommand
 
         $this->resource = null;
 
-        return (object)[
+        return (object) [
             'stdout' => $stdout,
             'stderr' => $stderr,
         ];
