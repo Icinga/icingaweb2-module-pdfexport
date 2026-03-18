@@ -5,12 +5,12 @@
 
 namespace Icinga\Module\Pdfexport\Backend;
 
-use Facebook\WebDriver\Remote\DesiredCapabilities;
+use Icinga\Module\Pdfexport\WebDriver\Capabilities;
 
 class Geckodriver extends WebdriverBackend
 {
     public function __construct(string $rul)
     {
-        parent::__construct($rul, DesiredCapabilities::firefox());
+        parent::__construct($rul, Capabilities::firefox());
     }
 }

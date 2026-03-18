@@ -6,24 +6,24 @@
 namespace Icinga\Module\Pdfexport\Backend;
 
 use Exception;
-use Facebook\WebDriver\Chrome\ChromeDevToolsDriver;
-use Facebook\WebDriver\Remote\DesiredCapabilities;
-use Icinga\Application\Logger;
+use Icinga\Module\Pdfexport\ChromeDevTools\ChromeDevTools;
+use Icinga\Module\Pdfexport\ChromeDevTools\Command;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
+use Icinga\Module\Pdfexport\WebDriver\Capabilities;
 
 class Chromedriver extends WebdriverBackend
 {
-    protected ?ChromeDevToolsDriver $dcp = null;
+    protected ?ChromeDevTools $dcp = null;
 
     public function __construct(string $url)
     {
-        parent::__construct($url, DesiredCapabilities::chrome());
+        parent::__construct($url, Capabilities::chrome());
     }
 
-    protected function getChromeDeveloperTools(): ChromeDevToolsDriver
+    protected function getChromeDeveloperTools(): ChromeDevTools
     {
         if ($this->dcp === null) {
-            $this->dcp = new ChromeDevToolsDriver($this->driver);
+            $this->dcp = new ChromeDevTools($this->driver);
         }
         return $this->dcp;
     }
@@ -57,27 +57,13 @@ class Chromedriver extends WebdriverBackend
     {
         $devTools = $this->getChromeDeveloperTools();
 
-        $png = base64_decode($devTools->execute(
-            'Page.captureScreenshot',
-            [
-                'format' => 'png',
-            ],
-        )['data']);
-
-        $path = '/tmp/png-' . time() . '.png';
-        file_put_contents($path, $png);
-        Logger::debug("Wrote PNG: " . $path);
-
         try {
-            $devTools->execute('Console.enable');
+            $devTools->execute(Command::enableConsole());
         } catch (Exception $_) {
             // Deprecated, might fail
         }
 
-        $result = $devTools->execute(
-            'Page.printToPDF',
-            $printParameters,
-        );
+        $result = $devTools->execute(Command::printToPdf($printParameters));
 
         return base64_decode($result['data']);
     }
