@@ -5,24 +5,23 @@
 
 namespace Icinga\Module\Pdfexport\Backend;
 
-use Facebook\WebDriver\Remote\DesiredCapabilities;
-use Facebook\WebDriver\Remote\RemoteWebDriver;
-use Facebook\WebDriver\WebDriverBy;
-use Facebook\WebDriver\WebDriverExpectedCondition;
-use Facebook\WebDriver\WebDriverWait;
-use Icinga\Application\Logger;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
+use Icinga\Module\Pdfexport\WebDriver\Capabilities;
+use Icinga\Module\Pdfexport\WebDriver\ElementPresentCondition;
+use Icinga\Module\Pdfexport\WebDriver\WebDriver;
+use Icinga\Module\Pdfexport\WebDriver\Command;
 
 class WebdriverBackend implements PfdPrintBackend
 {
-    protected RemoteWebDriver $driver;
+    protected WebDriver $driver;
+
 
 
     public function __construct(
         string $url,
-        DesiredCapabilities $capabilities,
+        Capabilities $capabilities,
     ) {
-        $this->driver = RemoteWebDriver::create($url, $capabilities);
+        $this->driver = WebDriver::create($url, $capabilities);
     }
 
     public function __destruct()
@@ -34,15 +33,17 @@ class WebdriverBackend implements PfdPrintBackend
     {
         // This is horribly ugly, but it works for all browser backends
         $encoded = base64_encode($document);
-        $this->driver->executeScript('document.head.remove();');
-        $this->driver->executeScript("document.body.outerHTML = atob('$encoded');");
+        $this->driver->execute(
+            Command::executeScript('document.head.remove();'),
+        );
+        $this->driver->execute(
+            Command::executeScript("document.body.outerHTML = atob('$encoded');"),
+        );
     }
 
     protected function waitForPageLoad(): void
     {
-        // Wait for the body element to ensure the page has fully loaded
-        $wait = new WebDriverWait($this->driver, 10);
-        $wait->until(WebDriverExpectedCondition::presenceOfElementLocated(WebDriverBy::tagName('body')));
+        $this->driver->wait(ElementPresentCondition::byTagName('body'));
     }
 
     protected function getPrintParameters(PrintableHtmlDocument $document): array
@@ -59,10 +60,8 @@ class WebdriverBackend implements PfdPrintBackend
 
     protected function printToPdf(array $printParameters): string
     {
-        $result = $this->driver->executeCustomCommand(
-            '/session/:sessionId/print',
-            'POST',
-            $printParameters,
+        $result = $this->driver->execute(
+            Command::printPage($printParameters),
         );
 
         return base64_decode($result);
@@ -72,10 +71,6 @@ class WebdriverBackend implements PfdPrintBackend
     {
         $this->setContent($document);
         $this->waitForPageLoad();
-
-        $path = '/tmp/chromedriver-' . time() . '.html';
-        file_put_contents($path, $this->driver->getPageSource());
-        Logger::info("Printing page $path.");
 
         $printParameters = $this->getPrintParameters($document);
 
