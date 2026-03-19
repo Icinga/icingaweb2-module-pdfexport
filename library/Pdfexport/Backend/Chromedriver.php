@@ -7,17 +7,70 @@ namespace Icinga\Module\Pdfexport\Backend;
 
 use Exception;
 use Icinga\Module\Pdfexport\ChromeDevTools\ChromeDevTools;
-use Icinga\Module\Pdfexport\ChromeDevTools\Command;
+use Icinga\Module\Pdfexport\ChromeDevTools\Command as DevToolsCommand;
+use Icinga\Module\Pdfexport\WebDriver\Command;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\WebDriver\Capabilities;
+use Icinga\Module\Pdfexport\WebDriver\ElementPresentCondition;
 
 class Chromedriver extends WebdriverBackend
 {
     protected ?ChromeDevTools $dcp = null;
 
+    public const ACTIVATE_SCRIPTS = <<<JS
+function activateScripts(node) {
+    if (isScript(node) === true) {
+        node.parentNode.replaceChild(cloneScript(node) , node);
+    } else {
+        var i = -1, children = node.childNodes;
+        while (++i < children.length) {
+              activateScripts(children[i]);
+        }
+    }
+
+    return node;
+}
+
+function cloneScript(node) {
+    var script  = document.createElement("script");
+    script.text = node.innerHTML;
+
+    var i = -1, attrs = node.attributes, attr;
+    while (++i < attrs.length) {                                    
+          script.setAttribute((attr = attrs[i]).name, attr.value);
+    }
+    return script;
+}
+
+function isScript(node) {
+    return node.tagName === 'SCRIPT';
+}
+
+activateScripts(document.documentElement);
+JS;
+
     public function __construct(string $url)
     {
         parent::__construct($url, Capabilities::chrome());
+    }
+
+    protected function setContent(PrintableHtmlDocument $document): void
+    {
+        parent::setContent($document);
+
+        $this->driver->execute(
+            Command::executeScript(self::ACTIVATE_SCRIPTS),
+        );
+        $this->driver->execute(
+            Command::executeScript('new Layout().apply();'),
+        );
+    }
+
+    protected function waitForPageLoad(): void
+    {
+        parent::waitForPageLoad();
+
+        $this->driver->wait(ElementPresentCondition::byCssSelector('[data-layout-ready=yes]'));
     }
 
     protected function getChromeDeveloperTools(): ChromeDevTools
@@ -27,18 +80,6 @@ class Chromedriver extends WebdriverBackend
         }
         return $this->dcp;
     }
-
-//    protected function setContent(PrintableHtmlDocument $document): void
-//    {
-//        $devTools = $this->getChromeDeveloperTools();
-//        $devTools->execute(
-//            'Page.setDocumentContent',
-//            [
-//                'frameId' => 'TODO',
-//                'html' => $document->render()
-//            ]
-//        );
-//    }
 
     protected function getPrintParameters(PrintableHtmlDocument $document): array
     {
@@ -58,12 +99,12 @@ class Chromedriver extends WebdriverBackend
         $devTools = $this->getChromeDeveloperTools();
 
         try {
-            $devTools->execute(Command::enableConsole());
+            $devTools->execute(DevToolsCommand::enableConsole());
         } catch (Exception $_) {
             // Deprecated, might fail
         }
 
-        $result = $devTools->execute(Command::printToPdf($printParameters));
+        $result = $devTools->execute(DevToolsCommand::printToPdf($printParameters));
 
         return base64_decode($result['data']);
     }
