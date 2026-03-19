@@ -5,7 +5,7 @@ namespace Icinga\Module\Pdfexport\WebDriver;
 class Command implements CommandInterface
 {
     public function __construct(
-        protected DriverCommand $name,
+        protected CommandName $name,
         protected array $parameters = [],
     ) {
     }
@@ -17,17 +17,17 @@ class Command implements CommandInterface
             'args' => static::prepareScriptArguments($arguments),
         ];
 
-        return new static(DriverCommand::ExecuteScript, $params);
+        return new static(CommandName::ExecuteScript, $params);
     }
 
     public static function getPageSource(): static
     {
-        return new static(DriverCommand::GetPageSource);
+        return new static(CommandName::GetPageSource);
     }
 
     public static function findElement(string $method, string $value): static
     {
-        return new static(DriverCommand::FindElement, [
+        return new static(CommandName::FindElement, [
             'using' => $method,
             'value' => $value,
         ]);
@@ -49,7 +49,7 @@ class Command implements CommandInterface
 
     public static function printPage(array $printParameters): static
     {
-        return new static(DriverCommand::PrintPage, $printParameters);
+        return new static(CommandName::PrintPage, $printParameters);
     }
 
     public function getPath(): string
@@ -67,7 +67,7 @@ class Command implements CommandInterface
         return $this->parameters;
     }
 
-    public function getName(): DriverCommand
+    public function getName(): CommandName
     {
         return $this->name;
     }

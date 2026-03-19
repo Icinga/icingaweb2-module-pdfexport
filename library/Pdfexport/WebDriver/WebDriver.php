@@ -28,7 +28,7 @@ class WebDriver
             'desiredCapabilities' => (object) $capabilities->toArray(),
         ];
 
-        $cmd = new Command(DriverCommand::NewSession, $params);
+        $cmd = new Command(CommandName::NewSession, $params);
 
         $response = $executor->execute(null, $cmd);
 
@@ -76,7 +76,7 @@ class WebDriver
     public function quit(): void
     {
         if ($this->executor !== null) {
-            $this->execute(new Command(DriverCommand::Quit));
+            $this->execute(new Command(CommandName::Quit));
             $this->executor = null;
         }
 

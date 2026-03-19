@@ -4,9 +4,8 @@ namespace Icinga\Module\Pdfexport\WebDriver;
 
 class Capabilities
 {
-
     /** @var array */
-    private static $ossToW3c = [
+    private static array $ossToW3c = [
         'platform' => 'platformName',
         'version' => 'browserVersion',
         'acceptSslCerts' => 'acceptInsecureCerts',
@@ -85,8 +84,10 @@ class Capabilities
         }
 
         if (array_key_exists('firefox_profile', $capabilities)) {
-            if (! array_key_exists('moz:firefoxOptions', $capabilities)
-                || ! array_key_exists('profile', $capabilities['moz:firefoxOptions'])) {
+            if (
+                ! array_key_exists('moz:firefoxOptions', $capabilities)
+                || ! array_key_exists('profile', $capabilities['moz:firefoxOptions'])
+            ) {
                 $w3cCapabilities['moz:firefoxOptions']['profile'] = $capabilities['firefox_profile'];
             }
         }
