@@ -4,6 +4,7 @@ namespace Icinga\Module\Pdfexport\WebDriver;
 
 use Exception;
 use GuzzleHttp\Client;
+use Icinga\Application\Logger;
 use RuntimeException;
 
 class CommandExecutor
@@ -44,15 +45,17 @@ class CommandExecutor
             throw new RuntimeException('Invalid HTTP method');
         }
 
-        if ($command instanceof Command
-            && $command->getName() === DriverCommand::NewSession) {
+        if (
+            $command instanceof Command
+            && $command->getName() === CommandName::NewSession
+        ) {
             $method = 'POST';
         }
 
         $headers = static::DEFAULT_HEADERS;
 
         if (in_array($method, ['POST', 'PUT'], true)) {
-            unset ($headers['expect']);
+            unset($headers['expect']);
         }
 
         if (is_array($params) && ! empty($params)) {
@@ -86,13 +89,16 @@ class CommandExecutor
 
         if (is_array($value) && array_key_exists('sessionId', $value)) {
             $sessionId = $value['sessionId'];
-        } else if (isset($results['sessionId'])) {
+        } elseif (isset($results['sessionId'])) {
             $sessionId = $results['sessionId'];
         }
 
         if (isset($value['error'])) {
+            Logger::error(print_r($value, true));
             throw new Exception(sprintf(
-                "Error in command response: %s - %s", $value['error'], $value['message'] ?? "Unknown error"
+                "Error in command response: %s - %s",
+                $value['error'],
+                $value['message'] ?? "Unknown error",
             ));
         }
 
