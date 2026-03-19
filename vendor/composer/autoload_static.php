@@ -6,22 +6,12 @@ namespace Composer\Autoload;
 
 class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
 {
-    public static $files = array (
-        '0e6d7bf4a5811bfa5cf40c5ccd6fae6a' => __DIR__ . '/..' . '/symfony/polyfill-mbstring/bootstrap.php',
-        '2a3c2110e8e0295330dc3d11a4cbc4cb' => __DIR__ . '/..' . '/php-webdriver/webdriver/lib/Exception/TimeoutException.php',
-    );
-
     public static $prefixLengthsPsr4 = array (
-        'W' => 
+        'W' =>
         array (
             'WebSocket\\' => 10,
         ),
-        'S' => 
-        array (
-            'Symfony\\Polyfill\\Mbstring\\' => 26,
-            'Symfony\\Component\\Process\\' => 26,
-        ),
-        'P' => 
+        'P' =>
         array (
             'Psr\\Log\\' => 8,
             'Psr\\Http\\Message\\' => 17,
@@ -30,62 +20,46 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
             'Phrity\\Http\\' => 12,
             'Phrity\\Comparison\\' => 18,
         ),
-        'K' => 
+        'K' =>
         array (
             'Karriere\\PdfMerge\\' => 18,
-        ),
-        'F' => 
-        array (
-            'Facebook\\WebDriver\\' => 19,
         ),
     );
 
     public static $prefixDirsPsr4 = array (
-        'WebSocket\\' => 
+        'WebSocket\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/websocket/src',
         ),
-        'Symfony\\Polyfill\\Mbstring\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/polyfill-mbstring',
-        ),
-        'Symfony\\Component\\Process\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/symfony/process',
-        ),
-        'Psr\\Log\\' => 
+        'Psr\\Log\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/log/src',
         ),
-        'Psr\\Http\\Message\\' => 
+        'Psr\\Http\\Message\\' =>
         array (
             0 => __DIR__ . '/..' . '/psr/http-factory/src',
             1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
-        'Phrity\\Util\\' => 
+        'Phrity\\Util\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/util-errorhandler/src',
         ),
-        'Phrity\\Net\\' => 
+        'Phrity\\Net\\' =>
         array (
-            0 => __DIR__ . '/..' . '/phrity/net-stream/src',
-            1 => __DIR__ . '/..' . '/phrity/net-uri/src',
+            0 => __DIR__ . '/..' . '/phrity/net-uri/src',
+            1 => __DIR__ . '/..' . '/phrity/net-stream/src',
         ),
-        'Phrity\\Http\\' => 
+        'Phrity\\Http\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/http/src',
         ),
-        'Phrity\\Comparison\\' => 
+        'Phrity\\Comparison\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/comparison/src',
         ),
-        'Karriere\\PdfMerge\\' => 
+        'Karriere\\PdfMerge\\' =>
         array (
             0 => __DIR__ . '/..' . '/karriere/pdf-merge/src',
-        ),
-        'Facebook\\WebDriver\\' => 
-        array (
-            0 => __DIR__ . '/..' . '/php-webdriver/webdriver/lib',
         ),
     );
 

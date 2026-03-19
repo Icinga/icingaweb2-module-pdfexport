@@ -3,7 +3,7 @@
         'name' => '__root__',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '9468d76922e728ff5aa16d55fc4ca472755e07e5',
+        'reference' => '9ce3413e78d2809619557cbe6ea79fafc5dd70c5',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -13,17 +13,11 @@
         '__root__' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '9468d76922e728ff5aa16d55fc4ca472755e07e5',
+            'reference' => '9ce3413e78d2809619557cbe6ea79fafc5dd70c5',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
             'dev_requirement' => false,
-        ),
-        'facebook/webdriver' => array(
-            'dev_requirement' => false,
-            'replaced' => array(
-                0 => '*',
-            ),
         ),
         'karriere/pdf-merge' => array(
             'pretty_version' => 'dev-master',
@@ -34,15 +28,6 @@
             'aliases' => array(
                 0 => '9999999-dev',
             ),
-            'dev_requirement' => false,
-        ),
-        'php-webdriver/webdriver' => array(
-            'pretty_version' => '1.15.2',
-            'version' => '1.15.2.0',
-            'reference' => '998e499b786805568deaf8cbf06f4044f05d91bf',
-            'type' => 'library',
-            'install_path' => __DIR__ . '/../php-webdriver/webdriver',
-            'aliases' => array(),
             'dev_requirement' => false,
         ),
         'phrity/comparison' => array(
@@ -123,24 +108,6 @@
             'reference' => 'f16e1d5863e37f8d8c2a01719f5b34baa2b714d3',
             'type' => 'library',
             'install_path' => __DIR__ . '/../psr/log',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
-        'symfony/polyfill-mbstring' => array(
-            'pretty_version' => 'v1.33.0',
-            'version' => '1.33.0.0',
-            'reference' => '6d857f4d76bd4b343eac26d6b539585d2bc56493',
-            'type' => 'library',
-            'install_path' => __DIR__ . '/../symfony/polyfill-mbstring',
-            'aliases' => array(),
-            'dev_requirement' => false,
-        ),
-        'symfony/process' => array(
-            'pretty_version' => 'v7.4.5',
-            'version' => '7.4.5.0',
-            'reference' => '608476f4604102976d687c483ac63a79ba18cc97',
-            'type' => 'library',
-            'install_path' => __DIR__ . '/../symfony/process',
             'aliases' => array(),
             'dev_requirement' => false,
         ),
