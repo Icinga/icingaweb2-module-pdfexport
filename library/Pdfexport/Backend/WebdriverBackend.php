@@ -15,8 +15,6 @@ class WebdriverBackend implements PfdPrintBackend
 {
     protected WebDriver $driver;
 
-
-
     public function __construct(
         string $url,
         Capabilities $capabilities,
