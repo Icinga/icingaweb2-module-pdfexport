@@ -2,7 +2,7 @@
 
 namespace Icinga\Module\Pdfexport\WebDriver;
 
-enum DriverCommand: string
+enum CommandName: string
 {
     case NewSession = 'newSession';
     case Status = 'status';
@@ -15,7 +15,7 @@ enum DriverCommand: string
 
     public function getPath(): string
     {
-        return match($this) {
+        return match ($this) {
             self::NewSession => '/session',
             self::Status => '/status',
             self::Close => '/session/:sessionId/window',
@@ -29,7 +29,7 @@ enum DriverCommand: string
 
     public function getMethod(): string
     {
-        return match($this) {
+        return match ($this) {
             self::NewSession => 'POST',
             self::Status => 'GET',
             self::Close => 'DELETE',

@@ -4,12 +4,13 @@ namespace Icinga\Module\Pdfexport\WebDriver;
 
 class ElementPresentCondition implements ConditionInterface
 {
-    const WEBDRIVER_ELEMENT_IDENTIFIER = 'element-6066-11e4-a52e-4f735466cecf';
+    protected const WEBDRIVER_ELEMENT_IDENTIFIER = 'element-6066-11e4-a52e-4f735466cecf';
 
     protected function __construct(
         protected string $mechanism,
         protected string $value,
-    ) {}
+    ) {
+    }
 
     public function apply(WebDriver $driver): mixed
     {
