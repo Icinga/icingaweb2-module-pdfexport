@@ -5,22 +5,12 @@
 
 namespace Icinga\Module\Pdfexport\ChromeDevTools;
 
-class Command
+readonly class Command
 {
     public function __construct(
-        protected string $name,
-        protected array $parameters = [],
+        public string $name,
+        public array $parameters = [],
     ) {
-    }
-
-    public function getName(): string
-    {
-        return $this->name;
-    }
-
-    public function getParameters(): array
-    {
-        return $this->parameters;
     }
 
     public static function enableConsole(): static

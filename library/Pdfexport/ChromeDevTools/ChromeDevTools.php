@@ -18,8 +18,8 @@ class ChromeDevTools
     public function execute(Command $command): mixed
     {
         $params = [
-            'cmd' => $command->getName(),
-            'params' => $command->getParameters(),
+            'cmd' => $command->name,
+            'params' => $command->parameters,
         ];
 
         $customCommand = new CustomCommand(
