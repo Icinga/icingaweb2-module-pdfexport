@@ -2,4 +2,4 @@ Module: PDF Export
 Version: 0.12.0
 Requires:
   Libraries: icinga-php-library (>=0.17.1), icinga-php-thirdparty (>=0.13.0)
-Description: PDF Export via Google Chrome/Chromium
+Description: PDF Export via Google Chrome/WebDriver

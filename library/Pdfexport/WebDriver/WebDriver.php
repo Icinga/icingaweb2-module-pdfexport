@@ -35,7 +35,7 @@ class WebDriver
 
         $response = $executor->execute(null, $cmd);
 
-        return new static($executor, $response->getSessionID());
+        return new static($executor, $response->sessionId);
     }
 
     public function execute(CommandInterface $command): mixed
@@ -46,7 +46,7 @@ class WebDriver
 
         $response = $this->executor->execute($this->sessionId, $command);
 
-        return $response->getValue();
+        return $response->value;
     }
 
     public function wait(
