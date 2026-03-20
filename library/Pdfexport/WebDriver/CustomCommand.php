@@ -1,8 +1,9 @@
 <?php
 
-namespace Icinga\Module\Pdfexport\WebDriver;
+// SPDX-FileCopyrightText: 2026 Icinga GmbH <https://icinga.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
 
-use Icinga\Module\Pdfexport\WebDriver\CommandInterface;
+namespace Icinga\Module\Pdfexport\WebDriver;
 
 class CustomCommand implements CommandInterface
 {
