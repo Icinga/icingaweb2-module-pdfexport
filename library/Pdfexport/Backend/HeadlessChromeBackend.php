@@ -8,6 +8,7 @@ namespace Icinga\Module\Pdfexport\Backend;
 use Exception;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ServerException;
+use Icinga\Application\Icinga;
 use Icinga\Application\Logger;
 use Icinga\Application\Platform;
 use Icinga\File\Storage\StorageInterface;
@@ -46,26 +47,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     /** @var string */
     public const WAIT_FOR_NETWORK = 'wait-for-network';
-
-    /** @var string Javascript Promise to wait for layout initialization */
-    public const WAIT_FOR_LAYOUT = <<<JS
-new Promise((fulfill, reject) => {
-    let timeoutId = setTimeout(() => reject('fail'), 10000);
-
-    if (document.documentElement.dataset.layoutReady === 'yes') {
-        clearTimeout(timeoutId);
-        fulfill(null);
-        return;
-    }
-
-    document.addEventListener('layout-ready', e => {
-        clearTimeout(timeoutId);
-        fulfill(e.detail);
-    }, {
-        once: true
-    });
-})
-JS;
 
     protected ?StorageInterface $fileStorage = null;
 
@@ -469,11 +450,20 @@ JS;
                 'expression' => 'setTimeout(() => new Layout().apply(), 0)',
             ]);
 
+            $module = Icinga::app()->getModuleManager()->getModule('pdfexport');
+            if (! method_exists($module, 'getJsDir')) {
+                $jsPath = join(DIRECTORY_SEPARATOR, [$module->getBaseDir(), 'public', 'js']);
+            } else {
+                $jsPath = $module->getJsDir();
+            }
+
+            $waitForLayout = file_get_contents($jsPath . '/wait-for-layout.js');
+
             $promisedResult = $this->communicate($page, 'Runtime.evaluate', [
                 'awaitPromise'  => true,
                 'returnByValue' => true,
                 'timeout'       => 1000, // Failsafe: doesn't apply to `await` it seems
-                'expression'    => static::WAIT_FOR_LAYOUT,
+                'expression'    => $waitForLayout,
             ]);
             if (isset($promisedResult['exceptionDetails'])) {
                 if (isset($promisedResult['exceptionDetails']['exception']['description'])) {

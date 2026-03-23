@@ -6,6 +6,7 @@
 namespace Icinga\Module\Pdfexport\Backend;
 
 use Exception;
+use Icinga\Application\Icinga;
 use Icinga\Module\Pdfexport\ChromeDevTools\ChromeDevTools;
 use Icinga\Module\Pdfexport\ChromeDevTools\Command as DevToolsCommand;
 use Icinga\Module\Pdfexport\WebDriver\Command;
@@ -17,38 +18,6 @@ class Chromedriver extends WebdriverBackend
 {
     protected ?ChromeDevTools $dcp = null;
 
-    public const ACTIVATE_SCRIPTS = <<<JS
-function activateScripts(node) {
-    if (isScript(node) === true) {
-        node.parentNode.replaceChild(cloneScript(node) , node);
-    } else {
-        var i = -1, children = node.childNodes;
-        while (++i < children.length) {
-              activateScripts(children[i]);
-        }
-    }
-
-    return node;
-}
-
-function cloneScript(node) {
-    var script  = document.createElement("script");
-    script.text = node.innerHTML;
-
-    var i = -1, attrs = node.attributes, attr;
-    while (++i < attrs.length) {                                    
-          script.setAttribute((attr = attrs[i]).name, attr.value);
-    }
-    return script;
-}
-
-function isScript(node) {
-    return node.tagName === 'SCRIPT';
-}
-
-activateScripts(document.documentElement);
-JS;
-
     public function __construct(string $url)
     {
         parent::__construct($url, Capabilities::chrome());
@@ -58,8 +27,17 @@ JS;
     {
         parent::setContent($document);
 
+        $module = Icinga::app()->getModuleManager()->getModule('pdfexport');
+        if (! method_exists($module, 'getJsDir')) {
+            $jsPath = join(DIRECTORY_SEPARATOR, [$module->getBaseDir(), 'public', 'js']);
+        } else {
+            $jsPath = $module->getJsDir();
+        }
+
+        $activeScripts = file_get_contents($jsPath . '/activate-scripts.js');
+
         $this->driver->execute(
-            Command::executeScript(self::ACTIVATE_SCRIPTS),
+            Command::executeScript($activeScripts),
         );
         $this->driver->execute(
             Command::executeScript('new Layout().apply();'),
