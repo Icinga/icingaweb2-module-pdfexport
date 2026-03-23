@@ -22,7 +22,8 @@ class ConfigController extends CompatController
 
     public function backendAction()
     {
-        $form = new BackendConfigForm(Config::module('pdfexport'));
+        $form = new BackendConfigForm();
+        $form->setConfig(Config::module('pdfexport'));
 
         $form->handleRequest($this->getServerRequest());
 
