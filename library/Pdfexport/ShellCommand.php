@@ -19,8 +19,8 @@ class ShellCommand
     /**
      * Create a new command
      *
-     * @param   string  $command    The command to execute
-     * @param   bool    $escape     Whether to escape the command
+     * @param string $command The command to execute
+     * @param bool $escape Whether to escape the command
      */
     public function __construct($command, $escape = true)
     {
@@ -72,26 +72,26 @@ class ShellCommand
         $descriptors = [
             ['pipe', 'r'], // stdin
             ['pipe', 'w'], // stdout
-            ['pipe', 'w']  // stderr
+            ['pipe', 'w'],  // stderr
         ];
 
         $this->resource = proc_open(
             $this->command,
             $descriptors,
-            $pipes
+            $pipes,
         );
 
         if (! is_resource($this->resource)) {
             throw new \Exception(sprintf(
                 "Can't fork '%s'",
-                $this->command
+                $this->command,
             ));
         }
 
         $namedpipes = (object) [
-            'stdin'     => &$pipes[0],
-            'stdout'    => &$pipes[1],
-            'stderr'    => &$pipes[2]
+            'stdin'  => &$pipes[0],
+            'stdout' => &$pipes[1],
+            'stderr' => &$pipes[2],
         ];
 
         fclose($namedpipes->stdin);
@@ -143,7 +143,7 @@ class ShellCommand
 
         return (object) [
             'stdout' => $stdout,
-            'stderr' => $stderr
+            'stderr' => $stderr,
         ];
     }
 }

@@ -6,10 +6,12 @@
 namespace Icinga\Module\Pdfexport\Controllers;
 
 use Icinga\Application\Config;
-use Icinga\Module\Pdfexport\Forms\ChromeBinaryForm;
-use Icinga\Web\Controller;
+use Icinga\Module\Pdfexport\Forms\BackendConfigForm;
+use ipl\Html\HtmlString;
+use ipl\Web\Compat\CompatController;
+use Icinga\Web\Widget\Tabs;
 
-class ConfigController extends Controller
+class ConfigController extends CompatController
 {
     public function init()
     {
@@ -18,14 +20,21 @@ class ConfigController extends Controller
         parent::init();
     }
 
-    public function chromeAction()
+    public function backendAction()
     {
-        $form = (new ChromeBinaryForm())
-            ->setIniConfig(Config::module('pdfexport'));
+        $form = new BackendConfigForm();
+        $form->setConfig(Config::module('pdfexport'));
 
-        $form->handleRequest();
+        $form->handleRequest($this->getServerRequest());
 
-        $this->view->tabs = $this->Module()->getConfigTabs()->activate('chrome');
-        $this->view->form = $form;
+        $this->mergeTabs($this->Module()->getConfigTabs()->activate('backend'));
+        $this->addContent(HtmlString::create($form->render()));
+    }
+
+    protected function mergeTabs(Tabs $tabs): void
+    {
+        foreach ($tabs->getTabs() as $tab) {
+            $this->tabs->add($tab->getName(), $tab);
+        }
     }
 }
