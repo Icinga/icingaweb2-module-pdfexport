@@ -170,8 +170,10 @@ class BackendConfigForm extends ConfigForm
         ]);
 
         $this->addElement('checkbox', 'local_chrome__force_temp_storage', [
-            'label'       => $this->translate('Use temp storage'),
-            'description' => $this->translate('Use temp storage to transfer the html to the local chrome instance.'),
+            'label'          => $this->translate('Use temp storage'),
+            'description'    => $this->translate('Use temp storage to transfer the html to the local chrome instance.'),
+            'checkedValue'   => '1',
+            'uncheckedValue' => '0',
         ]);
 
         $this->addElement('submit', 'submit', [
