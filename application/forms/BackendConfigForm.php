@@ -9,7 +9,7 @@ use Exception;
 use Icinga\Module\Pdfexport\Backend\Chromedriver;
 use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
-use Icinga\Module\Pdfexport\Form\ConfigForm;
+use Icinga\Web\Form\ConfigForm;
 use ipl\Html\Html;
 use ipl\Validator\CallbackValidator;
 use ipl\Web\Common\CalloutType;
@@ -94,7 +94,7 @@ class BackendConfigForm extends ConfigForm
             'A remote chrome instance and it\'s debug interface can be used to create PDFs.',
         )));
 
-        $this->addElement('text', 'remote_chrome_host', [
+        $this->addElement('text', 'remote_chrome__host', [
             'label'       => $this->translate('Host'),
             'description' => $this->translate('Host address of the server with the running web browser.'),
             'validators'  => [
