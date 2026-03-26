@@ -17,7 +17,15 @@ class BackendLocator
 {
     public function getFirstSupportedBackend(): ?PfdPrintBackend
     {
-        foreach (['webdriver', 'remote_chrome', 'local_chrome'] as $section) {
+        $sorted = [];
+        foreach (Config::module('pdfexport') as $section => $configs) {
+            $priority = (int) $configs->get('priority', 100);
+            $sorted[$section] = $priority;
+        }
+
+        asort($sorted);
+
+        foreach ($sorted as $section => $priority) {
             $backend = $this->getSingleBackend($section);
             if ($backend === null) {
                 continue;
@@ -40,8 +48,8 @@ class BackendLocator
             $url = "$host:$port";
             $type = $config->get($section, 'type');
             $backend = match ($type) {
-                'chrome' => new Chromedriver($url),
-                'firefox' => new Geckodriver($url),
+                'chrome_webdriver' => new Chromedriver($url),
+                'firefox_webdriver' => new Geckodriver($url),
                 default => throw new Exception("Invalid webdriver type $type"),
             };
             Logger::info("Connected WebDriver Backend: $section");
@@ -106,7 +114,8 @@ class BackendLocator
 
         Logger::info("Connecting to backend $section.");
 
-        $backend = match ($section) {
+        $type = $config->get($section, 'type');
+        $backend = match ($type) {
             'local_chrome' => $this->connectToLocalChrome($section),
             'remote_chrome' => $this->connectToRemoteChrome($section),
             default => $this->connectToWebDriver($section),

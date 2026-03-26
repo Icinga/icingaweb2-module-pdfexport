@@ -5,8 +5,8 @@
 
 /** @var \Icinga\Application\Modules\Module $this */
 
-$this->provideConfigTab('backend', array(
+$this->provideConfigTab('backends', array(
     'title' => $this->translate('Configure the Chrome/WebDriver connection'),
-    'label' => $this->translate('Backend'),
-    'url'   => 'config/backend'
+    'label' => $this->translate('Backends'),
+    'url'   => 'config/backends'
 ));
