@@ -3,7 +3,7 @@
 ## Requirements <a id="installation-requirements"></a>
 
 * PHP ≥ 8.2
-* Icinga Web 2 ≥ 2.12
+* Icinga Web 2 ≥ 2.12.5
 * Icinga Web 2 libraries:
   * [Icinga PHP Library (ipl)](https://github.com/Icinga/icinga-php-library) ≥ 1.0.0
   * [Icinga PHP Thirdparty](https://github.com/Icinga/icinga-php-thirdparty) ≥ 1.0.0
