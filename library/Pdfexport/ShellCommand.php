@@ -5,28 +5,42 @@
 
 namespace Icinga\Module\Pdfexport;
 
+use Exception;
+
 class ShellCommand
 {
     /** @var string Command to execute */
-    protected $command;
+    protected string $command;
 
-    /** @var int Exit code of the command */
-    protected $exitCode;
+    /** @var ?int Exit code of the command */
+    protected ?int $exitCode = null;
+
+    /** @var array|null Environment variables */
+    protected ?array $env;
 
     /** @var ?resource Process resource */
     protected $resource;
+
+    /** @var object|null Named pipe resources */
+    protected ?object $namedPipes;
+
+    /** @var string collected stdout */
+    protected string $stdout;
+
+    /** @var string collected stderr */
+    protected string $stderr;
 
     /**
      * Create a new command
      *
      * @param string $command The command to execute
      * @param bool $escape Whether to escape the command
+     * @param array|null $env Environment variables
      */
-    public function __construct($command, $escape = true)
+    public function __construct(string $command, bool $escape = true, ?array $env = null)
     {
-        $command = (string) $command;
-
         $this->command = $escape ? escapeshellcmd($command) : $command;
+        $this->env = $env;
     }
 
     /**
@@ -34,7 +48,7 @@ class ShellCommand
      *
      * @return int
      */
-    public function getExitCode()
+    public function getExitCode(): int
     {
         return $this->exitCode;
     }
@@ -44,7 +58,7 @@ class ShellCommand
      *
      * @return object
      */
-    public function getStatus()
+    public function getStatus(): object
     {
         $status = (object) proc_get_status($this->resource);
         if ($status->running === false && $this->exitCode === null) {
@@ -56,64 +70,67 @@ class ShellCommand
         return $status;
     }
 
-    /**
-     * Execute the command
-     *
-     * @return  object
-     *
-     * @throws  \Exception
-     */
-    public function execute()
+    public function start(): void
     {
         if ($this->resource !== null) {
-            throw new \Exception('Command already started');
+            throw new Exception('Command already started');
         }
 
         $descriptors = [
             ['pipe', 'r'], // stdin
             ['pipe', 'w'], // stdout
-            ['pipe', 'w'],  // stderr
+            ['pipe', 'w'], // stderr
         ];
 
         $this->resource = proc_open(
             $this->command,
             $descriptors,
             $pipes,
+            null,
+            $this->env,
         );
 
         if (! is_resource($this->resource)) {
-            throw new \Exception(sprintf(
+            throw new Exception(sprintf(
                 "Can't fork '%s'",
                 $this->command,
             ));
         }
 
-        $namedpipes = (object) [
-            'stdin'  => &$pipes[0],
+        $this->namedPipes = (object) [
+            'stdin' => &$pipes[0],
             'stdout' => &$pipes[1],
             'stderr' => &$pipes[2],
         ];
 
-        fclose($namedpipes->stdin);
+        fclose($this->namedPipes->stdin);
+    }
 
-        $read = [$namedpipes->stderr, $namedpipes->stdout];
+    public function wait($callback = null): void
+    {
+        if ($this->resource === null) {
+            throw new Exception('Command not started');
+        }
+
+        $read = [$this->namedPipes->stderr, $this->namedPipes->stdout];
         $origRead = $read;
-        $write = null; // stdin not handled
+        // stdin not handled
+        $write = null;
         $except = null;
-        $stdout = '';
-        $stderr = '';
+        $this->stdout = '';
+        $this->stderr = '';
 
-        stream_set_blocking($namedpipes->stdout, false); // non-blocking
-        stream_set_blocking($namedpipes->stderr, false);
+        stream_set_blocking($this->namedPipes->stdout, false);
+        stream_set_blocking($this->namedPipes->stderr, false);
 
         while (stream_select($read, $write, $except, 0, 20000) !== false) {
             foreach ($read as $pipe) {
-                if ($pipe === $namedpipes->stdout) {
-                    $stdout .= stream_get_contents($pipe);
+                if ($pipe === $this->namedPipes->stdout) {
+                    $this->stdout .= stream_get_contents($pipe);
                 }
 
-                if ($pipe === $namedpipes->stderr) {
-                    $stderr .= stream_get_contents($pipe);
+                if ($pipe === $this->namedPipes->stderr) {
+                    $this->stderr .= stream_get_contents($pipe);
                 }
             }
 
@@ -129,10 +146,25 @@ class ShellCommand
 
             // Reset pipes
             $read = $origRead;
-        }
 
-        fclose($namedpipes->stderr);
-        fclose($namedpipes->stdout);
+            if ($callback !== null) {
+                $continue = call_user_func($callback, $this->stdout, $this->stderr);
+                if ($continue === false) {
+                    break;
+                }
+            }
+        }
+    }
+
+    public function stop(): int
+    {
+        if ($this->resource === null) {
+            throw new Exception('Command not started');
+        }
+        fclose($this->namedPipes->stderr);
+        fclose($this->namedPipes->stdout);
+
+        proc_terminate($this->resource);
 
         $exitCode = proc_close($this->resource);
         if ($this->exitCode === null) {
@@ -140,10 +172,8 @@ class ShellCommand
         }
 
         $this->resource = null;
+        $this->namedPipes = null;
 
-        return (object) [
-            'stdout' => $stdout,
-            'stderr' => $stderr,
-        ];
+        return $exitCode;
     }
 }

@@ -14,6 +14,7 @@ use Icinga\Application\Platform;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
+use Icinga\Module\Pdfexport\ShellCommand;
 use LogicException;
 use Throwable;
 use WebSocket\Client;
@@ -22,21 +23,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
 {
     /** @var int */
     public const MIN_SUPPORTED_CHROME_VERSION = 59;
-
-    /** @var int */
-    protected const CHROME_START_MAX_WAIT_TIME = 10;
-
-    /** @var int */
-    protected const CHROME_CLOSE_MAX_WAIT_TIME = 5;
-
-    /** @var int */
-    protected const PROCESS_IDLE_TIME = 100000;
-
-    /** @var int */
-    protected const STREAM_WAIT_TIME = 200000;
-
-    /** @var int */
-    protected const STREAM_CHUNK_SIZE = 8192;
 
     /**
      * Line of stderr output identifying the websocket url
@@ -62,9 +48,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     private array $interceptedEvents = [];
 
-    protected $process;
-
-    protected array $pipes = [];
+    protected ?ShellCommand $process = null;
 
     protected ?string $socket = null;
 
@@ -111,11 +95,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
 
         $browserHome = $instance->getFileStorage()->resolvePath('HOME');
-        $descriptors = [
-            0 => ['pipe', 'r'],  // stdin
-            1 => ['pipe', 'w'],  // stdout
-            2 => ['pipe', 'w'],  // stderr
-        ];
 
         $commandLine = join(' ', [
             escapeshellarg($path),
@@ -141,58 +120,25 @@ class HeadlessChromeBackend implements PfdPrintBackend
             Logger::debug('Starting browser process: %s', $commandLine);
         }
 
-        $instance->process = proc_open($commandLine, $descriptors, $instance->pipes, null, $env);
-
-        if (! is_resource($instance->process)) {
-            throw new Exception('Could not start browser process.');
-        }
-
-        // Non-blocking mode
-        stream_set_blocking($instance->pipes[2], false);
-
-        $startTime = time();
-
-        while (true) {
-            $status = proc_get_status($instance->process);
-
-            // Timeout handling
-            if ((time() - $startTime) > self::CHROME_START_MAX_WAIT_TIME) {
-                proc_terminate($instance->process, 6); // SIGABRT
-                Logger::error(
-                    'Browser timed out after %d seconds without the expected output',
-                    self::CHROME_CLOSE_MAX_WAIT_TIME,
-                );
-
-                throw new Exception(
-                    'Received empty response or none at all from browser.'
-                    . ' Please check the logs for further details.',
-                );
+        $instance->process = new ShellCommand($commandLine, false, $env);
+        $instance->process->start();
+        Logger::debug('Started browser process');
+        $instance->process->wait(function ($stdout, $stderr) use ($instance) {
+            if ($stdout !== '') {
+                Logger::debug('Caught browser stdout: %d', mb_strlen($stdout));
             }
+            if ($stderr !== '') {
+                Logger::error('Browser process stderr: %d', mb_strlen($stderr));
+                if (preg_match(self::DEBUG_ADDR_PATTERN, trim($stderr), $matches)) {
+                    $instance->socket = $matches[1];
+                    $instance->browserId = $matches[2];
 
-            $read = [$instance->pipes[2]];
-            $write = null;
-            $except = null;
-
-            if (stream_select($read, $write, $except, 0, self::STREAM_WAIT_TIME)) {
-                $chunk = fread($instance->pipes[2], self::STREAM_CHUNK_SIZE);
-
-                if ($chunk !== false && $chunk !== '') {
-                    Logger::debug('Caught browser output: %s', $chunk);
-
-                    if (preg_match(self::DEBUG_ADDR_PATTERN, trim($chunk), $matches)) {
-                        $instance->socket = $matches[1];
-                        $instance->browserId = $matches[2];
-                        break;
-                    }
+                    Logger::debug('Caught browser info socket: %s, id: %s', $instance->socket, $instance->browserId);
+                    return false;
                 }
             }
-
-            if (! $status['running']) {
-                break;
-            }
-
-            usleep(self::PROCESS_IDLE_TIME);
-        }
+            return true;
+        });
 
         if ($instance->socket === null || $instance->browserId === null) {
             throw new Exception('Could not start browser process.');
@@ -203,35 +149,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     protected function closeLocal(): void
     {
-        foreach ($this->pipes as $pipe) {
-            fclose($pipe);
-        }
-        $this->pipes = [];
+        Logger::debug('Closing local chrome instance');
 
         if ($this->process !== null) {
-            proc_terminate($this->process);
-
-            $start = time();
-            $running = true;
-
-            while ($running && (time() - $start) < self::CHROME_CLOSE_MAX_WAIT_TIME) {
-                $status = proc_get_status($this->process);
-                $running = $status['running'];
-
-                if ($running) {
-                    usleep(self::PROCESS_IDLE_TIME);
-                }
-            }
-
-            // If still running after wait time seconds, force kills the entire process group
-            if ($running) {
-                $status = proc_get_status($this->process);
-                if (! empty($status['pid'])) {
-                    posix_kill(-$status['pid'], SIGKILL);
-                }
-            }
-
-            proc_close($this->process);
+            $code = $this->process->stop();
+            Logger::error("Closed local chrome with exit code %d", $code);
             $this->process = null;
         }
 
@@ -356,7 +278,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
             try {
                 $this->communicate($this->page, 'Console.enable');
-            } catch (Exception $_) {
+            } catch (Exception) {
                 // Deprecated, might fail
             }
         }
@@ -526,7 +448,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
     }
 
-    private function registerEvent($method, $params)
+    private function registerEvent($method, $params): void
     {
         if (Logger::getInstance()->getLevel() === Logger::DEBUG) {
             $shortenValues = function ($params) use (&$shortenValues) {
