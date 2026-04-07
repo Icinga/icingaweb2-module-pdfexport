@@ -122,7 +122,7 @@ class BackendLocator
                 $binary,
                 Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0') === '1',
             );
-            Logger::info("Connected WebDriver Backend: $section");
+            Logger::info("Connected local chrome Backend: $section");
             return $backend;
         } catch (Exception $e) {
             Logger::warning(
