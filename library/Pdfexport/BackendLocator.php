@@ -13,8 +13,16 @@ use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
 use Icinga\Module\Pdfexport\Backend\PfdPrintBackend;
 
+/**
+ * Class implementing the traversal and fallback logic for the PDF backend selection.
+ */
 class BackendLocator
 {
+    /**
+     * Get the first supported backend from the configuration which responded with a successful connection.
+     * First, in this context means the backend with the lowest priority.
+     * @return PfdPrintBackend|null the first supported backend or null if none is available
+     */
     public function getFirstSupportedBackend(): ?PfdPrintBackend
     {
         $sorted = [];
@@ -36,6 +44,13 @@ class BackendLocator
         return null;
     }
 
+    /**
+     * Create and connect to a WebDriver backend.
+     * The backend is identified by the 'type' configuration option.
+     * @param string $section The configuration section to use for the backend.
+     *
+     * @return PfdPrintBackend|null The created and connected backend or null if the backend could not be created.
+     */
     protected function connectToWebDriver(string $section): ?PfdPrintBackend
     {
         $config = Config::module('pdfexport');
@@ -60,6 +75,12 @@ class BackendLocator
         return null;
     }
 
+    /**
+     * Connect to a remote HeadlessChrome backend.
+     * @param string $section the configuration section to use for the backend
+     *
+     * @return PfdPrintBackend|null the created and connected backend or null if the backend could not be created
+     */
     protected function connectToRemoteChrome(string $section): ?PfdPrintBackend
     {
         $config = Config::module('pdfexport');
@@ -83,6 +104,12 @@ class BackendLocator
         return null;
     }
 
+    /**
+     * Connect to a local HeadlessChrome backend.
+     * @param string $section the configuration section to use for the backend
+     *
+     * @return PfdPrintBackend|null the created and connected backend or null if the backend could not be created
+     */
     protected function connectToLocalChrome(string $section): ?PfdPrintBackend
     {
         $config = Config::module('pdfexport');
@@ -93,7 +120,7 @@ class BackendLocator
             }
             $backend = HeadlessChromeBackend::createLocal(
                 $binary,
-                $this->getForceTempStorage(),
+                Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0') === '1',
             );
             Logger::info("Connected WebDriver Backend: $section");
             return $backend;
@@ -105,7 +132,14 @@ class BackendLocator
         return null;
     }
 
-    protected function getSingleBackend($section): ?PfdPrintBackend
+    /**
+     * Create and connect to a single backend.
+     * The type of the backend is determined by the 'type' configuration option.
+     * @param $section string the configuration section to use for the backend
+     *
+     * @return PfdPrintBackend|null the created and connected backend or null if the backend could not be created
+     */
+    protected function getSingleBackend(string $section): ?PfdPrintBackend
     {
         $config = Config::module('pdfexport');
         if (! $config->hasSection($section)) {
@@ -132,10 +166,5 @@ class BackendLocator
         }
 
         return $backend;
-    }
-
-    public static function getForceTempStorage(): bool
-    {
-        return Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0') === '1';
     }
 }

@@ -15,7 +15,7 @@ class ElementPresentCondition implements ConditionInterface
     ) {
     }
 
-    public function apply(WebDriver $driver): mixed
+    public function apply(WebDriver $driver): bool
     {
         $response = $driver->execute(
             Command::findElement($this->mechanism, $this->value),

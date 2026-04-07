@@ -7,9 +7,13 @@ namespace Icinga\Module\Pdfexport\WebDriver;
 
 use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Icinga\Application\Logger;
 use RuntimeException;
 
+/**
+ * An abstraction layer for executing WebDriver commands.
+ */
 class CommandExecutor
 {
     protected const DEFAULT_HEADERS = [
@@ -19,6 +23,11 @@ class CommandExecutor
 
     protected ?Client $client = null;
 
+    /**
+     * Construct a new CommandExecutor given a base URL
+     * @param string $url the base URL to use for executing commands
+     * @param float|null $timeout the timeout in seconds for each command
+     */
     public function __construct(
         protected string $url,
         protected ?float $timeout = 10,
@@ -26,6 +35,15 @@ class CommandExecutor
         $this->client = new Client();
     }
 
+    /**
+     * Execute a WebDriver command.
+     * @param string|null $sessionId the session ID to use for the command, required for each command except
+     * `newSession`
+     * @param CommandInterface $command the command to execute
+     *
+     * @return Response
+     * @throws GuzzleException
+     */
     public function execute(?string $sessionId, CommandInterface $command): Response
     {
         $method = $command->getMethod();

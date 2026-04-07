@@ -5,6 +5,10 @@
 
 namespace Icinga\Module\Pdfexport\WebDriver;
 
+/**
+ * A container for WebDriver capabilities.
+ * @link https://www.w3.org/TR/webdriver/#capabilities
+ */
 class Capabilities
 {
     /** @var array */
@@ -14,11 +18,19 @@ class Capabilities
         'acceptSslCerts' => 'acceptInsecureCerts',
     ];
 
+    /**
+     * Construct a new Capabilities set.
+     * @param array $capabilities The capabilities to set.
+     */
     public function __construct(
         protected array $capabilities = [],
     ) {
     }
 
+    /**
+     * Create a new Capabilities set with the default capabilities for Chrome.
+     * @return static
+     */
     public static function chrome(): static
     {
         return new static([
@@ -27,6 +39,10 @@ class Capabilities
         ]);
     }
 
+    /**
+     * Create a new Capabilities set with the default capabilities for Firefox.
+     * @return static
+     */
     public static function firefox(): static
     {
         return new static([
@@ -41,6 +57,10 @@ class Capabilities
         ]);
     }
 
+    /**
+     * Convert the capabilities to a W3C-compatible array.
+     * @return array
+     */
     public function toW3cCompatibleArray(): array
     {
         $allowedW3cCapabilities = [
@@ -98,6 +118,10 @@ class Capabilities
         return $w3cCapabilities;
     }
 
+    /**
+     * Get the raw capabilities array. This is not necessarily W3C-compatible.
+     * @return array
+     */
     public function toArray(): array
     {
         return $this->capabilities;
