@@ -13,4 +13,10 @@ class Geckodriver extends WebdriverBackend
     {
         parent::__construct($rul, Capabilities::firefox());
     }
+
+    public function supportsCoverPage(): bool
+    {
+        // Firefox generates compressed PDFs, which can't be merged by the `tcpi` libary
+        return false;
+    }
 }

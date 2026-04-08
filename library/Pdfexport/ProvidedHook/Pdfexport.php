@@ -66,7 +66,7 @@ class Pdfexport extends PdfexportHook
 
         $pdf = $backend->toPdf($document);
 
-        if ($html instanceof PrintableHtmlDocument) {
+        if ($html instanceof PrintableHtmlDocument && $backend->supportsCoverPage()) {
             $coverPage = $html->getCoverPage();
             if ($coverPage !== null) {
                 $coverPageDocument = $this->getPrintableHtmlDocument($coverPage);
