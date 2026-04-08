@@ -85,4 +85,9 @@ class WebdriverBackend implements PfdPrintBackend
     {
         $this->driver->quit();
     }
+
+    public function supportsCoverPage(): bool
+    {
+        return true;
+    }
 }

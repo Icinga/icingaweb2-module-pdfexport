@@ -626,4 +626,9 @@ class HeadlessChromeBackend implements PfdPrintBackend
         $this->closeBrowser();
         $this->closeLocal();
     }
+
+    public function supportsCoverPage(): bool
+    {
+        return true;
+    }
 }

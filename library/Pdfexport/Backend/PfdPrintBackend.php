@@ -13,5 +13,7 @@ interface PfdPrintBackend
 
     public function isSupported(): bool;
 
+    public function supportsCoverPage(): bool;
+
     public function close(): void;
 }
