@@ -15,11 +15,12 @@ use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\BackendLocator;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use ipl\Html\HtmlString;
+use ipl\Html\ValidHtml;
 use Karriere\PdfMerge\PdfMerge;
 
 class Pdfexport extends PdfexportHook
 {
-    public static function first()
+    public static function first(): static
     {
         $pdfexport = null;
 
@@ -52,10 +53,18 @@ class Pdfexport extends PdfexportHook
         }
     }
 
-    public function streamPdfFromHtml($html, $filename): void
+    public function streamPdfFromHtml(ValidHtml $html, $filename): never
     {
+        $pdf = $this->htmlToPdf($html);
         $filename = basename($filename, '.pdf') . '.pdf';
 
+        $this->emit($pdf, $filename);
+
+        exit;
+    }
+
+    public function htmlToPdf(ValidHtml $html): string
+    {
         $document = $this->getPrintableHtmlDocument($html);
 
         $locator = new BackendLocator();
@@ -84,9 +93,7 @@ class Pdfexport extends PdfexportHook
         $backend->close();
         unset($coverPage);
 
-        $this->emit($pdf, $filename);
-
-        exit;
+        return $pdf;
     }
 
     protected function emit(string $pdf, string $filename): void
@@ -100,7 +107,7 @@ class Pdfexport extends PdfexportHook
             ->sendResponse();
     }
 
-    protected function getPrintableHtmlDocument($html): PrintableHtmlDocument
+    protected function getPrintableHtmlDocument(ValidHtml $html): PrintableHtmlDocument
     {
         if ($html instanceof PrintableHtmlDocument) {
             return $html;
