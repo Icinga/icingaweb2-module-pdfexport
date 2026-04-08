@@ -7,6 +7,9 @@ namespace Icinga\Module\Pdfexport;
 
 use Exception;
 
+/**
+ * Abstraction for a running shell command.
+ */
 class ShellCommand
 {
     /** @var string Command to execute */
@@ -70,6 +73,12 @@ class ShellCommand
         return $status;
     }
 
+    /**
+     * Run the command
+     *
+     * @return void
+     * @throws Exception
+     */
     public function start(): void
     {
         if ($this->resource !== null) {
@@ -106,6 +115,16 @@ class ShellCommand
         fclose($this->namedPipes->stdin);
     }
 
+    /**
+     * Capture stdout and stderr of the command.
+     * This function will block until the command exits or the optional callback returns false.
+     *
+     * @param callable|null $callback A callback function that will be called with the captured stdout and stderr.
+     * The callback should return true to continue waiting, false to stop waiting.
+     *
+     * @return void
+     * @throws Exception
+     */
     public function wait($callback = null): void
     {
         if ($this->resource === null) {
@@ -156,6 +175,12 @@ class ShellCommand
         }
     }
 
+    /**
+     * Stop running command and return exit code
+     *
+     * @return int exit code
+     * @throws Exception
+     */
     public function stop(): int
     {
         if ($this->resource === null) {
