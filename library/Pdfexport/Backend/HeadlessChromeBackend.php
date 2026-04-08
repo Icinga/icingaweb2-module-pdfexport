@@ -159,7 +159,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
         try {
             if ($this->fileStorage !== null) {
-                unset($this->fileStorage);
                 $this->fileStorage = null;
             }
         } catch (Exception $exception) {
