@@ -20,6 +20,8 @@ use Karriere\PdfMerge\PdfMerge;
 
 class Pdfexport extends PdfexportHook
 {
+    protected ?BackendLocator $locator = null;
+
     public static function first(): static
     {
         $pdfexport = null;
@@ -41,9 +43,21 @@ class Pdfexport extends PdfexportHook
         return $pdfexport;
     }
 
+    /**
+     * Get the backend locator instance, creating it if necessary
+     * @return BackendLocator
+     */
+    protected function getLocator(): BackendLocator
+    {
+        if (! $this->locator) {
+            $this->locator = new BackendLocator();
+        }
+        return $this->locator;
+    }
+
     public function isSupported(): bool
     {
-        $locator = new BackendLocator();
+        $locator = $this->getLocator();
         try {
             $backend = $locator->getFirstSupportedBackend();
             return $backend !== null;
@@ -67,7 +81,7 @@ class Pdfexport extends PdfexportHook
     {
         $document = $this->getPrintableHtmlDocument($html);
 
-        $locator = new BackendLocator();
+        $locator = $this->getLocator();
         $backend = $locator->getFirstSupportedBackend();
         if ($backend === null) {
             Logger::warning("No supported PDF backend available.");
