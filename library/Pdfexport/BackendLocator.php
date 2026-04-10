@@ -19,12 +19,25 @@ use Icinga\Module\Pdfexport\Backend\PfdPrintBackend;
 class BackendLocator
 {
     /**
+     * The currently connected backend.
+     * This is used to avoid re-connecting to the same backend multiple times.
+     * @var PfdPrintBackend|null
+     */
+    protected ?PfdPrintBackend $backend = null;
+
+    /**
      * Get the first supported backend from the configuration which responded with a successful connection.
      * First, in this context means the backend with the lowest priority.
+     * Note: This method caches the first successful backend and reuses it for subsequent calls.
      * @return PfdPrintBackend|null the first supported backend or null if none is available
      */
     public function getFirstSupportedBackend(): ?PfdPrintBackend
     {
+        if ($this->backend !== null && $this->backend->isSupported()) {
+            return $this->backend;
+        }
+
+        $this->backend = null;
         $sorted = [];
         foreach (Config::module('pdfexport') as $section => $configs) {
             $priority = (int) $configs->get('priority', 100);
@@ -34,11 +47,11 @@ class BackendLocator
         asort($sorted);
 
         foreach ($sorted as $section => $priority) {
-            $backend = $this->getSingleBackend($section);
-            if ($backend === null) {
+            $this->backend = $this->getSingleBackend($section);
+            if ($this->backend === null) {
                 continue;
             }
-            return $backend;
+            return $this->backend;
         }
 
         return null;
