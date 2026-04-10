@@ -55,7 +55,7 @@ class Pdfexport extends PdfexportHook
         return $this->locator;
     }
 
-    public function isSupported(): bool
+    public function isSupported()
     {
         $locator = $this->getLocator();
         try {
@@ -67,7 +67,7 @@ class Pdfexport extends PdfexportHook
         }
     }
 
-    public function streamPdfFromHtml(ValidHtml $html, $filename): never
+    public function streamPdfFromHtml($html, $filename)
     {
         $pdf = $this->htmlToPdf($html);
         $filename = basename($filename, '.pdf') . '.pdf';
@@ -77,7 +77,7 @@ class Pdfexport extends PdfexportHook
         exit;
     }
 
-    public function htmlToPdf(ValidHtml $html): string
+    public function htmlToPdf($html)
     {
         $document = $this->getPrintableHtmlDocument($html);
 
