@@ -17,29 +17,29 @@ use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use ipl\Html\HtmlString;
 use ipl\Html\ValidHtml;
 use Karriere\PdfMerge\PdfMerge;
+use RuntimeException;
 
 class Pdfexport extends PdfexportHook
 {
     protected ?BackendLocator $locator = null;
 
-    public static function first(): static
+    /**
+     * Get the first hook.
+     * Note: This function is the exact same as the one if the base class.
+     * It can be removed after we decide to remove compatibility with current
+     * reporting (1.1) and icingaweb2 (2.13) versions.
+     *
+     * @return static
+     */
+    public static function first()
     {
-        $pdfexport = null;
-
-        if (Hook::has('Pdfexport')) {
-            $pdfexport = Hook::first('Pdfexport');
-
-            if (! $pdfexport->isSupported()) {
-                throw new Exception(
-                    sprintf("Can't export: %s does not support exporting PDFs", get_class($pdfexport)),
-                );
-            }
+        if (! Hook::has('Pdfexport')) {
+            throw new RuntimeException('No PDF exporter available');
         }
-
-        if (! $pdfexport) {
-            throw new Exception("Can't export: No module found which provides PDF export");
+        $pdfexport = Hook::first('Pdfexport');
+        if (! $pdfexport->isSupported()) {
+            throw new RuntimeException('PDF exporter is not supported');
         }
-
         return $pdfexport;
     }
 
