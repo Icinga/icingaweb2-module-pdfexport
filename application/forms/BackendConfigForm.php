@@ -9,10 +9,10 @@ use Exception;
 use Icinga\Module\Pdfexport\Backend\Chromedriver;
 use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
-use Icinga\Web\Form\ConfigForm;
+use Icinga\Web\Form\ConfigSectionForm;
 use ipl\Validator\CallbackValidator;
 
-class BackendConfigForm extends ConfigForm
+class BackendConfigForm extends ConfigSectionForm
 {
     public function assemble(): void
     {

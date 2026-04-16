@@ -6,9 +6,8 @@
 namespace Icinga\Module\Pdfexport\Controllers;
 
 use Icinga\Application\Config;
-use Icinga\Application\Logger;
 use Icinga\Module\Pdfexport\Forms\BackendConfigForm;
-use Icinga\Web\Form\ConfigForm;
+use Icinga\Web\Form\ConfigSectionForm;
 use Icinga\Web\Notification;
 use ipl\Html\Attributes;
 use ipl\Html\Form;
@@ -91,7 +90,7 @@ class ConfigController extends CompatController
             $this->redirectNow('__CLOSE__');
         });
 
-        $form->on(ConfigForm::ON_DELETE, function () use ($form) {
+        $form->on(ConfigSectionForm::ON_DELETE, function () use ($form) {
             Notification::success($this->translate('Print backend deleted'));
             $this->redirectNow('__CLOSE__');
         });
