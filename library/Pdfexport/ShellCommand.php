@@ -86,7 +86,6 @@ class ShellCommand
             ['pipe', 'w'], // stdout
             ['pipe', 'w'], // stderr
         ];
-
         $this->resource = proc_open(
             $this->command,
             $descriptors,
@@ -94,7 +93,6 @@ class ShellCommand
             null,
             $this->env,
         );
-
         if (! is_resource($this->resource)) {
             throw new Exception(sprintf(
                 "Can't fork '%s'",
@@ -107,7 +105,6 @@ class ShellCommand
             'stdout' => &$pipes[1],
             'stderr' => &$pipes[2],
         ];
-
         fclose($this->namedPipes->stdin);
     }
 
@@ -161,7 +158,6 @@ class ShellCommand
 
             // Reset pipes
             $read = $origRead;
-
             if ($callback !== null) {
                 $continue = call_user_func($callback, $this->stdout, $this->stderr);
                 if ($continue === false) {
@@ -182,11 +178,10 @@ class ShellCommand
         if ($this->resource === null) {
             throw new Exception('Command not started');
         }
+
         fclose($this->namedPipes->stderr);
         fclose($this->namedPipes->stdout);
-
         proc_terminate($this->resource);
-
         $exitCode = proc_close($this->resource);
         if ($this->exitCode === null) {
             $this->exitCode = $exitCode;

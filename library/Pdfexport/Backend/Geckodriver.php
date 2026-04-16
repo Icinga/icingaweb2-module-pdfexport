@@ -16,7 +16,7 @@ class Geckodriver extends WebdriverBackend
 
     public function supportsCoverPage(): bool
     {
-        // Firefox generates compressed PDFs, which can't be merged by the `tcpi` libary
+        // Firefox generates compressed PDFs, which can't be merged by the `tcpi` library
         return false;
     }
 }

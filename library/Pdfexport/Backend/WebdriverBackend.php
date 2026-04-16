@@ -15,10 +15,8 @@ class WebdriverBackend implements PfdPrintBackend
 {
     protected WebDriver $driver;
 
-    public function __construct(
-        string $url,
-        Capabilities $capabilities,
-    ) {
+    public function __construct(string $url, Capabilities $capabilities)
+    {
         $this->driver = WebDriver::create($url, $capabilities);
     }
 
@@ -31,12 +29,8 @@ class WebdriverBackend implements PfdPrintBackend
     {
         // This is horribly ugly, but it works for all browser backends
         $encoded = base64_encode($document);
-        $this->driver->execute(
-            Command::executeScript('document.head.remove();'),
-        );
-        $this->driver->execute(
-            Command::executeScript("document.body.outerHTML = atob('$encoded');"),
-        );
+        $this->driver->execute(Command::executeScript('document.head.remove();'));
+        $this->driver->execute(Command::executeScript("document.body.outerHTML = atob('$encoded');"));
     }
 
     protected function waitForPageLoad(): void
@@ -46,23 +40,12 @@ class WebdriverBackend implements PfdPrintBackend
 
     protected function getPrintParameters(PrintableHtmlDocument $document): array
     {
-        $parameters = [
-            'background' => true,
-        ];
-
-        return array_merge(
-            $parameters,
-            $document->getPrintParametersForWebdriver(),
-        );
+        return array_merge(['background' => true], $document->getPrintParametersForWebdriver());
     }
 
     protected function printToPdf(array $printParameters): string
     {
-        $result = $this->driver->execute(
-            Command::printPage($printParameters),
-        );
-
-        return base64_decode($result);
+        return base64_decode($this->driver->execute(Command::printPage($printParameters)));
     }
 
     public function toPdf(PrintableHtmlDocument $document): string
@@ -70,9 +53,7 @@ class WebdriverBackend implements PfdPrintBackend
         $this->setContent($document);
         $this->waitForPageLoad();
 
-        $printParameters = $this->getPrintParameters($document);
-
-        return $this->printToPdf($printParameters);
+        return $this->printToPdf($this->getPrintParameters($document));
     }
 
     public function isSupported(): bool

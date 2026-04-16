@@ -102,18 +102,21 @@ class BackendLocator
             if ($host === null) {
                 return null;
             }
+
             $port = $config->get($section, 'port', 9222);
             $backend = HeadlessChromeBackend::createRemote(
                 $host,
                 $port,
             );
             Logger::info("Connected WebDriver Backend: $section");
+
             return $backend;
         } catch (Exception $e) {
             Logger::warning(
                 "Error while creating remote HeadlessChrome! backend: $section, error: " . $e->getMessage(),
             );
         }
+
         return null;
     }
 
@@ -131,17 +134,20 @@ class BackendLocator
             if ($binary === null) {
                 return null;
             }
+
             $backend = HeadlessChromeBackend::createLocal(
                 $binary,
                 Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0') === '1',
             );
             Logger::info("Connected local chrome Backend: $section");
+
             return $backend;
         } catch (Exception $e) {
             Logger::warning(
                 "Error while creating HeadlessChrome backend: $section, path: $binary, error:" . $e->getMessage(),
             );
         }
+
         return null;
     }
 

@@ -17,17 +17,9 @@ class ChromeDevTools
 
     public function execute(Command $command): mixed
     {
-        $params = [
+        return $this->driver->execute(new CustomCommand('POST', '/session/:sessionId/goog/cdp/execute', [
             'cmd' => $command->name,
             'params' => $command->parameters,
-        ];
-
-        $customCommand = new CustomCommand(
-            'POST',
-            '/session/:sessionId/goog/cdp/execute',
-            $params,
-        );
-
-        return $this->driver->execute($customCommand);
+        ]));
     }
 }

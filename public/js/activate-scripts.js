@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 function activateScripts(node) {
-    if (isScript(node) === true) {
-        node.parentNode.replaceChild(cloneScript(node) , node);
+    if (node.tagName === 'SCRIPT') {
+        node.parentNode.replaceChild(cloneScript(node), node);
     } else {
         var i = -1, children = node.childNodes;
         while (++i < children.length) {
@@ -15,7 +15,7 @@ function activateScripts(node) {
 }
 
 function cloneScript(node) {
-    var script  = document.createElement("script");
+    var script  = document.createElement('script');
     script.text = node.innerHTML;
 
     var i = -1, attrs = node.attributes, attr;
@@ -23,10 +23,6 @@ function cloneScript(node) {
         script.setAttribute((attr = attrs[i]).name, attr.value);
     }
     return script;
-}
-
-function isScript(node) {
-    return node.tagName === 'SCRIPT';
 }
 
 activateScripts(document.documentElement);

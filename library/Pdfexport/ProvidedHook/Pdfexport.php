@@ -14,7 +14,6 @@ use Icinga\Application\Web;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\BackendLocator;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
-use ipl\Html\HtmlString;
 use ipl\Html\ValidHtml;
 use Karriere\PdfMerge\PdfMerge;
 use RuntimeException;
@@ -54,6 +53,7 @@ class Pdfexport extends PdfexportHook
         if (! $this->locator) {
             $this->locator = new BackendLocator();
         }
+
         return $this->locator;
     }
 
@@ -61,8 +61,7 @@ class Pdfexport extends PdfexportHook
     {
         $locator = $this->getLocator();
         try {
-            $backend = $locator->getFirstSupportedBackend();
-            return $backend !== null;
+            return $locator->getFirstSupportedBackend() !== null;
         } catch (Exception $e) {
             Logger::warning("No supported PDF backend available.");
             return false;
@@ -71,20 +70,14 @@ class Pdfexport extends PdfexportHook
 
     public function streamPdfFromHtml($html, $filename)
     {
-        $pdf = $this->htmlToPdf($html);
-        $filename = basename($filename, '.pdf') . '.pdf';
-
-        $this->emit($pdf, $filename);
-
-        exit;
+        $this->emit($this->htmlToPdf($html), basename($filename, '.pdf') . '.pdf');
     }
 
     public function htmlToPdf($html)
     {
         $document = $this->getPrintableHtmlDocument($html);
 
-        $locator = $this->getLocator();
-        $backend = $locator->getFirstSupportedBackend();
+        $backend = $this->getLocator()->getFirstSupportedBackend();
         if ($backend === null) {
             Logger::warning("No supported PDF backend available.");
         }
@@ -97,11 +90,8 @@ class Pdfexport extends PdfexportHook
                 $coverPageDocument = $this->getPrintableHtmlDocument($coverPage);
                 $coverPageDocument->addAttributes($html->getAttributes());
                 $coverPageDocument->removeMargins();
-
                 $coverPagePdf = $backend->toPdf($coverPageDocument);
-
                 $backend->close();
-
                 $pdf = $this->mergePdfs($coverPagePdf, $pdf);
             }
         }
@@ -121,6 +111,8 @@ class Pdfexport extends PdfexportHook
             ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true)
             ->setBody($pdf)
             ->sendResponse();
+
+        exit;
     }
 
     protected function getPrintableHtmlDocument(ValidHtml $html): PrintableHtmlDocument
@@ -128,8 +120,9 @@ class Pdfexport extends PdfexportHook
         if ($html instanceof PrintableHtmlDocument) {
             return $html;
         }
+
         return (new PrintableHtmlDocument())
-            ->setContent(HtmlString::create($html));
+            ->setContent($html);
     }
 
     protected function mergePdfs(string ...$pdfs): string

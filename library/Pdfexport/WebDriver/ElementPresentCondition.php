@@ -21,11 +21,7 @@ class ElementPresentCondition implements ConditionInterface
             Command::findElement($this->mechanism, $this->value),
         );
 
-        if (isset($response['ELEMENT']) || isset($response[self::WEBDRIVER_ELEMENT_IDENTIFIER])) {
-            return true;
-        }
-
-        return false;
+        return isset($response['ELEMENT']) || isset($response[self::WEBDRIVER_ELEMENT_IDENTIFIER]);
     }
 
     public static function byCssSelector(string $selector): static

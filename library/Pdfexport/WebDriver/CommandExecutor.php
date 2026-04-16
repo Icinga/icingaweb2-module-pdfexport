@@ -5,7 +5,6 @@
 
 namespace Icinga\Module\Pdfexport\WebDriver;
 
-use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Icinga\Application\Logger;
@@ -52,8 +51,10 @@ class CommandExecutor
             if ($sessionId === null) {
                 throw new RuntimeException('Session ID is not set');
             }
+
             $path = str_replace(':sessionId', $sessionId, $path);
         }
+
         $params = $command->getParameters();
         foreach ($params as $name => $value) {
             if (str_starts_with($name, ':')) {
@@ -66,15 +67,11 @@ class CommandExecutor
             throw new RuntimeException('Invalid HTTP method');
         }
 
-        if (
-            $command instanceof Command
-            && $command->getName() === CommandName::NewSession
-        ) {
+        if ($command instanceof Command && $command->getName() === CommandName::NewSession) {
             $method = 'POST';
         }
 
         $headers = static::DEFAULT_HEADERS;
-
         if (in_array($method, ['POST', 'PUT'], true)) {
             unset($headers['expect']);
         }
@@ -92,11 +89,8 @@ class CommandExecutor
             'http_errors' => false,
             'timeout' => $this->timeout ?? 0,
         ];
-
         $response = $this->client->request($method, $this->url . $path, $options);
-
         $results = json_decode($response->getBody()->getContents(), true);
-
         if ($results === null && json_last_error() !== JSON_ERROR_NONE) {
             throw new RuntimeException(json_last_error_msg());
         }
@@ -116,16 +110,16 @@ class CommandExecutor
 
         if (isset($value['error'])) {
             Logger::error(print_r($value, true));
-            throw new Exception(sprintf(
-                "Error in command response: %s - %s",
+            throw new RuntimeException(sprintf(
+                'Error in command response: %s - %s',
                 $value['error'],
-                $value['message'] ?? "Unknown error",
+                $value['message'] ?? 'Unknown error',
             ));
         }
 
         $status = $results['status'] ?? 0;
         if ($status !== 0) {
-            throw new Exception($message, $status);
+            throw new RuntimeException($message, $status);
         }
 
         return new Response($sessionId, $status, $value);

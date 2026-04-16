@@ -26,59 +26,37 @@ class Chromedriver extends WebdriverBackend
     protected function setContent(PrintableHtmlDocument $document): void
     {
         parent::setContent($document);
-
         $module = Icinga::app()->getModuleManager()->getModule('pdfexport');
-        if (! method_exists($module, 'getJsDir')) {
-            $jsPath = join(DIRECTORY_SEPARATOR, [$module->getBaseDir(), 'public', 'js']);
-        } else {
-            $jsPath = $module->getJsDir();
-        }
-
-        $activeScripts = file_get_contents($jsPath . '/activate-scripts.js');
-
-        $this->driver->execute(
-            Command::executeScript($activeScripts),
-        );
-        $this->driver->execute(
-            Command::executeScript('new Layout().apply();'),
-        );
+        $activeScripts = file_get_contents($module->getJsDir() . '/activate-scripts.js');
+        $this->driver->execute(Command::executeScript($activeScripts));
+        $this->driver->execute(Command::executeScript('new Layout().apply();'));
     }
 
     protected function waitForPageLoad(): void
     {
         parent::waitForPageLoad();
-
         $this->driver->wait(ElementPresentCondition::byCssSelector('[data-layout-ready=yes]'));
     }
 
     protected function getChromeDeveloperTools(): ChromeDevTools
     {
-        if ($this->dcp === null) {
-            $this->dcp = new ChromeDevTools($this->driver);
-        }
-        return $this->dcp;
+        return $this->dcp ??= new ChromeDevTools($this->driver);
     }
 
     protected function getPrintParameters(PrintableHtmlDocument $document): array
     {
-        $parameters = [
+        return array_merge([
             'printBackground' => true,
             'transferMode'    => 'ReturnAsBase64',
-        ];
-
-        return array_merge(
-            $parameters,
-            $document->getPrintParameters(),
-        );
+        ], $document->getPrintParameters());
     }
 
     protected function printToPdf(array $printParameters): string
     {
         $devTools = $this->getChromeDeveloperTools();
-
         try {
             $devTools->execute(DevToolsCommand::enableConsole());
-        } catch (Exception $_) {
+        } catch (Exception) {
             // Deprecated, might fail
         }
 

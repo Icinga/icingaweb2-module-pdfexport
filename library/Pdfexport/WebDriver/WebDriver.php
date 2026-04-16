@@ -89,7 +89,7 @@ class WebDriver
     public function wait(
         ConditionInterface $condition,
         int $timeoutSeconds = 10,
-        int $intervalMs = 250
+        int $intervalMs = 250,
     ): mixed {
         $end = microtime(true) + $timeoutSeconds;
         $lastException = null;

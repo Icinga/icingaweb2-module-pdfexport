@@ -65,18 +65,17 @@ class HeadlessChromeBackend implements PfdPrintBackend
         $instance->socket = "$host:$port";
         try {
             $result = $instance->getJsonVersion();
-
             if (! is_array($result)) {
                 throw new Exception('Failed to determine remote chrome version via the /json/version endpoint.');
             }
 
             $parts = explode('/', $result['webSocketDebuggerUrl']);
             $instance->browserId = end($parts);
-        } catch (Exception $e) {
+        } catch (RuntimeException $e) {
             Logger::warning(
-                'Failed to connect to remote chrome: %s (%s)',
+                "Failed to connect to remote chrome: %s\n%s",
                 $instance->socket,
-                $e,
+                IcingaException::getConfidentialTraceAsString($e),
             );
 
             throw $e;
@@ -89,13 +88,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
     {
         $instance = new self();
         $instance->useFilesystemTransfer = $useFile;
-
         if (! file_exists($path)) {
-            throw new Exception('Local chrome binary not found: ' . $path);
+            throw new RuntimeException(sprintf('Local chrome binary not found: %s', $path));
         }
 
         $browserHome = $instance->getFileStorage()->resolvePath('HOME');
-
         $commandLine = join(' ', [
             escapeshellarg($path),
             static::renderArgumentList([
@@ -127,16 +124,17 @@ class HeadlessChromeBackend implements PfdPrintBackend
             if ($stdout !== '') {
                 Logger::debug('Caught browser stdout: %d', mb_strlen($stdout));
             }
+
             if ($stderr !== '') {
                 Logger::error('Browser process stderr: %d', mb_strlen($stderr));
                 if (preg_match(self::DEBUG_ADDR_PATTERN, trim($stderr), $matches)) {
-                    $instance->socket = $matches[1];
-                    $instance->browserId = $matches[2];
-
+                    [, $instance->socket, $instance->browserId] = $matches;
                     Logger::debug('Caught browser info socket: %s, id: %s', $instance->socket, $instance->browserId);
+
                     return false;
                 }
             }
+
             return true;
         });
 
@@ -150,7 +148,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
     protected function closeLocal(): void
     {
         Logger::debug('Closing local chrome instance');
-
         if ($this->process !== null) {
             $code = $this->process->stop();
             Logger::error("Closed local chrome with exit code %d", $code);
@@ -171,11 +168,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
      */
     public function getFileStorage(): StorageInterface
     {
-        if ($this->fileStorage === null) {
-            $this->fileStorage = new TemporaryLocalFileStorage();
-        }
-
-        return $this->fileStorage;
+        return $this->fileStorage ??= new TemporaryLocalFileStorage();
     }
 
     /**
@@ -184,11 +177,9 @@ class HeadlessChromeBackend implements PfdPrintBackend
     public static function renderArgumentList(array $arguments): string
     {
         $list = [];
-
         foreach ($arguments as $name => $value) {
             if ($value !== null) {
                 $value = escapeshellarg($value);
-
                 if (! is_int($name)) {
                     if (str_ends_with($name, '=')) {
                         $glue = '';
@@ -215,25 +206,20 @@ class HeadlessChromeBackend implements PfdPrintBackend
             'transferMode'    => 'ReturnAsBase64',
         ];
 
-        return array_merge(
-            $parameters,
-            $document->getPrintParameters(),
-        );
+        return array_merge($parameters, $document->getPrintParameters());
     }
 
     public function toPdf(PrintableHtmlDocument $document): string
     {
         $this->setContent($document);
         $printParameters = $this->getPrintParameters($document);
+
         return $this->printToPdf($printParameters);
     }
 
     protected function getBrowser(): Client
     {
-        if ($this->browser === null) {
-            $this->browser = new Client(sprintf('ws://%s/devtools/browser/%s', $this->socket, $this->browserId));
-        }
-        return $this->browser;
+        return $this->browser ??= new Client(sprintf('ws://%s/devtools/browser/%s', $this->socket, $this->browserId));
     }
 
     protected function closeBrowser(): void
@@ -243,7 +229,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
 
         $this->closePage();
-
         try {
             $this->browser->close();
             $this->browser = null;
@@ -257,11 +242,9 @@ class HeadlessChromeBackend implements PfdPrintBackend
     {
         if ($this->page === null) {
             $browser = $this->getBrowser();
-
             // Open new tab, get its id
-            $result = $this->communicate($browser, 'Target.createTarget', [
-                'url' => 'about:blank',
-            ]);
+            $result = $this->communicate($browser, 'Target.createTarget', ['url' => 'about:blank']);
+
             if (isset($result['targetId'])) {
                 $this->frameId = $result['targetId'];
             } else {
@@ -269,7 +252,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
             }
 
             $this->page = new Client(sprintf('ws://%s/devtools/page/%s', $this->socket, $this->frameId));
-
             // enable various events
             $this->communicate($this->page, 'Log.enable');
             $this->communicate($this->page, 'Network.enable');
@@ -281,6 +263,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
                 // Deprecated, might fail
             }
         }
+
         return $this->page;
     }
 
@@ -314,19 +297,12 @@ class HeadlessChromeBackend implements PfdPrintBackend
         if ($this->useFilesystemTransfer) {
             $path = uniqid('icingaweb2-pdfexport-') . '.html';
             $storage = $this->getFileStorage();
-
             $storage->create($path, $document->render());
-
             $absPath = $storage->resolvePath($path, true);
-
             Logger::debug('Using filesystem transfer to local chrome instance. Path: ' . $absPath);
-
             $url = "file://$absPath";
-
             // Navigate to target
-            $result = $this->communicate($page, 'Page.navigate', [
-                'url' => $url,
-            ]);
+            $result = $this->communicate($page, 'Page.navigate', ['url' => $url]);
 
             if (isset($result['frameId'])) {
                 $this->frameId = $result['frameId'];
@@ -335,13 +311,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
             }
 
             // wait for the page to fully load
-            $this->waitFor(
-                $page,
-                'Page.frameStoppedLoading',
-                [
-                    'frameId' => $this->frameId,
-                ],
-            );
+            $this->waitFor($page, 'Page.frameStoppedLoading', ['frameId' => $this->frameId]);
 
             try {
                 $storage->delete($path);
@@ -365,21 +335,12 @@ class HeadlessChromeBackend implements PfdPrintBackend
         if (! $document->isEmpty()) {
             // Ensure layout scripts work in the same environment as the pdf printing itself
             $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => 'print']);
-
             $this->communicate($page, 'Runtime.evaluate', [
                 'timeout'    => 1000,
                 'expression' => 'setTimeout(() => new Layout().apply(), 0)',
             ]);
-
             $module = Icinga::app()->getModuleManager()->getModule('pdfexport');
-            if (! method_exists($module, 'getJsDir')) {
-                $jsPath = join(DIRECTORY_SEPARATOR, [$module->getBaseDir(), 'public', 'js']);
-            } else {
-                $jsPath = $module->getJsDir();
-            }
-
-            $waitForLayout = file_get_contents($jsPath . '/wait-for-layout.js');
-
+            $waitForLayout = file_get_contents($module->getJsDir() . '/wait-for-layout.js');
             $promisedResult = $this->communicate($page, 'Runtime.evaluate', [
                 'awaitPromise'  => true,
                 'returnByValue' => true,
@@ -405,7 +366,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
     protected function printToPdf(array $printParameters): string
     {
         $page = $this->getPage();
-
         // print pdf
         $result = $this->communicate($page, 'Page.printToPDF', array_merge(
             $printParameters,
@@ -422,13 +382,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     private function renderApiCall($method, $options = null): string
     {
-        $data = [
+        return json_encode([
             'id'     => time(),
             'method' => $method,
             'params' => $options ?: [],
-        ];
-
-        return json_encode($data, JSON_FORCE_OBJECT);
+        ], JSON_FORCE_OBJECT);
     }
 
     private function parseApiResponse(string $payload)
@@ -437,11 +395,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
         if (isset($data['method']) || isset($data['result'])) {
             return $data;
         } elseif (isset($data['error'])) {
-            throw new Exception(sprintf(
-                'Error response (%s): %s',
-                $data['error']['code'],
-                $data['error']['message'],
-            ));
+            throw new Exception(sprintf('Error response (%s): %s', $data['error']['code'], $data['error']['message']));
         } else {
             throw new Exception(sprintf('Unknown response received: %s', $payload));
         }
@@ -465,7 +419,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
                 return $params;
             };
             $shortenedParams = $shortenValues($params);
-
             Logger::debug(
                 'Received CDP event: %s(%s)',
                 $method,
@@ -482,7 +435,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
         } elseif ($method === 'Network.loadingFailed') {
             $requestData = $this->interceptedRequests[$params['requestId']];
             unset($this->interceptedRequests[$params['requestId']]);
-
             Logger::error(
                 'Headless Chrome was unable to complete a request to "%s". Error: %s',
                 $requestData['request']['url'],
@@ -497,7 +449,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
     {
         Logger::debug('Transmitting CDP call: %s(%s)', $method, $params ? join(',', array_keys($params)) : '');
         $ws->text($this->renderApiCall($method, $params));
-
         do {
             $response = $this->parseApiResponse($ws->receive()->getContent());
             $gotEvent = isset($response['method']);
@@ -528,7 +479,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
         $wait = true;
         $interceptedPos = -1;
-
         $params = null;
         do {
             if (isset($this->interceptedEvents[++$interceptedPos])) {
@@ -573,7 +523,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
     protected function getJsonVersion(): bool|array
     {
         $client = new HttpClient();
-
         try {
             $response = $client->request('GET', sprintf('http://%s/json/version', $this->socket));
         } catch (ServerException $e) {
@@ -600,13 +549,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
     public function getVersion(): int
     {
         $version = $this->getJsonVersion();
-
         if (! isset($version['Browser'])) {
             throw new Exception("Invalid Version Json");
         }
 
         preg_match('/Chrome\/([0-9]+)/', $version['Browser'], $matches);
-
         if (! isset($matches[1])) {
             throw new Exception("Malformed Chrome Version String: " . $version['Browser']);
         }

@@ -525,12 +525,8 @@ CSS;
     protected function createLayoutScript(): ValidHtml
     {
         $module = Icinga::app()->getModuleManager()->getModule('pdfexport');
-        if (! method_exists($module, 'getJsDir')) {
-            $jsPath = join(DIRECTORY_SEPARATOR, [$module->getBaseDir(), 'public', 'js']);
-        } else {
-            $jsPath = $module->getJsDir();
-        }
 
+        $jsPath = $module->getJsDir();
         $layoutJS = file_get_contents($jsPath . '/layout.js') . "\n\n\n";
         $layoutJS .= file_get_contents($jsPath . '/layout-plugins/page-breaker.js') . "\n\n\n";
 
