@@ -6,136 +6,114 @@
 namespace Icinga\Module\Pdfexport\ProvidedHook;
 
 use Exception;
-use Icinga\Application\Config;
 use Icinga\Application\Hook;
 use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
+use Icinga\Application\Logger;
 use Icinga\Application\Web;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
-use Icinga\Module\Pdfexport\HeadlessChrome;
+use Icinga\Module\Pdfexport\BackendLocator;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
+use ipl\Html\HtmlString;
+use ipl\Html\ValidHtml;
 use Karriere\PdfMerge\PdfMerge;
-use React\Promise\PromiseInterface;
+use RuntimeException;
 
 class Pdfexport extends PdfexportHook
 {
+    protected ?BackendLocator $locator = null;
+
+    /**
+     * Get the first hook.
+     * Note: This function is the exact same as the one if the base class.
+     * It can be removed after we decide to remove compatibility with current
+     * reporting (1.1) and icingaweb2 (2.13) versions.
+     *
+     * @return static
+     *
+     * @deprecated Use {@see PdfexportHook::first()} instead
+     */
     public static function first()
     {
-        $pdfexport = null;
-
-        if (Hook::has('Pdfexport')) {
-            $pdfexport = Hook::first('Pdfexport');
-
-            if (! $pdfexport->isSupported()) {
-                throw new Exception(
-                    sprintf("Can't export: %s does not support exporting PDFs", get_class($pdfexport))
-                );
-            }
+        if (! Hook::has('Pdfexport')) {
+            throw new RuntimeException('No PDF exporter available');
         }
-
-        if (! $pdfexport) {
-            throw new Exception("Can't export: No module found which provides PDF export");
+        $pdfexport = Hook::first('Pdfexport');
+        if (! $pdfexport->isSupported()) {
+            throw new RuntimeException('PDF exporter is not supported');
         }
-
         return $pdfexport;
     }
 
-    public static function getBinary()
+    /**
+     * Get the backend locator instance, creating it if necessary
+     * @return BackendLocator
+     */
+    protected function getLocator(): BackendLocator
     {
-        return Config::module('pdfexport')->get('chrome', 'binary', '/usr/bin/google-chrome');
-    }
-
-    public static function getForceTempStorage()
-    {
-        return (bool) Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0');
-    }
-
-    public static function getHost()
-    {
-        return Config::module('pdfexport')->get('chrome', 'host');
-    }
-
-    public static function getPort()
-    {
-        return Config::module('pdfexport')->get('chrome', 'port', 9222);
+        if (! $this->locator) {
+            $this->locator = new BackendLocator();
+        }
+        return $this->locator;
     }
 
     public function isSupported()
     {
+        $locator = $this->getLocator();
         try {
-            return $this->chrome()->getVersion() >= 59;
+            $backend = $locator->getFirstSupportedBackend();
+            return $backend !== null;
         } catch (Exception $e) {
+            Logger::warning("No supported PDF backend available.");
             return false;
         }
     }
 
+    public function streamPdfFromHtml($html, $filename)
+    {
+        $pdf = $this->htmlToPdf($html);
+        $filename = basename($filename, '.pdf') . '.pdf';
+
+        $this->emit($pdf, $filename);
+
+        exit;
+    }
+
     public function htmlToPdf($html)
     {
-        // Keep reference to the chrome object because it is using temp files which are automatically removed when
-        // the object is destructed
-        $chrome = $this->chrome();
+        $document = $this->getPrintableHtmlDocument($html);
 
-        $pdf = $chrome->fromHtml($html, static::getForceTempStorage())->toPdf();
-
-        if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
-            $coverPagePdf = $chrome
-                ->fromHtml(
-                    (new PrintableHtmlDocument())
-                        ->add($coverPage)
-                        ->addAttributes($html->getAttributes())
-                        ->removeMargins(),
-                    static::getForceTempStorage()
-                )
-                ->toPdf();
-
-            $pdf = $this->mergePdfs($coverPagePdf, $pdf);
+        $locator = $this->getLocator();
+        $backend = $locator->getFirstSupportedBackend();
+        if ($backend === null) {
+            Logger::warning("No supported PDF backend available.");
         }
+
+        $pdf = $backend->toPdf($document);
+
+        if ($html instanceof PrintableHtmlDocument && $backend->supportsCoverPage()) {
+            $coverPage = $html->getCoverPage();
+            if ($coverPage !== null) {
+                $coverPageDocument = $this->getPrintableHtmlDocument($coverPage);
+                $coverPageDocument->addAttributes($html->getAttributes());
+                $coverPageDocument->removeMargins();
+
+                $coverPagePdf = $backend->toPdf($coverPageDocument);
+
+                $backend->close();
+
+                $pdf = $this->mergePdfs($coverPagePdf, $pdf);
+            }
+        }
+
+        $backend->close();
+        unset($coverPage);
 
         return $pdf;
     }
 
-    /**
-     * Transforms the given printable html document/string asynchronously to PDF.
-     *
-     * @param PrintableHtmlDocument|string $html
-     *
-     * @return PromiseInterface
-     */
-    public function asyncHtmlToPdf($html): PromiseInterface
+    protected function emit(string $pdf, string $filename): void
     {
-        // Keep reference to the chrome object because it is using temp files which are automatically removed when
-        // the object is destructed
-        $chrome = $this->chrome();
-
-        $pdfPromise = $chrome->fromHtml($html, static::getForceTempStorage())->asyncToPdf();
-
-        if ($html instanceof PrintableHtmlDocument && ($coverPage = $html->getCoverPage()) !== null) {
-            /** @var PromiseInterface $pdfPromise */
-            $pdfPromise = $pdfPromise->then(function (string $pdf) use ($chrome, $html, $coverPage) {
-                return $chrome->fromHtml(
-                    (new PrintableHtmlDocument())
-                        ->add($coverPage)
-                        ->addAttributes($html->getAttributes())
-                        ->removeMargins(),
-                    static::getForceTempStorage()
-                )->asyncToPdf()->then(
-                    function (string $coverPagePdf) use ($pdf) {
-                        return $this->mergePdfs($coverPagePdf, $pdf);
-                    }
-                );
-            });
-        }
-
-        return $pdfPromise;
-    }
-
-    public function streamPdfFromHtml($html, $filename)
-    {
-        $filename = basename($filename, '.pdf') . '.pdf';
-
-        // Generate the PDF before changing the response headers to properly handle and display errors in the UI.
-        $pdf = $this->htmlToPdf($html);
-
         /** @var Web $app */
         $app = Icinga::app();
         $app->getResponse()
@@ -143,25 +121,15 @@ class Pdfexport extends PdfexportHook
             ->setHeader('Content-Disposition', "inline; filename=\"$filename\"", true)
             ->setBody($pdf)
             ->sendResponse();
-
-        exit;
     }
 
-    /**
-     * Create an instance of HeadlessChrome from configuration
-     *
-     * @return HeadlessChrome
-     */
-    protected function chrome()
+    protected function getPrintableHtmlDocument(ValidHtml $html): PrintableHtmlDocument
     {
-        $chrome = new HeadlessChrome();
-        $chrome->setBinary(static::getBinary());
-
-        if (($host = static::getHost()) !== null) {
-            $chrome->setRemote($host, static::getPort());
+        if ($html instanceof PrintableHtmlDocument) {
+            return $html;
         }
-
-        return $chrome;
+        return (new PrintableHtmlDocument())
+            ->setContent(HtmlString::create($html));
     }
 
     protected function mergePdfs(string ...$pdfs): string
