@@ -30,6 +30,8 @@ class Pdfexport extends PdfexportHook
      * reporting (1.1) and icingaweb2 (2.13) versions.
      *
      * @return static
+     *
+     * @deprecated Use {@see PdfexportHook::first()} instead
      */
     public static function first()
     {
