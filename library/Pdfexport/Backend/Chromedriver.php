@@ -28,13 +28,7 @@ class Chromedriver extends WebdriverBackend
         parent::setContent($document);
 
         $module = Icinga::app()->getModuleManager()->getModule('pdfexport');
-        if (! method_exists($module, 'getJsDir')) {
-            $jsPath = join(DIRECTORY_SEPARATOR, [$module->getBaseDir(), 'public', 'js']);
-        } else {
-            $jsPath = $module->getJsDir();
-        }
-
-        $activeScripts = file_get_contents($jsPath . '/activate-scripts.js');
+        $activeScripts = file_get_contents($module->getJsDir() . '/activate-scripts.js');
 
         $this->driver->execute(
             Command::executeScript($activeScripts),

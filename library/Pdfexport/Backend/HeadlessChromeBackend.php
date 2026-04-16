@@ -372,13 +372,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
             ]);
 
             $module = Icinga::app()->getModuleManager()->getModule('pdfexport');
-            if (! method_exists($module, 'getJsDir')) {
-                $jsPath = join(DIRECTORY_SEPARATOR, [$module->getBaseDir(), 'public', 'js']);
-            } else {
-                $jsPath = $module->getJsDir();
-            }
-
-            $waitForLayout = file_get_contents($jsPath . '/wait-for-layout.js');
+            $waitForLayout = file_get_contents($module->getJsDir() . '/wait-for-layout.js');
 
             $promisedResult = $this->communicate($page, 'Runtime.evaluate', [
                 'awaitPromise'  => true,
