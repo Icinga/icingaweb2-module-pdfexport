@@ -38,11 +38,20 @@ class Pdfexport extends PdfexportHook
         if (! Hook::has('Pdfexport')) {
             throw new RuntimeException('No PDF exporter available');
         }
-        $pdfexport = Hook::first('Pdfexport');
-        if (! $pdfexport->isSupported()) {
-            throw new RuntimeException('PDF exporter is not supported');
+
+        foreach (Hook::all('Pdfexport') as $exporter) {
+            try {
+                if (! $exporter->isSupported()) {
+                    continue;
+                }
+
+                return $exporter;
+            } catch (Throwable $e) {
+                Logger::error('PDF exporter reported an error during support check: %s', $e);
+            }
         }
-        return $pdfexport;
+
+        throw new RuntimeException('Not supported PDF exporter available');
     }
 
     /**
