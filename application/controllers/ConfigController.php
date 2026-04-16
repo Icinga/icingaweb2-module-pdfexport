@@ -85,13 +85,18 @@ class ConfigController extends CompatController
         $form->setConfig(Config::module('pdfexport'));
         $form->setSection($name);
 
-        $form->on(Form::ON_SUBMIT, function () use ($form) {
+        $form->on(Form::ON_SUBMIT, function () {
             Notification::success($this->translate('Updated print backend'));
             $this->redirectNow('__CLOSE__');
         });
 
-        $form->on(ConfigSectionForm::ON_DELETE, function () use ($form) {
+        $form->on(ConfigSectionForm::ON_DELETE, function () {
             Notification::success($this->translate('Print backend deleted'));
+            $this->redirectNow('__CLOSE__');
+        });
+
+        $form->on(ConfigSectionForm::ON_RENAME, function () {
+            Notification::success($this->translate('Print backend renamed'));
             $this->redirectNow('__CLOSE__');
         });
 
