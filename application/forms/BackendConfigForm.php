@@ -26,6 +26,12 @@ class BackendConfigForm extends ConfigSectionForm
             'description' => $this->translate('The priority of the backend. A lower priority will be used first.'),
         ]);
 
+        $this->addElement('checkbox', 'enabled', [
+            'label' => $this->translate('Enabled'),
+            'value' => true,
+            'description' => $this->translate('If the backend is not enabled, it will be ignored for PDF generation.'),
+        ]);
+
         $this->addElement('select', 'type', [
             'label' => $this->translate('Type'),
             'multiOptions' => [
