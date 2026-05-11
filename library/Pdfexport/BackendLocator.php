@@ -40,6 +40,9 @@ class BackendLocator
         $this->backend = null;
         $sorted = [];
         foreach (Config::module('pdfexport') as $section => $configs) {
+            if ($configs->get('enabled', 'n') !== 'y') {
+                continue;
+            }
             $priority = (int) $configs->get('priority', 100);
             $sorted[$section] = $priority;
         }
