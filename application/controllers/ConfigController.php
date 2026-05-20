@@ -81,9 +81,7 @@ class ConfigController extends CompatController
         $name = $this->params->shiftRequired('backend');
         $this->addTitleTab($this->translate(sprintf('Edit %s', $name)));
 
-        $form = new BackendConfigForm();
-        $form->setConfig(Config::module('pdfexport'));
-        $form->setSection($name);
+        $form = new BackendConfigForm(Config::module('pdfexport'), $name);
 
         $form->on(Form::ON_SUBMIT, function () {
             Notification::success($this->translate('Updated print backend'));
@@ -109,9 +107,7 @@ class ConfigController extends CompatController
     {
         $this->addTitleTab($this->translate(sprintf('Create Print Backend')));
 
-        $form = new BackendConfigForm();
-        $form->setConfig(Config::module('pdfexport'));
-        $form->setIsCreateForm(true);
+        $form = new BackendConfigForm(Config::module('pdfexport'), null);
 
         $form->on(Form::ON_SUBMIT, function () {
             Notification::success($this->translate('Created new print backend'));
