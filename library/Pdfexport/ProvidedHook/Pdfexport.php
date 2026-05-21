@@ -11,6 +11,7 @@ use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Application\Icinga;
 use Icinga\Application\Logger;
 use Icinga\Application\Web;
+use Icinga\Exception\IcingaException;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\BackendLocator;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
@@ -18,6 +19,7 @@ use ipl\Html\HtmlString;
 use ipl\Html\ValidHtml;
 use Karriere\PdfMerge\PdfMerge;
 use RuntimeException;
+use Throwable;
 
 class Pdfexport extends PdfexportHook
 {
@@ -35,23 +37,18 @@ class Pdfexport extends PdfexportHook
      */
     public static function first()
     {
-        if (! Hook::has('Pdfexport')) {
-            throw new RuntimeException('No PDF exporter available');
-        }
-
         foreach (Hook::all('Pdfexport') as $exporter) {
             try {
-                if (! $exporter->isSupported()) {
-                    continue;
+                if ($exporter->isSupported()) {
+                    return $exporter;
                 }
-
-                return $exporter;
             } catch (Throwable $e) {
-                Logger::error('PDF exporter reported an error during support check: %s', $e);
+                Logger::error('PDF exporter reported an error during support check: %s', $e->getMessage());
+                Logger::error("%s\n%s", $e, IcingaException::getConfidentialTraceAsString($e));
             }
         }
 
-        throw new RuntimeException('Not supported PDF exporter available');
+        throw new RuntimeException('No supported PDF exporter available');
     }
 
     /**
