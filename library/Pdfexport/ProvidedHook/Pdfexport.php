@@ -43,8 +43,11 @@ class Pdfexport extends PdfexportHook
                     return $exporter;
                 }
             } catch (Throwable $e) {
-                Logger::error('PDF exporter reported an error during support check: %s', $e->getMessage());
-                Logger::error("%s\n%s", $e, IcingaException::getConfidentialTraceAsString($e));
+                Logger::error(
+                    "PDF exporter reported an error during support check: %s\n%s",
+                    $e,
+                    IcingaException::getConfidentialTraceAsString($e),
+                );
             }
         }
 
