@@ -16,8 +16,6 @@ class BackendConfigForm extends ConfigSectionForm
 {
     public function assemble(): void
     {
-        $this->addSectionNameElement();
-
         $this->addElement('number', 'priority', [
             'label'       => $this->translate('Priority'),
             'required'    => true,
@@ -43,9 +41,10 @@ class BackendConfigForm extends ConfigSectionForm
             ],
             'required' => true,
             'class' => 'autosubmit',
+            'value' => 'local_chrome',
         ]);
 
-        $type = $this->getPopulatedValue('type') ?? $this->getConfigValue('type');
+        $type = $this->getValue('type');
 
         switch ($type) {
             case 'remote_chrome':
@@ -173,7 +172,5 @@ class BackendConfigForm extends ConfigSectionForm
 
                 break;
         }
-
-        $this->addButtonElements();
     }
 }

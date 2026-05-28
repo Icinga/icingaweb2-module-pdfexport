@@ -9,8 +9,9 @@ use Icinga\Application\Config;
 use Icinga\Module\Pdfexport\Forms\BackendConfigForm;
 use Icinga\Web\Form\ConfigSectionForm;
 use Icinga\Web\Notification;
+use Icinga\Web\Session;
 use ipl\Html\Attributes;
-use ipl\Html\Form;
+use ipl\Html\Contract\Form;
 use ipl\Html\HtmlString;
 use ipl\Html\Table;
 use ipl\Web\Compat\CompatController;
@@ -81,40 +82,36 @@ class ConfigController extends CompatController
         $name = $this->params->shiftRequired('backend');
         $this->addTitleTab($this->translate(sprintf('Edit %s', $name)));
 
-        $form = new BackendConfigForm(Config::module('pdfexport'), $name);
-
-        $form->on(Form::ON_SUBMIT, function () {
-            Notification::success($this->translate('Updated print backend'));
-            $this->redirectNow('__CLOSE__');
-        });
-
-        $form->on(ConfigSectionForm::ON_DELETE, function () {
-            Notification::success($this->translate('Print backend deleted'));
-            $this->redirectNow('__CLOSE__');
-        });
-
-        $form->on(ConfigSectionForm::ON_RENAME, function () {
-            Notification::success($this->translate('Print backend renamed'));
-            $this->redirectNow('__CLOSE__');
-        });
-
-        $form->handleRequest($this->getServerRequest());
+        $form = (new BackendConfigForm(Config::module('pdfexport'), $name))
+            ->setCsrfCounterMeasureId(Session::getSession()->getId())
+            ->on(Form::ON_SUBMIT, function () {
+                Notification::success($this->translate('Updated print backend'));
+                $this->redirectNow('__CLOSE__');
+            })
+            ->on(ConfigSectionForm::ON_DELETE, function () {
+                Notification::success($this->translate('Print backend deleted'));
+                $this->redirectNow('__CLOSE__');
+            })
+            ->on(ConfigSectionForm::ON_RENAME, function () {
+                Notification::success($this->translate('Print backend renamed'));
+                $this->redirectNow('__CLOSE__');
+            })
+            ->handleRequest($this->getServerRequest());
 
         $this->addContent(HtmlString::create($form->render()));
     }
 
     public function createbackendAction(): void
     {
-        $this->addTitleTab($this->translate(sprintf('Create Print Backend')));
+        $this->addTitleTab($this->translate('Create Print Backend'));
 
-        $form = new BackendConfigForm(Config::module('pdfexport'), null);
-
-        $form->on(Form::ON_SUBMIT, function () {
-            Notification::success($this->translate('Created new print backend'));
-            $this->redirectNow('__CLOSE__');
-        });
-
-        $form->handleRequest($this->getServerRequest());
+        $form = (new BackendConfigForm(Config::module('pdfexport'), null))
+            ->setCsrfCounterMeasureId(Session::getSession()->getId())
+            ->on(Form::ON_SUBMIT, function () {
+                Notification::success($this->translate('Created new print backend'));
+                $this->redirectNow('__CLOSE__');
+            })
+            ->handleRequest($this->getServerRequest());
 
         $this->addContent($form);
     }
