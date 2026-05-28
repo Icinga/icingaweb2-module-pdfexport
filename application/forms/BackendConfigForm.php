@@ -16,8 +16,6 @@ class BackendConfigForm extends ConfigSectionForm
 {
     public function assemble(): void
     {
-        $this->addSectionNameElement();
-
         $this->addElement('number', 'priority', [
             'label'       => $this->translate('Priority'),
             'required'    => true,
@@ -173,7 +171,5 @@ class BackendConfigForm extends ConfigSectionForm
 
                 break;
         }
-
-        $this->addButtonElements();
     }
 }
