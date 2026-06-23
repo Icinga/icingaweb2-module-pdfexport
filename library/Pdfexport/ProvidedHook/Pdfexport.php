@@ -21,6 +21,10 @@ use Karriere\PdfMerge\PdfMerge;
 use RuntimeException;
 use Throwable;
 
+/**
+ * PDF Export Hook implementation that forwards the PDF generation to the first
+ * supported PDF backend
+ */
 class Pdfexport extends PdfexportHook
 {
     protected ?BackendLocator $locator = null;
@@ -56,6 +60,7 @@ class Pdfexport extends PdfexportHook
 
     /**
      * Get the backend locator instance, creating it if necessary
+     *
      * @return BackendLocator
      */
     protected function getLocator(): BackendLocator
@@ -95,7 +100,9 @@ class Pdfexport extends PdfexportHook
         $locator = $this->getLocator();
         $backend = $locator->getFirstSupportedBackend();
         if ($backend === null) {
-            Logger::warning("No supported PDF backend available.");
+            Logger::warning('No supported PDF backend available.');
+
+            return null;
         }
 
         $pdf = $backend->toPdf($document);
@@ -121,7 +128,15 @@ class Pdfexport extends PdfexportHook
         return $pdf;
     }
 
-    protected function emit(string $pdf, string $filename): void
+    /**
+     * Emit a PDF file as the response with the appropriate headers
+     *
+     * @param string $pdf The content of the PDF file to be emitted.
+     * @param string $filename The filename to be used for the emitted PDF.
+     *
+     * @return never
+     */
+    protected function emit(string $pdf, string $filename): never
     {
         /** @var Web $app */
         $app = Icinga::app();
@@ -132,6 +147,16 @@ class Pdfexport extends PdfexportHook
             ->sendResponse();
     }
 
+    /**
+     * Converts a ValidHtml object into a PrintableHtmlDocument instance
+     *
+     * If the provided ValidHtml is already an instance of PrintableHtmlDocument, it is returned as is.
+     * Otherwise, a new PrintableHtmlDocument is created with the given HTML content.
+     *
+     * @param ValidHtml $html The HTML content to convert
+     *
+     * @return PrintableHtmlDocument
+     */
     protected function getPrintableHtmlDocument(ValidHtml $html): PrintableHtmlDocument
     {
         if ($html instanceof PrintableHtmlDocument) {
@@ -141,6 +166,13 @@ class Pdfexport extends PdfexportHook
             ->setContent(HtmlString::create($html));
     }
 
+    /**
+     * Merge multiple PDF files into a single one
+     *
+     * @param string ...$pdfs The paths to the PDF files to merge
+     *
+     * @return string the resulting PDF content
+     */
     protected function mergePdfs(string ...$pdfs): string
     {
         $merger = new PdfMerge();
