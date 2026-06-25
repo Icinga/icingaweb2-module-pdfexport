@@ -313,7 +313,7 @@ JS;
                     }
 
                     $killer = Loop::addTimer(10, function (TimerInterface $timer) use ($chrome, $deferred) {
-                        $chrome->terminate(6); // SIGABRT
+                        $this->terminateProcess($chrome, 6); // SIGABRT
 
                         Logger::error(
                             'Browser timed out after %d seconds without the expected output',
@@ -346,7 +346,7 @@ JS;
                                 Logger::error('Failed to print PDF. An error occurred: %s', $e);
                             }
 
-                            $chrome->terminate();
+                            $this->terminateProcess($chrome);
 
                             if (! empty($pdf)) {
                                 $deferred->resolve($pdf);
@@ -687,6 +687,26 @@ JS;
         } while ($wait);
 
         return $params;
+    }
+
+    /**
+     * Terminate a process and close pipes inherited by subprocesses
+     *
+     * Chrome spawns sub-processes that inherit open pipes. Close them before termination
+     * so the event loop is not kept alive by inherited file descriptors.
+     *
+     * @param Process $process The process to terminate
+     * @param ?int $signal The signal passed to Process::terminate()
+     *
+     * @return void
+     */
+    private function terminateProcess(Process $process, ?int $signal = null): void
+    {
+        foreach ($process->pipes as $pipe) {
+            $pipe->close();
+        }
+
+        $process->terminate($signal);
     }
 
     /**
