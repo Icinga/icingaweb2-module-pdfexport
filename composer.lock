@@ -626,16 +626,16 @@
         },
         {
             "name": "phrity/websocket",
-            "version": "3.7.2",
+            "version": "3.7.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sirn-se/websocket-php.git",
-                "reference": "a8edb30395d45edd83452f54dfbb0905c3115a95"
+                "reference": "c92d613ec298ea108b8ebae306609cd40427f7d6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sirn-se/websocket-php/zipball/a8edb30395d45edd83452f54dfbb0905c3115a95",
-                "reference": "a8edb30395d45edd83452f54dfbb0905c3115a95",
+                "url": "https://api.github.com/repos/sirn-se/websocket-php/zipball/c92d613ec298ea108b8ebae306609cd40427f7d6",
+                "reference": "c92d613ec298ea108b8ebae306609cd40427f7d6",
                 "shasum": ""
             },
             "require": {
@@ -686,9 +686,9 @@
             ],
             "support": {
                 "issues": "https://github.com/sirn-se/websocket-php/issues",
-                "source": "https://github.com/sirn-se/websocket-php/tree/3.7.2"
+                "source": "https://github.com/sirn-se/websocket-php/tree/3.7.3"
             },
-            "time": "2026-06-15T08:13:51+00:00"
+            "time": "2026-06-22T14:53:45+00:00"
         },
         {
             "name": "psr/http-factory",
