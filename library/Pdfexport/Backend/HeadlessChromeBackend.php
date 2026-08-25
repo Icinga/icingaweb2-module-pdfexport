@@ -126,7 +126,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
             }
 
             if ($stderr !== '') {
-                Logger::error('Browser process stderr: %d', mb_strlen($stderr));
+                Logger::debug('Browser process stderr: %d', mb_strlen($stderr));
                 if (preg_match(self::DEBUG_ADDR_PATTERN, trim($stderr), $matches)) {
                     [, $instance->socket, $instance->browserId] = $matches;
                     Logger::debug('Caught browser info socket: %s, id: %s', $instance->socket, $instance->browserId);
@@ -139,7 +139,29 @@ class HeadlessChromeBackend implements PfdPrintBackend
         });
 
         if ($instance->socket === null || $instance->browserId === null) {
+            Logger::error(
+                'Chrome exited without DevTools socket. stderr: %s',
+                $instance->process->getStderr()
+            );
+
             throw new Exception('Could not start browser process.');
+        }
+
+        // Drain the pipe while probing with short timeouts until Chrome responds, then close
+        // the read end so subsequent writes fail silently (Chrome ignores SIGPIPE).
+        $stderrPipe = $instance->process->getStderrPipe();
+        if (is_resource($stderrPipe)) {
+            $deadline = microtime(true) + 30.0;
+            while (microtime(true) < $deadline) {
+                stream_get_contents($stderrPipe);
+                if ($instance->probeDevtools(1.0)) {
+                    break;
+                }
+
+                usleep(50000);
+            }
+
+            $instance->process->closeStderrPipe();
         }
 
         return $instance;
@@ -150,7 +172,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
         Logger::debug('Closing local chrome instance');
         if ($this->process !== null) {
             $code = $this->process->stop();
-            Logger::error("Closed local chrome with exit code %d", $code);
+            Logger::debug("Closed local chrome with exit code %d", $code);
             $this->process = null;
         }
 
@@ -515,6 +537,20 @@ class HeadlessChromeBackend implements PfdPrintBackend
         } while ($wait);
 
         return $params;
+    }
+
+    /**
+     * Return true if the DevTools HTTP server responds within $timeout seconds.
+     */
+    protected function probeDevtools(float $timeout): bool
+    {
+        try {
+            $client = new HttpClient(['timeout' => $timeout, 'connect_timeout' => $timeout]);
+            $response = $client->request('GET', sprintf('http://%s/json/version', $this->socket));
+            return $response->getStatusCode() === 200;
+        } catch (Exception $e) {
+            return false;
+        }
     }
 
     /**

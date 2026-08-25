@@ -118,7 +118,7 @@ class ShellCommand
      * @return void
      * @throws Exception
      */
-    public function wait($callback = null): void
+    public function wait(callable|null $callback = null): void
     {
         if ($this->resource === null) {
             throw new Exception('Command not started');
@@ -168,6 +168,43 @@ class ShellCommand
     }
 
     /**
+     * Get the stderr pipe resource, or null if the command has not been started or has already been stopped.
+     *
+     * @return resource|null
+     */
+    public function getStderrPipe()
+    {
+        return $this->namedPipes?->stderr;
+    }
+
+    /**
+     * Get the accumulated stderr output collected during wait().
+     *
+     * @return string
+     */
+    public function getStderr(): string
+    {
+        return $this->stderr ?? '';
+    }
+
+    /**
+     * Close the stderr pipe without stopping the process.
+     *
+     * Useful to stop draining a pipe after the process is ready, so the process
+     * is no longer blocked on stderr writes (e.g., when the OS discards further writes
+     * via SIGPIPE after the read end is closed).
+     *
+     * @return void
+     */
+    public function closeStderrPipe(): void
+    {
+        if ($this->namedPipes !== null && is_resource($this->namedPipes->stderr)) {
+            fclose($this->namedPipes->stderr);
+            $this->namedPipes->stderr = null;
+        }
+    }
+
+    /**
      * Stop running command and return exit code
      *
      * @return int exit code
@@ -179,7 +216,9 @@ class ShellCommand
             throw new Exception('Command not started');
         }
 
-        fclose($this->namedPipes->stderr);
+        if (is_resource($this->namedPipes->stderr)) {
+            fclose($this->namedPipes->stderr);
+        }
         fclose($this->namedPipes->stdout);
         proc_terminate($this->resource);
         $exitCode = proc_close($this->resource);
