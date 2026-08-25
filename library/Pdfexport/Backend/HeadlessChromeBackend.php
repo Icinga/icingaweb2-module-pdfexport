@@ -24,13 +24,6 @@ class HeadlessChromeBackend implements PfdPrintBackend
     /** @var int */
     public const MIN_SUPPORTED_CHROME_VERSION = 59;
 
-    /**
-     * Line of stderr output identifying the websocket url
-     *
-     * The first matching group is the used port, and the second one the browser id.
-     */
-    public const DEBUG_ADDR_PATTERN = '/DevTools listening on ws:\/\/((?>\d+\.?){4}:\d+)\/devtools\/browser\/([\w-]+)/';
-
     /** @var string */
     public const WAIT_FOR_NETWORK = 'wait-for-network';
 
@@ -43,6 +36,8 @@ class HeadlessChromeBackend implements PfdPrintBackend
     protected ?Client $page = null;
 
     protected ?string $frameId;
+
+    protected ?string $sessionId = null;
 
     private array $interceptedRequests = [];
 
@@ -93,26 +88,37 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
 
         $browserHome = $instance->getFileStorage()->resolvePath('HOME');
+        $args = [
+            '--bwsi',
+            '--headless',
+            '--disable-gpu',
+            '--no-sandbox',
+            '--no-first-run',
+            '--disable-dev-shm-usage',
+            '--remote-debugging-port=0',
+            '--homedir='       => $browserHome,
+            '--user-data-dir=' => $browserHome,
+        ];
+
+        if (Platform::isLinux()) {
+            $args[] = '--ozone-platform=headless';
+        }
+
         $commandLine = join(' ', [
             escapeshellarg($path),
-            static::renderArgumentList([
-                '--bwsi',
-                '--headless',
-                '--disable-gpu',
-                '--no-sandbox',
-                '--no-first-run',
-                '--disable-dev-shm-usage',
-                '--remote-debugging-port=0',
-                '--homedir='       => $browserHome,
-                '--user-data-dir=' => $browserHome,
-            ]),
+            static::renderArgumentList($args),
         ]);
 
         $env = null;
         if (Platform::isLinux()) {
             Logger::debug('Starting browser process: HOME=%s exec %s', $browserHome, $commandLine);
             $env = array_merge($_ENV, ['HOME' => $browserHome]);
-            $commandLine = 'exec ' . $commandLine;
+            // Redirect stderr to /dev/null before exec-ing any wrapper script. Distro wrappers
+            // (e.g. Fedora's chromium-browser, Google Chrome) route Chrome's stderr through a cat
+            // subprocess writing to PHP's pipe. Keeping that pipe open causes either buffer-fill
+            // deadlock (IO thread) or EPIPE when PHP closes the read end (fatal CHECK in renderer).
+            // With stderr going to /dev/null the cat subprocess never blocks and never dies.
+            $commandLine = 'exec ' . $commandLine . ' 2>/dev/null';
         } else {
             Logger::debug('Starting browser process: %s', $commandLine);
         }
@@ -120,48 +126,36 @@ class HeadlessChromeBackend implements PfdPrintBackend
         $instance->process = new ShellCommand($commandLine, false, $env);
         $instance->process->start();
         Logger::debug('Started browser process');
-        $instance->process->wait(function ($stdout, $stderr) use ($instance) {
-            if ($stdout !== '') {
-                Logger::debug('Caught browser stdout: %d', mb_strlen($stdout));
-            }
 
-            if ($stderr !== '') {
-                Logger::debug('Browser process stderr: %d', mb_strlen($stderr));
-                if (preg_match(self::DEBUG_ADDR_PATTERN, trim($stderr), $matches)) {
-                    [, $instance->socket, $instance->browserId] = $matches;
-                    Logger::debug('Caught browser info socket: %s, id: %s', $instance->socket, $instance->browserId);
-
-                    return false;
+        // Chrome writes the DevTools port to DevToolsActivePort in user-data-dir once the
+        // DevTools server is listening. Poll for it instead of reading stderr.
+        $portFile = $browserHome . '/DevToolsActivePort';
+        $deadline = microtime(true) + 30.0;
+        while (microtime(true) < $deadline) {
+            usleep(100000);
+            if (is_readable($portFile)) {
+                $content = file_get_contents($portFile);
+                if ($content !== false) {
+                    $lines = explode("\n", trim($content));
+                    $port = (int) ($lines[0] ?? 0);
+                    $browserId = basename(trim($lines[1] ?? ''));
+                    if ($port > 0 && $browserId !== '') {
+                        $instance->socket = '127.0.0.1:' . $port;
+                        $instance->browserId = $browserId;
+                        Logger::debug(
+                            'Caught browser info from DevToolsActivePort: %s, id: %s',
+                            $instance->socket,
+                            $instance->browserId
+                        );
+                        break;
+                    }
                 }
             }
-
-            return true;
-        });
-
-        if ($instance->socket === null || $instance->browserId === null) {
-            Logger::error(
-                'Chrome exited without DevTools socket. stderr: %s',
-                $instance->process->getStderr()
-            );
-
-            throw new Exception('Could not start browser process.');
         }
 
-        // Drain the pipe while probing with short timeouts until Chrome responds, then close
-        // the read end so subsequent writes fail silently (Chrome ignores SIGPIPE).
-        $stderrPipe = $instance->process->getStderrPipe();
-        if (is_resource($stderrPipe)) {
-            $deadline = microtime(true) + 30.0;
-            while (microtime(true) < $deadline) {
-                stream_get_contents($stderrPipe);
-                if ($instance->probeDevtools(1.0)) {
-                    break;
-                }
-
-                usleep(50000);
-            }
-
-            $instance->process->closeStderrPipe();
+        if ($instance->socket === null) {
+            Logger::error('Chrome did not create DevToolsActivePort within 30 seconds');
+            throw new Exception('Could not start browser process.');
         }
 
         return $instance;
@@ -273,9 +267,34 @@ class HeadlessChromeBackend implements PfdPrintBackend
                 throw new Exception('Expected target id. Got instead: ' . json_encode($result));
             }
 
-            $this->page = new Client(sprintf('ws://%s/devtools/page/%s', $this->socket, $this->frameId));
-            // enable various events
-            $this->communicate($this->page, 'Log.enable');
+            // Try direct page WebSocket first (works for all standard Chrome/Chromium builds).
+            // Fall back to flatten session for headless-only builds that don't expose /devtools/page/{id}.
+            $direct = new Client(sprintf('ws://%s/devtools/page/%s', $this->socket, $this->frameId));
+            try {
+                $this->communicate($direct, 'Log.enable');
+                $this->page = $direct;
+            } catch (Exception $directException) {
+                try {
+                    $direct->close();
+                } catch (Throwable) {
+                }
+
+                $attached = $this->communicate($browser, 'Target.attachToTarget', [
+                    'targetId' => $this->frameId,
+                    'flatten'  => true,
+                ]);
+                if (isset($attached['sessionId'])) {
+                    $this->sessionId = $attached['sessionId'];
+                    $this->page = $browser;
+                    $this->communicate($this->page, 'Log.enable');
+                } else {
+                    throw new Exception(sprintf(
+                        'Failed to connect to page. Direct: %s. Flatten returned no session.',
+                        $directException->getMessage()
+                    ));
+                }
+            }
+
             $this->communicate($this->page, 'Network.enable');
             $this->communicate($this->page, 'Page.enable');
 
@@ -304,8 +323,17 @@ class HeadlessChromeBackend implements PfdPrintBackend
             throw new Exception('Expected close confirmation. Got instead: ' . json_encode($result));
         }
 
+        // Only close page if it's a separate connection; if it's the same as browser, leave browser open
+        if ($this->page !== $this->browser) {
+            try {
+                $this->page->close();
+            } catch (Throwable $e) {
+                Logger::debug('Failed to close page connection: ' . $e->getMessage());
+            }
+        }
         $this->page = null;
         $this->frameId = null;
+        $this->sessionId = null;
     }
 
     protected function setContent(PrintableHtmlDocument $document): void
@@ -402,13 +430,17 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return $pdf;
     }
 
-    private function renderApiCall($method, $options = null): string
+    private function renderApiCall($method, $options = null, ?string $sessionId = null): string
     {
-        return json_encode([
+        $payload = [
             'id'     => time(),
             'method' => $method,
             'params' => $options ?: [],
-        ], JSON_FORCE_OBJECT);
+        ];
+        if ($sessionId !== null) {
+            $payload['sessionId'] = $sessionId;
+        }
+        return json_encode($payload, JSON_FORCE_OBJECT);
     }
 
     private function parseApiResponse(string $payload)
@@ -469,14 +501,19 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     private function communicate(Client $ws, $method, $params = null)
     {
+        // Include sessionId for page-level commands when using flatten sessions
+        $sessionId = null;
+        if ($this->sessionId !== null && $ws === $this->page && ! str_starts_with($method, 'Target.')) {
+            $sessionId = $this->sessionId;
+        }
         Logger::debug('Transmitting CDP call: %s(%s)', $method, $params ? join(',', array_keys($params)) : '');
-        $ws->text($this->renderApiCall($method, $params));
+        $ws->text($this->renderApiCall($method, $params, $sessionId));
         do {
             $response = $this->parseApiResponse($ws->receive()->getContent());
             $gotEvent = isset($response['method']);
 
             if ($gotEvent) {
-                $this->registerEvent($response['method'], $response['params']);
+                $this->registerEvent($response['method'], $response['params'] ?? []);
             }
         } while ($gotEvent);
 
@@ -585,11 +622,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
     public function getVersion(): int
     {
         $version = $this->getJsonVersion();
-        if (! isset($version['Browser'])) {
+        if (! is_array($version) || empty($version['Browser'])) {
             throw new Exception("Invalid Version Json");
         }
 
-        preg_match('/Chrome\/([0-9]+)/', $version['Browser'], $matches);
+        preg_match('/(?:Chrome|Chromium)\/([0-9]+)/', $version['Browser'], $matches);
         if (! isset($matches[1])) {
             throw new Exception("Malformed Chrome Version String: " . $version['Browser']);
         }
@@ -599,7 +636,12 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     public function isSupported(): bool
     {
-        return $this->getVersion() >= self::MIN_SUPPORTED_CHROME_VERSION;
+        try {
+            return $this->getVersion() >= self::MIN_SUPPORTED_CHROME_VERSION;
+        } catch (Exception $e) {
+            Logger::warning('Chrome version check failed: %s. Checking DevTools availability.', $e->getMessage());
+            return $this->probeDevtools(2.0);
+        }
     }
 
     public function close(): void
