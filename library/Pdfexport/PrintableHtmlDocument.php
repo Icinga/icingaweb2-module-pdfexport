@@ -192,9 +192,9 @@ CSS;
     /**
      * Get the document title
      *
-     * @return string
+     * @return ?string
      */
-    public function getTitle(): string
+    public function getTitle(): ?string
     {
         return $this->title;
     }
@@ -202,11 +202,11 @@ CSS;
     /**
      * Set the document title
      *
-     * @param string $title
+     * @param ?string $title
      *
      * @return $this
      */
-    public function setTitle(string $title): static
+    public function setTitle(?string $title): static
     {
         $this->title = $title;
 
