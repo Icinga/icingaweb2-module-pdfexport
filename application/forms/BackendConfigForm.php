@@ -11,9 +11,12 @@ use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
 use Icinga\Web\Form\ConfigSectionForm;
 use ipl\Validator\CallbackValidator;
+use ipl\Web\Common\CsrfCounterMeasure;
 
 class BackendConfigForm extends ConfigSectionForm
 {
+    use CsrfCounterMeasure;
+
     public function assemble(): void
     {
         $this->addElement('number', 'priority', [
@@ -99,8 +102,7 @@ class BackendConfigForm extends ConfigSectionForm
                             }
 
                             try {
-                                $chrome = (HeadlessChromeBackend::createLocal($value));
-                                $version = $chrome->getVersion();
+                                $version = HeadlessChromeBackend::createLocal($value)->getVersion();
                             } catch (Exception $e) {
                                 $validator->addMessage($e->getMessage());
                                 return false;
@@ -172,5 +174,7 @@ class BackendConfigForm extends ConfigSectionForm
 
                 break;
         }
+
+        $this->addCsrfCounterMeasure();
     }
 }
