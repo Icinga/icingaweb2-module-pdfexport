@@ -46,7 +46,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart apache2
 ```
 
-## SELinux: Chrome renderer crashes on RHEL/Fedora/CentOS <a id="troubleshooting-selinux"></a>
+## SELinux: Chrome renderer crashes on RHEL/Fedora <a id="troubleshooting-selinux"></a>
 
 Applies to: local Chrome backend on systems with SELinux in enforcing mode.
 

@@ -10,7 +10,7 @@ The first backend (lowest priority number) that is able to handle the request is
 
 The module needs Google Chrome or Chromium supporting headless mode.
 
-### RHEL/CentOS <a id="configuration-chrome-setup-rhel"></a>
+### RHEL <a id="configuration-chrome-setup-rhel"></a>
 
 Add the Chrome repository from Google to yum, next to EPEL.
 
