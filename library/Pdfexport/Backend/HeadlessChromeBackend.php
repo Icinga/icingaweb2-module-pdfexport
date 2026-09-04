@@ -24,6 +24,9 @@ class HeadlessChromeBackend implements PfdPrintBackend
     /** @var int */
     public const MIN_SUPPORTED_CHROME_VERSION = 59;
 
+    /** @var float */
+    public const DEVTOOLS_PORT_TIMEOUT_SECONDS = 30.0;
+
     /** @var string */
     public const WAIT_FOR_NETWORK = 'wait-for-network';
 
@@ -130,7 +133,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
         // Chrome writes the DevTools port to DevToolsActivePort in user-data-dir once the
         // DevTools server is listening. Poll for it instead of reading stderr.
         $portFile = $browserHome . '/DevToolsActivePort';
-        $deadline = microtime(true) + 30.0;
+        $deadline = microtime(true) + static::DEVTOOLS_PORT_TIMEOUT_SECONDS;
         while (microtime(true) < $deadline) {
             usleep(100000);
             if (is_readable($portFile)) {
@@ -154,8 +157,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
 
         if ($instance->socket === null) {
-            Logger::error('Chrome did not create DevToolsActivePort within 30 seconds');
-            throw new Exception('Could not start browser process.');
+            Logger::error(
+                'Chrome did not create DevToolsActivePort within %d seconds',
+                static::DEVTOOLS_PORT_TIMEOUT_SECONDS,
+            );
+            throw new RuntimeException('Could not start browser process.');
         }
 
         return $instance;
@@ -217,20 +223,16 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     protected function getPrintParameters(PrintableHtmlDocument $document): array
     {
-        $parameters = [
+        return array_merge([
             'printBackground' => true,
             'transferMode'    => 'ReturnAsBase64',
-        ];
-
-        return array_merge($parameters, $document->getPrintParameters());
+        ], $document->getPrintParameters());
     }
 
     public function toPdf(PrintableHtmlDocument $document): string
     {
         $this->setContent($document);
-        $printParameters = $this->getPrintParameters($document);
-
-        return $this->printToPdf($printParameters);
+        return $this->printToPdf($this->getPrintParameters($document));
     }
 
     protected function getBrowser(): Client
@@ -283,6 +285,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
                     'targetId' => $this->frameId,
                     'flatten'  => true,
                 ]);
+
                 if (isset($attached['sessionId'])) {
                     $this->sessionId = $attached['sessionId'];
                     $this->page = $browser;
@@ -290,7 +293,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
                 } else {
                     throw new Exception(sprintf(
                         'Failed to connect to page. Direct: %s. Flatten returned no session.',
-                        $directException->getMessage()
+                        $directException->getMessage(),
                     ));
                 }
             }
@@ -331,6 +334,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
                 Logger::debug('Failed to close page connection: ' . $e->getMessage());
             }
         }
+
         $this->page = null;
         $this->frameId = null;
         $this->sessionId = null;
@@ -421,13 +425,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
             $printParameters,
             ['transferMode' => 'ReturnAsBase64', 'printBackground' => true],
         ));
-        if (! empty($result['data'])) {
-            $pdf = base64_decode($result['data']);
-        } else {
-            throw new Exception('Expected base64 data. Got instead: ' . json_encode($result));
+        if (empty($result['data'])) {
+            throw new RuntimeException('Expected base64 data. Got instead: ' . json_encode($result));
         }
 
-        return $pdf;
+        return base64_decode($result['data']);
     }
 
     private function renderApiCall($method, $options = null, ?string $sessionId = null): string

@@ -64,11 +64,7 @@ class Pdfexport extends PdfexportHook
      */
     protected function getLocator(): BackendLocator
     {
-        if (! $this->locator) {
-            $this->locator = new BackendLocator();
-        }
-
-        return $this->locator;
+        return $this->locator ??= new BackendLocator();
     }
 
     public function isSupported()
