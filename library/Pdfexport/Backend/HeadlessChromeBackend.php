@@ -32,6 +32,9 @@ class HeadlessChromeBackend implements PfdPrintBackend
     /** @var string */
     public const WAIT_FOR_NETWORK = 'wait-for-network';
 
+    /** @var int */
+    const MAX_PARAM_LENGTH = 256;
+
     protected ?StorageInterface $fileStorage = null;
 
     protected bool $useFilesystemTransfer = false;
@@ -505,24 +508,23 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
     }
 
+    protected static function shortenParams(array $params): array
+    {
+        foreach ($params as &$value) {
+            if (is_array($value)) {
+                $value = static::shortenParams($value);
+            } elseif (is_string($value) && strlen($value) > static::MAX_PARAM_LENGTH) {
+                $value = substr($value, 0, static::MAX_PARAM_LENGTH) . '...';
+            }
+        }
+
+        return $params;
+    }
+
     private function registerEvent($method, $params): void
     {
         if (Logger::getInstance()->getLevel() === Logger::DEBUG) {
-            $shortenValues = function ($params) use (&$shortenValues) {
-                foreach ($params as &$value) {
-                    if (is_array($value)) {
-                        $value = $shortenValues($value);
-                    } elseif (is_string($value)) {
-                        $shortened = substr($value, 0, 256);
-                        if ($shortened !== $value) {
-                            $value = $shortened . '...';
-                        }
-                    }
-                }
-
-                return $params;
-            };
-            $shortenedParams = $shortenValues($params);
+            $shortenedParams = static::shortenParams($params);
             Logger::debug(
                 'Received CDP event: %s(%s)',
                 $method,
