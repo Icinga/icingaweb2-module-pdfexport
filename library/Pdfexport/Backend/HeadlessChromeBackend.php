@@ -636,6 +636,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
             $response = $client->request('GET', sprintf('http://%s/json/version', $this->socket));
             return $response->getStatusCode() === 200;
         } catch (Exception $e) {
+            Logger::warning(
+                "Devtools request failed: %s (%s)",
+                $e->getMessage(),
+                IcingaException::getConfidentialTraceAsString($e),
+            );
             return false;
         }
     }
