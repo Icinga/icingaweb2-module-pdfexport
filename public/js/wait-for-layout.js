@@ -12,12 +12,12 @@ new Promise((fulfill, reject) => {
         fulfill(e.detail);
     };
 
+    document.addEventListener('layout-ready', onLayoutReady, {
+        once: true
+    });
+
     const timeoutId = setTimeout(() => {
         document.removeEventListener('layout-ready', onLayoutReady);
         reject('fail');
     }, 10000);
-
-    document.addEventListener('layout-ready', onLayoutReady, {
-        once: true
-    });
 })
