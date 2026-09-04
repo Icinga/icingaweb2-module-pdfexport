@@ -73,7 +73,11 @@ class Pdfexport extends PdfexportHook
         try {
             return $locator->getFirstSupportedBackend() !== null;
         } catch (Exception $e) {
-            Logger::warning("No supported PDF backend available.");
+            Logger::warning(
+                'No supported PDF backend available.',
+                $e->getMessage(),
+                IcingaException::getConfidentialTraceAsString($e),
+            );
             return false;
         }
     }

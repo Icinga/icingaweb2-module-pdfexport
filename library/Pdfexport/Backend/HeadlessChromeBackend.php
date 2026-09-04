@@ -11,11 +11,13 @@ use GuzzleHttp\Exception\ServerException;
 use Icinga\Application\Icinga;
 use Icinga\Application\Logger;
 use Icinga\Application\Platform;
+use Icinga\Exception\IcingaException;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\ShellCommand;
 use LogicException;
+use RuntimeException;
 use Throwable;
 use WebSocket\Client;
 
@@ -57,14 +59,24 @@ class HeadlessChromeBackend implements PfdPrintBackend
         $this->close();
     }
 
-    public static function createRemote(string $host, int $port): static
+    /**
+     * Create an instance of the backend by connecting to an already running chrome/chromium instance
+     *
+     * @param string $host the hostname to connect to
+     * @param int $port the chrome devtools protocoll port
+     *
+     * @return self
+     *
+     * @throws RuntimeException
+     */
+    public static function createRemote(string $host, int $port): self
     {
         $instance = new self();
         $instance->socket = "$host:$port";
         try {
             $result = $instance->getJsonVersion();
             if (! is_array($result)) {
-                throw new Exception('Failed to determine remote chrome version via the /json/version endpoint.');
+                throw new RuntimeException('Failed to determine remote chrome version via the /json/version endpoint.');
             }
 
             $parts = explode('/', $result['webSocketDebuggerUrl']);
@@ -82,7 +94,15 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return $instance;
     }
 
-    public static function createLocal(string $path, bool $useFile = false): static
+    /**
+     * Spawn a new instance of the Chrome/Chromium browser and hands back a backend instance
+     *
+     * @param string $path the path to the executeable
+     * @param bool $useFile should the transfer of the html document use the filesystem
+     *
+     * @throws RuntimeException
+     */
+    public static function createLocal(string $path, bool $useFile = false): self
     {
         $instance = new self();
         $instance->useFilesystemTransfer = $useFile;
@@ -177,11 +197,13 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
 
         try {
-            if ($this->fileStorage !== null) {
-                $this->fileStorage = null;
-            }
-        } catch (Exception $exception) {
-            Logger::error("Failed to close local temporary file storage: " . $exception->getMessage());
+            $this->fileStorage = null;
+        } catch (Exception $e) {
+            Logger::error(
+                "Failed to close local temporary file storage: %s\n%s",
+                $e->getMessage(),
+                IcingaException::getConfidentialTraceAsString($e),
+            );
         }
     }
 
@@ -246,13 +268,26 @@ class HeadlessChromeBackend implements PfdPrintBackend
             return;
         }
 
-        $this->closePage();
+        try {
+            $this->closePage();
+        } catch (Exception $e) {
+            Logger::warning(
+                "Failed to close browser: %s\n%s",
+                $e->getMessage(),
+                IcingaException::getConfidentialTraceAsString($e),
+            );
+        }
+
         try {
             $this->browser->close();
             $this->browser = null;
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
             // For some reason, the browser doesn't send a response
-            Logger::debug('Failed to close browser connection: ' . $e->getMessage());
+            Logger::warning(
+                "Failed to close browser connection: %s\n%s",
+                $e->getMessage(),
+                IcingaException::getConfidentialTraceAsString($e),
+            );
         }
     }
 
@@ -266,7 +301,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
             if (isset($result['targetId'])) {
                 $this->frameId = $result['targetId'];
             } else {
-                throw new Exception('Expected target id. Got instead: ' . json_encode($result));
+                throw new RuntimeException('Expected target id. Got instead: ' . json_encode($result));
             }
 
             // Try direct page WebSocket first (works for all standard Chrome/Chromium builds).
@@ -278,7 +313,12 @@ class HeadlessChromeBackend implements PfdPrintBackend
             } catch (Exception $directException) {
                 try {
                     $direct->close();
-                } catch (Throwable) {
+                } catch (Exception $e) {
+                    Logger::warning(
+                        "Failed to close websocket client: %s\n%s",
+                        $directException->getMessage(),
+                        IcingaException::getConfidentialTraceAsString($e),
+                    );
                 }
 
                 $attached = $this->communicate($browser, 'Target.attachToTarget', [
@@ -291,7 +331,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
                     $this->page = $browser;
                     $this->communicate($this->page, 'Log.enable');
                 } else {
-                    throw new Exception(sprintf(
+                    throw new RuntimeException(sprintf(
                         'Failed to connect to page. Direct: %s. Flatten returned no session.',
                         $directException->getMessage(),
                     ));
@@ -323,7 +363,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
         ]);
 
         if (! isset($result['success'])) {
-            throw new Exception('Expected close confirmation. Got instead: ' . json_encode($result));
+            throw new RuntimeException('Expected close confirmation. Got instead: ' . json_encode($result));
         }
 
         // Only close page if it's a separate connection; if it's the same as browser, leave browser open
@@ -331,7 +371,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
             try {
                 $this->page->close();
             } catch (Throwable $e) {
-                Logger::debug('Failed to close page connection: ' . $e->getMessage());
+                Logger::warning(
+                    "Failed to close page connection: %s\n%s",
+                    $e->getMessage(),
+                    IcingaException::getConfidentialTraceAsString($e),
+                );
             }
         }
 
@@ -370,7 +414,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
             try {
                 $storage->delete($path);
             } catch (Exception $e) {
-                Logger::warning('Failed to delete file: ' . $e->getMessage());
+                Logger::warning(
+                    "Failed to delete file: %s\n%s",
+                    $e->getMessage(),
+                    IcingaException::getConfidentialTraceAsString($e),
+                );
             }
         } else {
             $this->communicate($page, 'Page.setDocumentContent', [
