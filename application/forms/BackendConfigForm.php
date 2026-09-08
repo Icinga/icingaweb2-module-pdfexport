@@ -51,6 +51,9 @@ class BackendConfigForm extends ConfigSectionForm
 
         switch ($type) {
             case 'remote_chrome':
+                $this->addElement('hidden', 'binary');
+                $this->addElement('hidden', 'force_temp_storage');
+
                 $this->addElement('text', 'host', [
                     'label'       => $this->translate('Host'),
                     'description' => $this->translate('Host address of the server with the running web browser.'),
@@ -91,6 +94,9 @@ class BackendConfigForm extends ConfigSectionForm
                 break;
 
             case 'local_chrome':
+                $this->addElement('hidden', 'host');
+                $this->addElement('hidden', 'port');
+
                 $this->addElement('text', 'binary', [
                     'label'       => $this->translate('Binary'),
                     'placeholder' => '/usr/bin/google-chrome',
@@ -133,6 +139,9 @@ class BackendConfigForm extends ConfigSectionForm
 
             case 'firefox_webdriver':
             case 'chrome_webdriver':
+                $this->addElement('hidden', 'binary');
+                $this->addElement('hidden', 'force_temp_storage');
+
                 $this->addElement('text', 'host', [
                     'label'       => $this->translate('Host'),
                     'description' => $this->translate('Host address of the webdriver server'),
