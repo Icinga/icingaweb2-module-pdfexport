@@ -14,7 +14,6 @@ use Icinga\Application\Platform;
 use Icinga\Exception\IcingaException;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
-use Icinga\Module\Notifications\Api\OpenApiDescriptionElement\OadV1Delete;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\ShellCommand;
 use LogicException;
