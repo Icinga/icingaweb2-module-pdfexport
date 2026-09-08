@@ -27,7 +27,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
     /** @var int */
     public const MIN_SUPPORTED_CHROME_VERSION = 59;
 
-    /** @var float */
+    /** @var float Maximum time to wait for the port to appear in the output */
     public const DEVTOOLS_PORT_TIMEOUT_SECONDS = 30.0;
 
     /** @var string */
