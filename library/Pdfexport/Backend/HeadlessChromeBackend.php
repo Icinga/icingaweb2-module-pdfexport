@@ -33,8 +33,8 @@ class HeadlessChromeBackend implements PfdPrintBackend
     /** @var string */
     public const WAIT_FOR_NETWORK = 'wait-for-network';
 
-    /** @var int */
-    const MAX_PARAM_LENGTH = 256;
+    /** @var int Maximum length of one parameter to log */
+    public const MAX_PARAM_LENGTH = 256;
 
     protected ?StorageInterface $fileStorage = null;
 
