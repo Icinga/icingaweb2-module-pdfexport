@@ -5,27 +5,40 @@
 
 namespace Icinga\Module\Pdfexport;
 
+use Exception;
+
+/**
+ * Abstraction for a running shell command.
+ */
 class ShellCommand
 {
     /** @var string Command to execute */
-    protected $command;
+    protected string $command;
 
-    /** @var int Exit code of the command */
-    protected $exitCode;
+    /** @var ?int Exit code of the command */
+    protected ?int $exitCode = null;
 
     /** @var ?resource Process resource */
     protected $resource;
 
+    /** @var object|null Named pipe resources */
+    protected ?object $namedPipes;
+
+    /** @var string collected stdout */
+    protected string $stdout;
+
+    /** @var string collected stderr */
+    protected string $stderr;
+
     /**
      * Create a new command
      *
-     * @param   string  $command    The command to execute
-     * @param   bool    $escape     Whether to escape the command
+     * @param string $command The command to execute
+     * @param bool $escape Whether to escape the command
+     * @param array|null $env Environment variables
      */
-    public function __construct($command, $escape = true)
+    public function __construct(string $command, bool $escape = true, protected ?array $env = null)
     {
-        $command = (string) $command;
-
         $this->command = $escape ? escapeshellcmd($command) : $command;
     }
 
@@ -34,7 +47,7 @@ class ShellCommand
      *
      * @return int
      */
-    public function getExitCode()
+    public function getExitCode(): int
     {
         return $this->exitCode;
     }
@@ -44,7 +57,7 @@ class ShellCommand
      *
      * @return object
      */
-    public function getStatus()
+    public function getStatus(): object
     {
         $status = (object) proc_get_status($this->resource);
         if ($status->running === false && $this->exitCode === null) {
@@ -57,63 +70,79 @@ class ShellCommand
     }
 
     /**
-     * Execute the command
+     * Run the command
      *
-     * @return  object
-     *
-     * @throws  \Exception
+     * @return void
+     * @throws Exception
      */
-    public function execute()
+    public function start(): void
     {
         if ($this->resource !== null) {
-            throw new \Exception('Command already started');
+            throw new Exception('Command already started');
         }
 
         $descriptors = [
             ['pipe', 'r'], // stdin
             ['pipe', 'w'], // stdout
-            ['pipe', 'w']  // stderr
+            ['pipe', 'w'], // stderr
         ];
-
         $this->resource = proc_open(
             $this->command,
             $descriptors,
-            $pipes
+            $pipes,
+            null,
+            $this->env,
         );
-
         if (! is_resource($this->resource)) {
-            throw new \Exception(sprintf(
+            throw new Exception(sprintf(
                 "Can't fork '%s'",
-                $this->command
+                $this->command,
             ));
         }
 
-        $namedpipes = (object) [
-            'stdin'     => &$pipes[0],
-            'stdout'    => &$pipes[1],
-            'stderr'    => &$pipes[2]
+        $this->namedPipes = (object) [
+            'stdin' => &$pipes[0],
+            'stdout' => &$pipes[1],
+            'stderr' => &$pipes[2],
         ];
+        fclose($this->namedPipes->stdin);
+    }
 
-        fclose($namedpipes->stdin);
+    /**
+     * Capture stdout and stderr of the command.
+     * This function will block until the command exits or the optional callback returns false.
+     *
+     * @param callable|null $callback A callback function that will be called with the captured stdout and stderr.
+     * The callback should return true to continue waiting, false to stop waiting.
+     *
+     * @return void
+     * @throws Exception
+     */
+    public function wait(callable|null $callback = null): void
+    {
+        if ($this->resource === null) {
+            throw new Exception('Command not started');
+        }
 
-        $read = [$namedpipes->stderr, $namedpipes->stdout];
+        $read = [$this->namedPipes->stderr, $this->namedPipes->stdout];
         $origRead = $read;
-        $write = null; // stdin not handled
+        // stdin not handled
+        $write = null;
         $except = null;
-        $stdout = '';
-        $stderr = '';
+        $this->stdout = '';
+        $this->stderr = '';
 
-        stream_set_blocking($namedpipes->stdout, false); // non-blocking
-        stream_set_blocking($namedpipes->stderr, false);
+        stream_set_blocking($this->namedPipes->stdout, false);
+        stream_set_blocking($this->namedPipes->stderr, false);
 
         while (stream_select($read, $write, $except, 0, 20000) !== false) {
             foreach ($read as $pipe) {
-                if ($pipe === $namedpipes->stdout) {
-                    $stdout .= stream_get_contents($pipe);
+                if ($pipe === $this->namedPipes->stdout) {
+                    $this->stdout .= stream_get_contents($pipe);
                 }
 
-                if ($pipe === $namedpipes->stderr) {
-                    $stderr .= stream_get_contents($pipe);
+                if ($pipe === $this->namedPipes->stderr) {
+                    $this->stderr .= stream_get_contents($pipe);
                 }
             }
 
@@ -129,21 +158,77 @@ class ShellCommand
 
             // Reset pipes
             $read = $origRead;
+            if ($callback !== null) {
+                $continue = call_user_func($callback, $this->stdout, $this->stderr);
+                if ($continue === false) {
+                    break;
+                }
+            }
+        }
+    }
+
+    /**
+     * Get the stderr pipe resource, or null if the command has not been started or has already been stopped.
+     *
+     * @return resource|null
+     */
+    public function getStderrPipe()
+    {
+        return $this->namedPipes?->stderr;
+    }
+
+    /**
+     * Get the accumulated stderr output collected during wait().
+     *
+     * @return string
+     */
+    public function getStderr(): string
+    {
+        return $this->stderr ?? '';
+    }
+
+    /**
+     * Close the stderr pipe without stopping the process.
+     *
+     * Useful to stop draining a pipe after the process is ready, so the process
+     * is no longer blocked on stderr writes (e.g., when the OS discards further writes
+     * via SIGPIPE after the read end is closed).
+     *
+     * @return void
+     */
+    public function closeStderrPipe(): void
+    {
+        if ($this->namedPipes !== null && is_resource($this->namedPipes->stderr)) {
+            fclose($this->namedPipes->stderr);
+            $this->namedPipes->stderr = null;
+        }
+    }
+
+    /**
+     * Stop running command and return exit code
+     *
+     * @return int exit code
+     * @throws Exception
+     */
+    public function stop(): int
+    {
+        if ($this->resource === null) {
+            throw new Exception('Command not started');
         }
 
-        fclose($namedpipes->stderr);
-        fclose($namedpipes->stdout);
-
+        if (is_resource($this->namedPipes->stderr)) {
+            fclose($this->namedPipes->stderr);
+        }
+        fclose($this->namedPipes->stdout);
+        proc_terminate($this->resource);
         $exitCode = proc_close($this->resource);
         if ($this->exitCode === null) {
             $this->exitCode = $exitCode;
         }
 
         $this->resource = null;
+        $this->namedPipes = null;
 
-        return (object) [
-            'stdout' => $stdout,
-            'stderr' => $stderr
-        ];
+        return $exitCode;
     }
 }

@@ -13,10 +13,9 @@ class PrintStyleSheet extends StyleSheet
     protected function collect()
     {
         parent::collect();
-
         $this->lessCompiler->setTheme(join(DIRECTORY_SEPARATOR, [
             Icinga::app()->getModuleManager()->getModule('pdfexport')->getCssDir(),
-            'print.less'
+            'print.less',
         ]));
 
         if (method_exists($this->lessCompiler, 'setThemeMode')) {
