@@ -5,6 +5,7 @@
 
 namespace Icinga\Module\Pdfexport\Backend;
 
+use Exception;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\WebDriver\Capabilities;
 use Icinga\Module\Pdfexport\WebDriver\ElementPresentCondition;
@@ -58,8 +59,11 @@ class WebdriverBackend implements PfdPrintBackend
 
     public function isSupported(): bool
     {
-        // TODO: Come up with a check
-        return true;
+        try {
+            return str_starts_with($this->printToPdf([]), '%PDF');
+        } catch (Exception) {
+            return false;
+        }
     }
 
     public function close(): void
