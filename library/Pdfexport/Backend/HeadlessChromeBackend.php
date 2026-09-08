@@ -14,6 +14,7 @@ use Icinga\Application\Platform;
 use Icinga\Exception\IcingaException;
 use Icinga\File\Storage\StorageInterface;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
+use Icinga\Module\Notifications\Api\OpenApiDescriptionElement\OadV1Delete;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\ShellCommand;
 use LogicException;
@@ -121,13 +122,13 @@ class HeadlessChromeBackend implements PfdPrintBackend
             '--no-sandbox',
             '--no-first-run',
             '--disable-dev-shm-usage',
-            '--remote-debugging-port=0',
-            '--homedir='       => $browserHome,
-            '--user-data-dir=' => $browserHome,
+            '--remote-debugging-port=' => 0,
+            '--homedir='               => $browserHome,
+            '--user-data-dir='         => $browserHome,
         ];
 
         if (Platform::isLinux()) {
-            $args[] = '--ozone-platform=headless';
+            $args['--ozone-platform='] = 'headless';
         }
 
         $commandLine = join(' ', [
@@ -221,26 +222,22 @@ class HeadlessChromeBackend implements PfdPrintBackend
     /**
      * Render the given argument name-value pairs as shell-escaped string
      */
-    public static function renderArgumentList(array $arguments): string
+    protected static function renderArgumentList(array $arguments): string
     {
         $list = [];
         foreach ($arguments as $name => $value) {
-            if ($value !== null) {
-                $value = escapeshellarg($value);
-                if (! is_int($name)) {
-                    if (str_ends_with($name, '=')) {
-                        $glue = '';
-                    } else {
-                        $glue = ' ';
-                    }
-
-                    $list[] = escapeshellarg($name) . $glue . $value;
-                } else {
-                    $list[] = $value;
-                }
-            } else {
-                $list[] = escapeshellarg($name);
+            if ($value === null) {
+                continue;
             }
+
+            if (is_int($name)) {
+                $list[] = escapeshellarg($value);
+                continue;
+            }
+
+            $list[] = str_ends_with($name, '=')
+                ? escapeshellarg($name . $value)
+                : escapeshellarg($name) . ' ' . escapeshellarg($value);
         }
 
         return implode(' ', $list);
@@ -408,7 +405,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
             if (isset($result['frameId'])) {
                 $this->frameId = $result['frameId'];
             } else {
-                throw new Exception('Expected navigation frame. Got instead: ' . json_encode($result));
+                throw new RuntimeException('Expected navigation frame. Got instead: ' . json_encode($result));
             }
 
             // wait for the page to fully load
@@ -477,10 +474,15 @@ class HeadlessChromeBackend implements PfdPrintBackend
             ['transferMode' => 'ReturnAsBase64', 'printBackground' => true],
         ));
         if (empty($result['data'])) {
+            throw new RuntimeException('Expected base64 data. Got instead empty data instead.');
+        }
+
+        $decoded = base64_decode($result['data']);
+        if ($decoded === false) {
             throw new RuntimeException('Expected base64 data. Got instead: ' . json_encode($result));
         }
 
-        return base64_decode($result['data']);
+        return $decoded;
     }
 
     private function renderApiCall($method, $options = null, ?string $sessionId = null): string
