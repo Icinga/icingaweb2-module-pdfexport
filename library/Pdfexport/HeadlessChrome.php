@@ -19,6 +19,7 @@ use React\Promise;
 use React\Promise\PromiseInterface;
 use Throwable;
 use WebSocket\Client;
+use WebSocket\Configuration;
 
 class HeadlessChrome
 {
@@ -440,7 +441,7 @@ JS;
             throw new Exception('Expected target id. Got instead: ' . json_encode($result));
         }
 
-        $page = new Client(sprintf('ws://%s/devtools/page/%s', $socket, $targetId), ['timeout' => 300]);
+        $page = new Client(sprintf('ws://%s/devtools/page/%s', $socket, $targetId), new Configuration(timeout: 300));
 
         // enable various events
         $this->communicate($page, 'Log.enable');
