@@ -13,8 +13,6 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
         ),
         'P' =>
         array (
-            'Psr\\Log\\' => 8,
-            'Psr\\Http\\Message\\' => 17,
             'Phrity\\Util\\Transformer\\' => 24,
             'Phrity\\Util\\Interpolator\\' => 25,
             'Phrity\\Util\\' => 12,
@@ -36,15 +34,6 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
         'WebSocket\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/websocket/src',
-        ),
-        'Psr\\Log\\' =>
-        array (
-            0 => __DIR__ . '/..' . '/psr/log/src',
-        ),
-        'Psr\\Http\\Message\\' =>
-        array (
-            0 => __DIR__ . '/..' . '/psr/http-factory/src',
-            1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'Phrity\\Util\\Transformer\\' =>
         array (
