@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2014-2025 Textalk and contributors.
+ * Copyright (C) 2014-2026 Textalk and contributors.
  * This file is part of Websocket PHP and is free software under the ISC License.
  */
 
@@ -11,10 +11,7 @@ namespace WebSocket\Exception;
  * WebSocket\Exception\ConnectionTimeoutException class.
  * Connection operation has timed out.
  */
-class ConnectionTimeoutException extends Exception implements MessageLevelInterface
+class ConnectionTimeoutException extends AbstractException implements MessageLevelInterface
 {
-    public function __construct()
-    {
-        parent::__construct('Connection operation timeout');
-    }
+    protected static string $defaultMessage = 'Connection operation timeout';
 }

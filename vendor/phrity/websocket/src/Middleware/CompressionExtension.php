@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2014-2025 Textalk and contributors.
+ * Copyright (C) 2014-2026 Textalk and contributors.
  *
  * This file is part of Websocket PHP and is free software under the ISC License.
  * License text: https://raw.githubusercontent.com/sirn-se/websocket-php/master/COPYING.md
@@ -15,9 +15,11 @@ use Psr\Http\Message\{
     ResponseInterface,
     ServerRequestInterface,
 };
-use Psr\Log\LoggerAwareInterface;
 use Stringable;
-use WebSocket\Connection;
+use WebSocket\{
+    Configuration,
+    Connection,
+};
 use WebSocket\Message\{
     Binary,
     Message,
@@ -25,7 +27,7 @@ use WebSocket\Message\{
 };
 use WebSocket\Middleware\CompressionExtension\CompressorInterface;
 use WebSocket\Trait\{
-    LoggerAwareTrait,
+    ConfigurationTrait,
     StringableTrait,
 };
 
@@ -35,15 +37,16 @@ use WebSocket\Trait\{
  * @see https://datatracker.ietf.org/doc/html/rfc7692
  */
 class CompressionExtension implements
-    LoggerAwareInterface,
     ProcessHttpOutgoingInterface,
     ProcessHttpIncomingInterface,
     ProcessIncomingInterface,
     ProcessOutgoingInterface,
     Stringable
 {
-    use LoggerAwareTrait;
+    use ConfigurationTrait;
     use StringableTrait;
+
+    private const SCOPE = 'permessage-compression';
 
     /** @var array<CompressorInterface> $compressors */
     private array $compressors = [];
@@ -51,7 +54,7 @@ class CompressionExtension implements
     public function __construct(CompressorInterface ...$compressors)
     {
         $this->compressors = $compressors;
-        $this->initLogger();
+        $this->initConfiguration();
     }
 
     public function processHttpOutgoing(
@@ -91,20 +94,24 @@ class CompressionExtension implements
             if ($preferred = $this->getPreferred($message)) {
                 $connection->setMeta('compressionExtension.compressor', $preferred->compressor);
                 $connection->setMeta('compressionExtension.configuration', $preferred->configuration);
-                $this->logger->debug(
-                    "[permessage-compression] Using {$preferred->compressor}",
-                    (array)$preferred->configuration
-                );
+                $this->configuration->getLogger()->debug("[{scope}] Using: {compressor}", [
+                    'scope' => self::SCOPE,
+                    'connection' => $connection->getIdentity(),
+                    'compressor' => $preferred->compressor,
+                    'configuration' => (array)$preferred->configuration,
+                ]);
             }
         } elseif ($message instanceof ResponseInterface) {
             // Incoming Response on Client
             if ($preferred = $this->getPreferred($message)) {
                 $connection->setMeta('compressionExtension.compressor', $preferred->compressor);
                 $connection->setMeta('compressionExtension.configuration', $preferred->configuration);
-                $this->logger->debug(
-                    "[permessage-compression] Using {$preferred->compressor}",
-                    (array)$preferred->configuration
-                );
+                $this->configuration->getLogger()->debug("[{scope}] Using: {compressor}", [
+                    'scope' => self::SCOPE,
+                    'connection' => $connection->getIdentity(),
+                    'compressor' => $preferred->compressor,
+                    'configuration' => (array)$preferred->configuration,
+                ]);
             }
             // @todo: If not found?
         }

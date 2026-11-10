@@ -1,24 +1,20 @@
 <?php
 
 /**
- * Copyright (C) 2014-2025 Textalk and contributors.
+ * Copyright (C) 2014-2026 Textalk and contributors.
  * This file is part of Websocket PHP and is free software under the ISC License.
  */
 
 namespace WebSocket\Message;
 
-use Psr\Log\{
-    LoggerAwareInterface,
-    LoggerInterface,
-};
 use Stringable;
-use WebSocket\Exception\BadOpcodeException;
+use WebSocket\Configuration;
 use WebSocket\Frame\{
     Frame,
     FrameHandler,
 };
 use WebSocket\Trait\{
-    LoggerAwareTrait,
+    ConfigurationTrait,
     StringableTrait,
 };
 
@@ -26,27 +22,22 @@ use WebSocket\Trait\{
  * WebSocket\Message\MessageHandler class.
  * Message/Frame handling.
  */
-class MessageHandler implements LoggerAwareInterface, Stringable
+class MessageHandler implements Stringable
 {
-    use LoggerAwareTrait;
+    use ConfigurationTrait;
     use StringableTrait;
 
     private const DEFAULT_SIZE = 4096;
+    private const SCOPE = 'message-handler';
 
     private FrameHandler $frameHandler;
     /** @var array<Frame> $frameBuffer */
     private array $frameBuffer = [];
 
-    public function __construct(FrameHandler $frameHandler)
+    public function __construct(FrameHandler $frameHandler, Configuration|null $configuration = null)
     {
         $this->frameHandler = $frameHandler;
-        $this->initLogger();
-    }
-
-    public function setLogger(LoggerInterface $logger): void
-    {
-        $this->logger = $logger;
-        $this->frameHandler->setLogger($logger);
+        $this->initConfiguration($configuration);
     }
 
     /**
@@ -58,11 +49,13 @@ class MessageHandler implements LoggerAwareInterface, Stringable
      */
     public function push(Message $message, int $size = self::DEFAULT_SIZE): Message
     {
-        $frames = $message->getFrames($size);
+        $frames = $message->getFrames($size, $this->configuration->getOpcodeRegistry());
         foreach ($frames as $frame) {
             $this->frameHandler->push($frame);
         }
-        $this->logger->info("[message-handler] Pushed {$message}", [
+        $this->configuration->getLogger()->info("[{scope}] Pushed {message}", [
+            'scope' => self::SCOPE,
+            'message' => $message,
             'opcode' => $message->getOpcode(),
             'content-length' => $message->getLength(),
             'frames' => count($frames),
@@ -91,24 +84,20 @@ class MessageHandler implements LoggerAwareInterface, Stringable
 
     /**
      * @param non-empty-array<Frame> $frames
-     * @throws BadOpcodeException
      */
     private function createMessage(array $frames): Message
     {
-        $opcode = $frames[0]->getOpcode() ?? null;
-        $message = match ($opcode) {
-            'text' => new Text(),
-            'binary' => new Binary(),
-            'ping' => new Ping(),
-            'pong' => new Pong(),
-            'close' => new Close(),
-            default => throw new BadOpcodeException("Invalid opcode '{$opcode}' provided"),
-        };
+        /** @var int<1, 15> $opcode */
+        $opcode = $frames[0]->getOpcode();
+        $message = $this->configuration->getOpcodeRegistry()->createMessage($opcode);
+
         $message->setPayload(array_reduce($frames, function (string $carry, Frame $item) {
             return $carry . $item->getPayload();
         }, ''));
         $message->setCompress($frames[0]->getRsv1() ?? false);
-        $this->logger->info("[message-handler] Pulled {$message}", [
+        $this->configuration->getLogger()->info("[{scope}] Pulled {message}", [
+            'scope' => self::SCOPE,
+            'message' => $message,
             'opcode' => $message->getOpcode(),
             'content-length' => $message->getLength(),
             'frames' => count($frames),
