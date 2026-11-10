@@ -7,8 +7,6 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'WebSocket\\' => array($vendorDir . '/phrity/websocket/src'),
-    'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
-    'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-factory/src', $vendorDir . '/psr/http-message/src'),
     'Phrity\\Util\\Transformer\\' => array($vendorDir . '/phrity/util-transformer/src'),
     'Phrity\\Util\\Interpolator\\' => array($vendorDir . '/phrity/util-interpolator/src'),
     'Phrity\\Util\\' => array($vendorDir . '/phrity/util-errorhandler/src', $vendorDir . '/phrity/util-accessor/src'),
