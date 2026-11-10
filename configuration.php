@@ -5,8 +5,9 @@
 
 /** @var \Icinga\Application\Modules\Module $this */
 
-$this->provideConfigTab('backends', array(
-    'title' => $this->translate('Configure Chrome/WebDriver connections'),
-    'label' => $this->translate('Backends'),
+// Module::includeScript() includes this file in Module scope, where protected methods are accessible.
+$this->provideConfigTab('backends', [ // @phpstan-ignore method.protected
+    'title' => $this->translate('Configure Chrome/WebDriver connections'), // @phpstan-ignore method.protected
+    'label' => $this->translate('Backends'), // @phpstan-ignore method.protected
     'url'   => 'config/backends',
-));
+]);

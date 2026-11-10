@@ -25,7 +25,7 @@ use ipl\Web\Widget\Link;
  */
 class ConfigController extends CompatController
 {
-    public function init()
+    public function init(): void
     {
         $this->assertPermission('config/modules');
 
@@ -50,7 +50,7 @@ class ConfigController extends CompatController
 
         $table = new Table();
         $table->setAttributes(Attributes::create([
-            'class' => 'table-row-selectable common-table',
+            'class'            => 'table-row-selectable common-table',
             'data-base-target' => '_next',
         ]));
         $table->add(Table::tr([
@@ -65,9 +65,7 @@ class ConfigController extends CompatController
             $sections[] = [$name, $data, (int) $data->get('priority')];
         }
 
-        usort($sections, function ($a, $b) {
-            return $a[2] <=> $b[2];
-        });
+        usort($sections, static fn(array $a, array $b): int => $a[2] <=> $b[2]);
 
         foreach ($sections as [$name, $data]) {
             $table->add(Table::tr([
@@ -97,7 +95,7 @@ class ConfigController extends CompatController
 
         $form = (new BackendConfigForm(BackendLocator::getBackendConfig(), $name))
             ->setCsrfCounterMeasureId(Session::getSession()->getId())
-            ->on(Form::ON_SUBMIT, function (BackendConfigForm $form) use ($name) {
+            ->on(Form::ON_SUBMIT, function (BackendConfigForm $form) use ($name): never {
                 Notification::success($form->getValue('name') === $name
                     ? $this->translate('Updated print backend')
                     : $this->translate('Print backend renamed'));
@@ -125,7 +123,7 @@ class ConfigController extends CompatController
 
         $form = (new BackendConfigForm(BackendLocator::getBackendConfig()))
             ->setCsrfCounterMeasureId(Session::getSession()->getId())
-            ->on(Form::ON_SUBMIT, function () {
+            ->on(Form::ON_SUBMIT, function (): never {
                 Notification::success($this->translate('Created new print backend'));
                 $this->redirectNow('__CLOSE__');
             })
@@ -147,7 +145,7 @@ class ConfigController extends CompatController
         $form = (new DeleteBackendForm(BackendLocator::getBackendConfig(), $name))
             ->setAction(Url::fromPath('pdfexport/config/deletebackend', ['backend' => $name])->getAbsoluteUrl())
             ->setCsrfCounterMeasureId(Session::getSession()->getId())
-            ->on(Form::ON_SUBMIT, function () {
+            ->on(Form::ON_SUBMIT, function (): never {
                 Notification::success($this->translate('Print backend deleted'));
                 $this->redirectNow('__CLOSE__');
             })

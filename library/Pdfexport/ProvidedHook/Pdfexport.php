@@ -35,15 +35,18 @@ class Pdfexport extends PdfexportHook
      * This compatibility implementation matches the one in the base class.
      * Reporting 1.1 and Icinga Web 2.13 require it.
      *
-     * @return static
+     * @return PdfexportHook The first supported registered exporter
      *
      * @throws RuntimeException If no supported PDF exporter is available
      *
      * @deprecated Use {@see PdfexportHook::first()} instead
      */
-    public static function first()
+    public static function first(): PdfexportHook
     {
-        foreach (Hook::all('Pdfexport') as $exporter) {
+        // The registry validates each instance against the hook's base class.
+        /** @var PdfexportHook[] $exporters */
+        $exporters = Hook::all('Pdfexport');
+        foreach ($exporters as $exporter) {
             try {
                 if ($exporter->isSupported()) {
                     return $exporter;
@@ -70,7 +73,7 @@ class Pdfexport extends PdfexportHook
         return $this->locator ??= new BackendLocator();
     }
 
-    public function isSupported()
+    public function isSupported(): bool
     {
         $locator = $this->getLocator();
         try {
@@ -81,6 +84,7 @@ class Pdfexport extends PdfexportHook
                 $e->getMessage(),
                 IcingaException::getConfidentialTraceAsString($e),
             );
+
             return false;
         }
     }
@@ -95,7 +99,7 @@ class Pdfexport extends PdfexportHook
      *
      * @throws RuntimeException If no supported PDF backend is available
      */
-    public function streamPdfFromHtml($html, $filename)
+    public function streamPdfFromHtml($html, $filename): never
     {
         $this->emit($this->htmlToPdf($html), basename($filename, '.pdf') . '.pdf');
     }
@@ -109,7 +113,7 @@ class Pdfexport extends PdfexportHook
      *
      * @throws RuntimeException If no supported PDF backend is available
      */
-    public function htmlToPdf($html)
+    public function htmlToPdf($html): string
     {
         $document = $this->getPrintableHtmlDocument($html);
 

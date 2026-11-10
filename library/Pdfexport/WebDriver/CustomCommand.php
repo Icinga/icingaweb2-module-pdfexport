@@ -6,16 +6,18 @@
 namespace Icinga\Module\Pdfexport\WebDriver;
 
 /**
- * A custom WebDriver command that allows sending arbitrary requests to the browser.
- * These commands are not part of the WebDriver protocol and are not covered by the official documentation.
+ * A custom WebDriver command for arbitrary browser requests
+ *
+ * These commands are outside the WebDriver protocol.
  */
 class CustomCommand implements CommandInterface
 {
     /**
-     * Create a new custom command.
+     * Create a new CustomCommand
+     *
      * @param string $method
      * @param string $path
-     * @param array $parameters
+     * @param array<string, mixed> $parameters
      */
     public function __construct(
         protected string $method,

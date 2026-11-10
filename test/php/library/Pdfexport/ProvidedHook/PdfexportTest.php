@@ -5,16 +5,58 @@
 
 namespace Tests\Icinga\Module\Pdfexport\ProvidedHook;
 
+use Icinga\Application\Hook;
+use Icinga\Application\Hook\PdfexportHook;
 use Icinga\Module\Pdfexport\Backend\PfdPrintBackend;
 use Icinga\Module\Pdfexport\BackendLocator;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\ProvidedHook\Pdfexport;
 use Icinga\Test\BaseTestCase;
 use ipl\Html\Html;
+use ReflectionProperty;
 use RuntimeException;
 
 class PdfexportTest extends BaseTestCase
 {
+    public function testFirstCanReturnAnotherRegisteredExporterImplementation(): void
+    {
+        $alternative = new class () extends PdfexportHook {
+            public function isSupported(): bool
+            {
+                return true;
+            }
+
+            public function streamPdfFromHtml($html, $filename): never
+            {
+                throw new RuntimeException('Streaming is not part of this support check');
+            }
+
+            public function htmlToPdf($html): string
+            {
+                return '%PDF-alternative';
+            }
+        };
+        $hooks = new ReflectionProperty(Hook::class, 'hooks');
+        $instances = new ReflectionProperty(Hook::class, 'instances');
+        $originalHooks = $hooks->getValue();
+        $originalInstances = $instances->getValue();
+
+        try {
+            $hooks->setValue(null, []);
+            $instances->setValue(null, []);
+            // The nondeprecated Module::provideHook() is protected and delegates to this registry API.
+            // @phpstan-ignore staticMethod.deprecated
+            Hook::register('Pdfexport', 'alternative', $alternative::class, true);
+
+            // Legacy callers rely on this compatibility entry point selecting every registered implementation.
+            // @phpstan-ignore staticMethod.deprecated
+            $this->assertInstanceOf($alternative::class, Pdfexport::first());
+        } finally {
+            $hooks->setValue(null, $originalHooks);
+            $instances->setValue(null, $originalInstances);
+        }
+    }
+
     public function testLegacyRenderedStringReachesBackendWithoutEscapingMarkup(): void
     {
         $html = '<section><h1>Überblick 日本語 😀</h1><p>5 &lt; 10</p></section>';
@@ -49,7 +91,7 @@ class PdfexportTest extends BaseTestCase
     public function testUnavailableBackendRaisesAnExplicitExportFailure(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('No supported PDF backend available.');
+        $this->expectExceptionMessageMatches('/^No supported PDF backend available\.$/');
 
         $this->createExporter(null)->htmlToPdf('<p>Legacy export</p>');
     }

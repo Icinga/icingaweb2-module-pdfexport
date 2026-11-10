@@ -14,6 +14,10 @@ use Throwable;
  * A session accepts commands until quit() is called. Closing is permanent,
  * even when the remote server rejects session deletion.
  *
+ * Subclasses must accept the executor and session identifier passed by create().
+ *
+ * @phpstan-consistent-constructor
+ *
  * @see https://www.w3.org/TR/webdriver/
  */
 class WebDriver
@@ -95,14 +99,14 @@ class WebDriver
     /**
      * Wait synchronously for a condition by polling
      *
-     * A condition succeeds when it returns anything except false. The last
-     * condition exception is rethrown if polling times out.
+     * A condition succeeds when it returns true. The last condition exception is
+     * rethrown if polling times out.
      *
      * @param ConditionInterface $condition Condition to wait for
      * @param int $timeoutSeconds Maximum wait in seconds
      * @param int $intervalMs Delay between checks in milliseconds
      *
-     * @return mixed Condition result, or false when polling times out without an exception
+     * @return bool Whether the condition succeeded before the timeout
      *
      * @throws Exception
      */
@@ -110,15 +114,14 @@ class WebDriver
         ConditionInterface $condition,
         int $timeoutSeconds = 10,
         int $intervalMs = 250,
-    ): mixed {
+    ): bool {
         $end = microtime(true) + $timeoutSeconds;
         $lastException = null;
 
         while ($end > microtime(true)) {
             try {
-                $result = $condition->apply($this);
-                if ($result !== false) {
-                    return $result;
+                if ($condition->apply($this)) {
+                    return true;
                 }
             } catch (Exception $e) {
                 $lastException = $e;

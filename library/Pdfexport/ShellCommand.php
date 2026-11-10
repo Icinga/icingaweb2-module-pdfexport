@@ -34,7 +34,7 @@ class ShellCommand
      *
      * @param string $command The command to execute
      * @param bool $escape Whether to escape the command
-     * @param array|null $env Environment variables
+     * @param ?array<string, string> $env Environment variables, or null to inherit the current environment
      */
     public function __construct(string $command, bool $escape = true, protected ?array $env = null)
     {
@@ -72,6 +72,7 @@ class ShellCommand
      * Run the command
      *
      * @return void
+     *
      * @throws Exception
      */
     public function start(): void
@@ -100,7 +101,7 @@ class ShellCommand
         }
 
         $this->namedPipes = (object) [
-            'stdin' => &$pipes[0],
+            'stdin'  => &$pipes[0],
             'stdout' => &$pipes[1],
             'stderr' => &$pipes[2],
         ];
@@ -115,6 +116,7 @@ class ShellCommand
      * The callback should return true to continue waiting, false to stop waiting.
      *
      * @return void
+     *
      * @throws Exception
      */
     public function wait(callable|null $callback = null): void
@@ -151,7 +153,7 @@ class ShellCommand
                 }
             }
 
-            if (empty($origRead)) {
+            if ($origRead === []) {
                 break;
             }
 
@@ -207,6 +209,7 @@ class ShellCommand
      * Stop running command and return exit code
      *
      * @return int exit code
+     *
      * @throws Exception
      */
     public function stop(): int
@@ -221,9 +224,7 @@ class ShellCommand
         fclose($this->namedPipes->stdout);
         proc_terminate($this->resource);
         $exitCode = proc_close($this->resource);
-        if ($this->exitCode === null) {
-            $this->exitCode = $exitCode;
-        }
+        $this->exitCode ??= $exitCode;
 
         $this->resource = null;
         $this->namedPipes = null;

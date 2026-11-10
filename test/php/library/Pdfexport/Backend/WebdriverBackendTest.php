@@ -50,10 +50,10 @@ class WebdriverBackendTest extends TestCase
                 }
             }
         );
-        $driver = new class ($executor) extends WebDriver {
-            public function __construct(CommandExecutor $executor)
+        $driver = new class ($executor, 'unicode-session') extends WebDriver {
+            public function __construct(?CommandExecutor $executor, ?string $sessionId)
             {
-                parent::__construct($executor, 'unicode-session');
+                parent::__construct($executor, $sessionId);
             }
         };
         $backend = new class ($driver) extends WebdriverBackend {

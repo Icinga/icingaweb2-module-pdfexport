@@ -27,7 +27,7 @@ class Geckodriver extends WebdriverBackend
      *
      * @return false Firefox PDFs use compression unsupported by the merger
      */
-    public function supportsCoverPage(): bool
+    public function supportsCoverPage(): false
     {
         return false;
     }

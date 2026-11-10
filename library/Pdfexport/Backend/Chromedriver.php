@@ -9,9 +9,9 @@ use Exception;
 use Icinga\Application\Icinga;
 use Icinga\Module\Pdfexport\ChromeDevTools\ChromeDevTools;
 use Icinga\Module\Pdfexport\ChromeDevTools\Command as DevToolsCommand;
-use Icinga\Module\Pdfexport\WebDriver\Command;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\WebDriver\Capabilities;
+use Icinga\Module\Pdfexport\WebDriver\Command;
 use Icinga\Module\Pdfexport\WebDriver\ElementPresentCondition;
 
 /**

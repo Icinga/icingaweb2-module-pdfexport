@@ -9,6 +9,7 @@ use Exception;
 use Icinga\Module\Pdfexport\WebDriver\Command;
 use Icinga\Module\Pdfexport\WebDriver\CommandExecutor;
 use Icinga\Module\Pdfexport\WebDriver\CommandName;
+use Icinga\Module\Pdfexport\WebDriver\ConditionInterface;
 use Icinga\Module\Pdfexport\WebDriver\Response;
 use Icinga\Module\Pdfexport\WebDriver\WebDriver;
 use PHPUnit\Framework\TestCase;
@@ -16,6 +17,45 @@ use RuntimeException;
 
 class WebDriverTest extends TestCase
 {
+    public function testWaitPollsUntilTheConditionSucceeds(): void
+    {
+        $executor = $this->createStub(CommandExecutor::class);
+        $executor->method('execute')->willReturn(new Response('test-session'));
+        $driver = $this->createDriver($executor);
+        $condition = $this->createMock(ConditionInterface::class);
+        $condition->expects($this->exactly(2))->method('apply')->with($driver)->willReturn(false, true);
+
+        $this->assertTrue($driver->wait($condition, timeoutSeconds: 1, intervalMs: 0));
+    }
+
+    public function testWaitReturnsFalseWhenTheDeadlineHasPassed(): void
+    {
+        $executor = $this->createStub(CommandExecutor::class);
+        $executor->method('execute')->willReturn(new Response('test-session'));
+        $driver = $this->createDriver($executor);
+        $condition = $this->createMock(ConditionInterface::class);
+        $condition->expects($this->never())->method('apply');
+
+        $this->assertFalse($driver->wait($condition, timeoutSeconds: 0));
+    }
+
+    public function testWaitRethrowsTheConditionFailureAfterTimeout(): void
+    {
+        $failure = new RuntimeException('Condition could not inspect the browser');
+        $executor = $this->createStub(CommandExecutor::class);
+        $executor->method('execute')->willReturn(new Response('test-session'));
+        $driver = $this->createDriver($executor);
+        $condition = $this->createMock(ConditionInterface::class);
+        $condition->expects($this->once())->method('apply')->with($driver)->willThrowException($failure);
+
+        try {
+            $driver->wait($condition, timeoutSeconds: 1, intervalMs: 1000);
+            $this->fail('A timed out wait must report the condition failure');
+        } catch (RuntimeException $error) {
+            $this->assertSame($failure, $error);
+        }
+    }
+
     public function testFailedQuitClosesSessionAndIsNeverRetried(): void
     {
         $failure = new RuntimeException('Remote session deletion failed');
@@ -69,10 +109,10 @@ class WebDriverTest extends TestCase
 
     protected function createDriver(CommandExecutor $executor): WebDriver
     {
-        return new class ($executor) extends WebDriver {
-            public function __construct(CommandExecutor $executor)
+        return new class ($executor, 'test-session') extends WebDriver {
+            public function __construct(?CommandExecutor $executor, ?string $sessionId)
             {
-                parent::__construct($executor, 'test-session');
+                parent::__construct($executor, $sessionId);
             }
         };
     }

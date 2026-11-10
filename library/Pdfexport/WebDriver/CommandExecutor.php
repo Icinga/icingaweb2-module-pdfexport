@@ -11,21 +11,23 @@ use Icinga\Application\Logger;
 use RuntimeException;
 
 /**
- * An abstraction layer for executing WebDriver commands.
+ * A WebDriver command executor
  */
 class CommandExecutor
 {
+    /** @var array<string, string> */
     protected const DEFAULT_HEADERS = [
         'Content-Type' => 'application/json;charset=UTF-8',
-        'Accept' => 'application/json',
+        'Accept'       => 'application/json',
     ];
 
     protected ?Client $client = null;
 
     /**
-     * Construct a new CommandExecutor given a base URL
-     * @param string $url the base URL to use for executing commands
-     * @param float|null $timeout the timeout in seconds for each command
+     * Create a new CommandExecutor
+     *
+     * @param string $url The base URL to use for executing commands
+     * @param ?float $timeout The timeout in seconds for each command
      */
     public function __construct(
         protected string $url,
@@ -35,13 +37,15 @@ class CommandExecutor
     }
 
     /**
-     * Execute a WebDriver command.
-     * @param string|null $sessionId the session ID to use for the command, required for each command except
-     * `newSession`
-     * @param CommandInterface $command the command to execute
+     * Execute a WebDriver command
+     *
+     * @param ?string $sessionId The session ID, required for each command except NewSession
+     * @param CommandInterface $command The command to execute
      *
      * @return Response
+     *
      * @throws GuzzleException
+     * @throws RuntimeException When the session, method, or response is invalid
      */
     public function execute(?string $sessionId, CommandInterface $command): Response
     {
@@ -63,7 +67,7 @@ class CommandExecutor
             }
         }
 
-        if (is_array($params) && ! empty($params) && $method !== 'POST') {
+        if ($params !== [] && $method !== 'POST') {
             throw new RuntimeException('Invalid HTTP method');
         }
 
@@ -76,18 +80,18 @@ class CommandExecutor
             unset($headers['expect']);
         }
 
-        if (is_array($params) && ! empty($params)) {
+        if ($params !== []) {
             $body = json_encode($params);
         } else {
             $body = '{}';
         }
 
         $options = [
-            'headers' => $headers,
-            'expect' => false,
-            'body' => $body,
+            'headers'     => $headers,
+            'expect'      => false,
+            'body'        => $body,
             'http_errors' => false,
-            'timeout' => $this->timeout ?? 0,
+            'timeout'     => $this->timeout ?? 0,
         ];
         $response = $this->client->request($method, $this->url . $path, $options);
         $results = json_decode($response->getBody()->getContents(), true);

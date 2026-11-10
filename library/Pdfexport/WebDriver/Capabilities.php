@@ -6,21 +6,28 @@
 namespace Icinga\Module\Pdfexport\WebDriver;
 
 /**
- * A container for WebDriver capabilities.
+ * A container for WebDriver capabilities
+ *
+ * Subclasses must accept the same constructor arguments so inherited factories
+ * can create them.
+ *
+ * @phpstan-consistent-constructor
+ *
  * @link https://www.w3.org/TR/webdriver/#capabilities
  */
 class Capabilities
 {
-    /** @var array */
-    private static array $ossToW3c = [
-        'platform' => 'platformName',
-        'version' => 'browserVersion',
+    /** @var array<string, string> */
+    protected static array $ossToW3c = [
+        'platform'       => 'platformName',
+        'version'        => 'browserVersion',
         'acceptSslCerts' => 'acceptInsecureCerts',
     ];
 
     /**
-     * Construct a new Capabilities set.
-     * @param array $capabilities The capabilities to set.
+     * Create a new Capabilities
+     *
+     * @param array<string, mixed> $capabilities Named standard or vendor capabilities
      */
     public function __construct(
         protected array $capabilities = [],
@@ -28,38 +35,41 @@ class Capabilities
     }
 
     /**
-     * Create a new Capabilities set with the default capabilities for Chrome.
+     * Create a new Capabilities set with the default capabilities for Chrome
+     *
      * @return static
      */
     public static function chrome(): static
     {
         return new static([
             'browserName' => 'chrome',
-            'platform' => 'ANY',
+            'platform'    => 'ANY',
         ]);
     }
 
     /**
-     * Create a new Capabilities set with the default capabilities for Firefox.
+     * Create a new Capabilities set with the default capabilities for Firefox
+     *
      * @return static
      */
     public static function firefox(): static
     {
         return new static([
-            'browserName' => 'firefox',
-            'platform' => 'ANY',
+            'browserName'        => 'firefox',
+            'platform'           => 'ANY',
             'moz:firefoxOptions' => [
                 'prefs' => [
                     'reader.parse-on-load.enabled' => false,
-                    'devtools.jsonview.enabled' => false,
+                    'devtools.jsonview.enabled'    => false,
                 ],
             ],
         ]);
     }
 
     /**
-     * Convert the capabilities to a W3C-compatible array.
-     * @return array
+     * Convert the capabilities to a W3C-compatible array
+     *
+     * @return array<string, mixed>
      */
     public function toW3cCompatibleArray(): array
     {
@@ -85,15 +95,15 @@ class Capabilities
                 continue;
             }
 
-            if (array_key_exists($capabilityKey, self::$ossToW3c)) {
+            if (array_key_exists($capabilityKey, static::$ossToW3c)) {
                 if ($capabilityKey === 'platform') {
                     if ($capabilityValue === 'ANY') {
                         continue;
                     }
 
-                    $w3cCapabilities[self::$ossToW3c[$capabilityKey]] = mb_strtolower($capabilityValue);
+                    $w3cCapabilities[static::$ossToW3c[$capabilityKey]] = mb_strtolower($capabilityValue);
                 } else {
-                    $w3cCapabilities[self::$ossToW3c[$capabilityKey]] = $capabilityValue;
+                    $w3cCapabilities[static::$ossToW3c[$capabilityKey]] = $capabilityValue;
                 }
             }
 
@@ -119,8 +129,9 @@ class Capabilities
     }
 
     /**
-     * Get the raw capabilities array. This is not necessarily W3C-compatible.
-     * @return array
+     * Get the raw capabilities array
+     *
+     * @return array<string, mixed> The capabilities without W3C conversion
      */
     public function toArray(): array
     {

@@ -6,13 +6,14 @@
 namespace Icinga\Module\Pdfexport\WebDriver;
 
 /**
- * Interface for conditions that can be used for searching elements in the browsers DOM.
+ * Condition evaluated against a WebDriver session
  */
 interface ConditionInterface
 {
     /**
-     * Apply the condition to the given WebDriver instance and return whether the condition is met.
-     * @param WebDriver $driver the WebDriver instance to apply the condition to
+     * Check whether the condition is met
+     *
+     * @param WebDriver $driver The session to inspect
      *
      * @return bool
      */

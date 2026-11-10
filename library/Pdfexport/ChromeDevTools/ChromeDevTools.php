@@ -33,7 +33,7 @@ class ChromeDevTools
     public function execute(Command $command): mixed
     {
         return $this->driver->execute(new CustomCommand('POST', '/session/:sessionId/goog/cdp/execute', [
-            'cmd' => $command->name,
+            'cmd'    => $command->name,
             'params' => (object) $command->parameters,
         ]));
     }

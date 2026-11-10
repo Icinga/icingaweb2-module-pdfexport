@@ -8,6 +8,7 @@ namespace Tests\Icinga\Module\Pdfexport;
 use Icinga\Module\Pdfexport\Backend\PfdPrintBackend;
 use Icinga\Module\Pdfexport\Backend\WebdriverBackend;
 use Icinga\Module\Pdfexport\BackendLocator;
+use Icinga\Module\Pdfexport\WebDriver\Command;
 use Icinga\Module\Pdfexport\WebDriver\CommandExecutor;
 use Icinga\Module\Pdfexport\WebDriver\CommandInterface;
 use Icinga\Module\Pdfexport\WebDriver\CommandName;
@@ -33,7 +34,7 @@ class BackendLocatorTest extends ConfigTestCase
         $this->assertSame('1', $snapshot->get('chrome', 'force_temp_storage'));
         $this->assertSame($original->getConfigFile(), $snapshot->getConfigFile());
 
-        $snapshot->getSection('chrome')->binary = '/other/chromium';
+        $snapshot->getSection('chrome')['binary'] = '/other/chromium';
 
         $this->assertSame($before, $original->toArray());
     }
@@ -95,14 +96,15 @@ class BackendLocatorTest extends ConfigTestCase
     {
         $this->replaceConfig([
             'disabled' => ['type' => 'chrome_webdriver', 'enabled' => 'n', 'priority' => '0'],
-            'healthy' => ['type' => 'firefox_webdriver', 'enabled' => 'y', 'priority' => '20'],
-            'broken' => ['type' => 'chrome_webdriver', 'enabled' => 'y', 'priority' => '10'],
+            'healthy'  => ['type' => 'firefox_webdriver', 'enabled' => 'y', 'priority' => '20'],
+            'broken'   => ['type' => 'chrome_webdriver', 'enabled' => 'y', 'priority' => '10'],
         ]);
         $executor = $this->createMock(CommandExecutor::class);
         $requests = [];
         $executor->expects($this->exactly(2))->method('execute')->willReturnCallback(
             function (?string $sessionId, CommandInterface $command) use (&$requests): Response {
                 $this->assertSame('broken-session', $sessionId);
+                $this->assertInstanceOf(Command::class, $command);
                 $requests[] = $command->getName();
 
                 throw new RuntimeException('Browser connection failed');
@@ -120,10 +122,10 @@ class BackendLocatorTest extends ConfigTestCase
                     return $healthy;
                 }
 
-                $driver = new class ($executor) extends WebDriver {
-                    public function __construct(CommandExecutor $executor)
+                $driver = new class ($executor, 'broken-session') extends WebDriver {
+                    public function __construct(?CommandExecutor $executor, ?string $sessionId)
                     {
-                        parent::__construct($executor, 'broken-session');
+                        parent::__construct($executor, $sessionId);
                     }
                 };
 

@@ -97,6 +97,7 @@ class BackendLocator
             if ($this->backend === null) {
                 continue;
             }
+
             return $this->backend;
         }
 
@@ -124,15 +125,17 @@ class BackendLocator
             $url = "$host:$port";
             $type = $config->get($section, 'type');
             $backend = match ($type) {
-                'chrome_webdriver' => new Chromedriver($url),
+                'chrome_webdriver'  => new Chromedriver($url),
                 'firefox_webdriver' => new Geckodriver($url),
-                default => throw new Exception("Invalid webdriver type $type"),
+                default             => throw new Exception("Invalid webdriver type $type"),
             };
             Logger::info("Connected WebDriver backend: $section");
+
             return $backend;
         } catch (Exception $e) {
             Logger::warning("Webdriver connection failed! backend: $section, error: " . $e->getMessage());
         }
+
         return null;
     }
 
@@ -221,18 +224,20 @@ class BackendLocator
 
         $type = $config->get($section, 'type');
         $backend = match ($type) {
-            'local_chrome' => $this->connectToLocalChrome($section),
+            'local_chrome'  => $this->connectToLocalChrome($section),
             'remote_chrome' => $this->connectToRemoteChrome($section),
-            default => $this->connectToWebDriver($section),
+            default         => $this->connectToWebDriver($section),
         };
 
         if ($backend === null) {
             Logger::warning("Failed to connect to backend: $section");
+
             return null;
         }
 
         if (! $backend->isSupported()) {
             Logger::warning("Connected backend $section does not support generating PDFs");
+
             return null;
         }
 

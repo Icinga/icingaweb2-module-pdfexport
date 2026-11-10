@@ -6,26 +6,30 @@
 namespace Icinga\Module\Pdfexport\WebDriver;
 
 /**
- * Interface for WebDriver commands.
+ * A WebDriver command
+ *
  * @link https://www.w3.org/TR/webdriver/#commands
  */
 interface CommandInterface
 {
     /**
-     * Get the path to the endpoint of the command.
+     * Get the path to the endpoint of the command
+     *
      * @return string
      */
     public function getPath(): string;
 
     /**
-     * The HTTP method to use for the command.
+     * Get the HTTP method to use for the command
+     *
      * @return string
      */
     public function getMethod(): string;
 
     /**
-     * Get the command parameters.
-     * @return array
+     * Get the command parameters
+     *
+     * @return array<string, mixed>
      */
     public function getParameters(): array;
 }

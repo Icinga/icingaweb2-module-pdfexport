@@ -52,9 +52,9 @@ class BackendConfigForm extends CompatForm
         $this->addCsrfCounterMeasure();
 
         $this->addElement('text', 'name', [
-            'label' => $this->translate('Name'),
-            'required' => true,
-            'ignore' => true,
+            'label'      => $this->translate('Name'),
+            'required'   => true,
+            'ignore'     => true,
             'validators' => [
                 new CallbackValidator(function ($value, CallbackValidator $validator): bool {
                     if (
@@ -95,23 +95,23 @@ class BackendConfigForm extends CompatForm
         ]);
 
         $this->addElement('checkbox', 'enabled', [
-            'label' => $this->translate('Enabled'),
-            'value' => true,
+            'label'       => $this->translate('Enabled'),
+            'value'       => true,
             'description' => $this->translate('If the backend is not enabled, it will be ignored for PDF generation.'),
         ]);
 
         $this->addElement('select', 'type', [
-            'label' => $this->translate('Type'),
+            'label'        => $this->translate('Type'),
             'multiOptions' => [
-                '' => sprintf(' - %s - ', t('Please choose')),
-                'chrome_webdriver' => t('Chrome WebDriver'),
+                ''                  => sprintf(' - %s - ', t('Please choose')),
+                'chrome_webdriver'  => t('Chrome WebDriver'),
                 'firefox_webdriver' => t('Firefox WebDriver'),
-                'remote_chrome' => t('Headless Chrome (Remote)'),
-                'local_chrome' => t('Headless Chrome (Local)'),
+                'remote_chrome'     => t('Headless Chrome (Remote)'),
+                'local_chrome'      => t('Headless Chrome (Local)'),
             ],
             'required' => true,
-            'class' => 'autosubmit',
-            'value' => 'local_chrome',
+            'class'    => 'autosubmit',
+            'value'    => 'local_chrome',
         ]);
 
         $type = $this->getValue('type');
@@ -126,7 +126,7 @@ class BackendConfigForm extends CompatForm
                     'description' => $this->translate('Host address of the server with the running web browser.'),
                     'required'    => true,
                     'validators'  => [
-                        new CallbackValidator(function ($value, CallbackValidator $validator) {
+                        new CallbackValidator(function ($value, CallbackValidator $validator): bool {
                             $port = $this->getValue('port') ?: 9222;
 
                             try {
@@ -134,6 +134,7 @@ class BackendConfigForm extends CompatForm
                                 $version = $chrome->getVersion();
                             } catch (Exception $e) {
                                 $validator->addMessage($e->getMessage());
+
                                 return false;
                             }
 
@@ -146,6 +147,7 @@ class BackendConfigForm extends CompatForm
                                     HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION,
                                     $version
                                 ));
+
                                 return false;
                             }
 
@@ -173,7 +175,7 @@ class BackendConfigForm extends CompatForm
                     'placeholder' => '/usr/bin/google-chrome',
                     'description' => $this->translate('Path to the binary of the web browser.'),
                     'validators'  => [
-                        new CallbackValidator(function ($value, CallbackValidator $validator) {
+                        new CallbackValidator(function ($value, CallbackValidator $validator): bool {
                             if (empty($value)) {
                                 return true;
                             }
@@ -182,6 +184,7 @@ class BackendConfigForm extends CompatForm
                                 $version = HeadlessChromeBackend::createLocal($value)->getVersion();
                             } catch (Exception $e) {
                                 $validator->addMessage($e->getMessage());
+
                                 return false;
                             }
 
@@ -204,8 +207,8 @@ class BackendConfigForm extends CompatForm
                 ]);
 
                 $this->addElement('checkbox', 'force_temp_storage', [
-                    'label'          => $this->translate('Use temp storage'),
-                    'description'    => $this->translate(
+                    'label'       => $this->translate('Use temp storage'),
+                    'description' => $this->translate(
                         'Use temp storage to transfer the html to the local chrome instance.'
                     ),
                     'checkedValue'   => '1',
@@ -224,27 +227,30 @@ class BackendConfigForm extends CompatForm
                     'description' => $this->translate('Host address of the webdriver server'),
                     'required'    => true,
                     'validators'  => [
-                        new CallbackValidator(function ($value, CallbackValidator $validator) use ($type) {
+                        new CallbackValidator(function ($value, CallbackValidator $validator) use ($type): bool {
                             $port = $this->getValue('port') ?: 4444;
 
                             try {
                                 $url = "$value:$port";
                                 $backend = match ($type) {
-                                    'chrome_webdriver' => new Chromedriver($url),
+                                    'chrome_webdriver'  => new Chromedriver($url),
                                     'firefox_webdriver' => new Geckodriver($url),
-                                    default => throw new Exception("Invalid webdriver type $type"),
+                                    default             => throw new Exception("Invalid webdriver type $type"),
                                 };
 
                                 if (! $backend->isSupported()) {
                                     $validator->addMessage(
                                         t('The webdriver server reports that it is unable to generate PDFs'),
                                     );
+
                                     return false;
                                 }
                             } catch (Exception $e) {
                                 $validator->addMessage($e->getMessage());
+
                                 return false;
                             }
+
                             return true;
                         }),
                     ],
@@ -292,7 +298,7 @@ class BackendConfigForm extends CompatForm
             'port',
             'force_temp_storage',
         ]));
-        $settings = array_filter($settings, static fn ($value): bool => $value !== null && $value !== '');
+        $settings = array_filter($settings, static fn($value): bool => $value !== null && $value !== '');
 
         $this->config->setSection($name, $settings);
         if ($this->originalName !== null && $this->originalName !== $name) {

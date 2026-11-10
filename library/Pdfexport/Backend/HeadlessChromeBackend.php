@@ -42,6 +42,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
     /** @var int Maximum length of one parameter to log */
     public const MAX_PARAM_LENGTH = 256;
 
+    /** @var ?StorageInterface<string, \SplFileInfo> */
     protected ?StorageInterface $fileStorage = null;
 
     protected bool $useFilesystemTransfer = false;
@@ -50,7 +51,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     protected ?Client $page = null;
 
-    protected ?string $frameId;
+    protected ?string $frameId = null;
 
     protected ?string $sessionId = null;
 
@@ -150,7 +151,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
             $args['--ozone-platform='] = 'headless';
         }
 
-        $commandLine = join(' ', [
+        $commandLine = implode(' ', [
             escapeshellarg($path),
             static::renderArgumentList($args),
         ]);
@@ -183,7 +184,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
                 $content = file_get_contents($portFile);
                 if ($content !== false) {
                     $lines = explode("\n", trim($content));
-                    $port = (int) ($lines[0] ?? 0);
+                    $port = (int) $lines[0];
                     $browserId = basename(trim($lines[1] ?? ''));
                     if ($port > 0 && $browserId !== '') {
                         $instance->socket = '127.0.0.1:' . $port;
@@ -238,7 +239,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
     /**
      * Get the temporary storage owned by this backend
      *
-     * @return StorageInterface
+     * @return StorageInterface<string, \SplFileInfo>
      */
     public function getFileStorage(): StorageInterface
     {
@@ -291,6 +292,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
     public function toPdf(PrintableHtmlDocument $document): string
     {
         $this->setContent($document);
+
         return $this->printToPdf($this->getPrintParameters($document));
     }
 
@@ -388,7 +390,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
                     throw new RuntimeException(sprintf(
                         'Failed to connect to page. Direct: %s. Flatten returned no session.',
                         $directException->getMessage(),
-                    ));
+                    ), $directException->getCode(), $directException);
                 }
             }
 
@@ -503,36 +505,33 @@ class HeadlessChromeBackend implements PfdPrintBackend
         // Wait for network activity to finish
         $this->waitFor($page, self::WAIT_FOR_NETWORK);
 
-        // Wait for the layout to initialize
-        if (! $document->isEmpty()) {
-            // Ensure layout scripts work in the same environment as the pdf printing itself
-            $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => 'print']);
-            $this->communicate($page, 'Runtime.evaluate', [
-                'timeout'    => 1000,
-                'expression' => 'setTimeout(() => new Layout().apply(), 0)',
-            ]);
-            $module = Icinga::app()->getModuleManager()->getModule('pdfexport');
-            $waitForLayout = file_get_contents($module->getJsDir() . '/wait-for-layout.js');
-            $promisedResult = $this->communicate($page, 'Runtime.evaluate', [
-                'awaitPromise'  => true,
-                'returnByValue' => true,
-                'timeout'       => 1000, // Failsafe: doesn't apply to `await` it seems
-                'expression'    => $waitForLayout,
-            ]);
-            if (isset($promisedResult['exceptionDetails'])) {
-                if (isset($promisedResult['exceptionDetails']['exception']['description'])) {
-                    Logger::error(
-                        'PDF layout failed to initialize: %s',
-                        $promisedResult['exceptionDetails']['exception']['description'],
-                    );
-                } else {
-                    Logger::warning('PDF layout failed to initialize. Pages might look skewed.');
-                }
+        // Layout scripts must run with the media used for PDF printing.
+        $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => 'print']);
+        $this->communicate($page, 'Runtime.evaluate', [
+            'timeout'    => 1000,
+            'expression' => 'setTimeout(() => new Layout().apply(), 0)',
+        ]);
+        $module = Icinga::app()->getModuleManager()->getModule('pdfexport');
+        $waitForLayout = file_get_contents($module->getJsDir() . '/wait-for-layout.js');
+        $promisedResult = $this->communicate($page, 'Runtime.evaluate', [
+            'awaitPromise'  => true,
+            'returnByValue' => true,
+            'timeout'       => 1000, // Failsafe: doesn't apply to `await` it seems
+            'expression'    => $waitForLayout,
+        ]);
+        if (isset($promisedResult['exceptionDetails'])) {
+            if (isset($promisedResult['exceptionDetails']['exception']['description'])) {
+                Logger::error(
+                    'PDF layout failed to initialize: %s',
+                    $promisedResult['exceptionDetails']['exception']['description'],
+                );
+            } else {
+                Logger::warning('PDF layout failed to initialize. Pages might look skewed.');
             }
-
-            // Reset media emulation, this may prevent the real media from coming into effect?
-            $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => '']);
         }
+
+        // Reset media emulation so the browser can use its real media again.
+        $this->communicate($page, 'Emulation.setEmulatedMedia', ['media' => '']);
     }
 
     /**
@@ -556,12 +555,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
             throw new RuntimeException('Expected base64 data. Got instead empty data instead.');
         }
 
-        $decoded = base64_decode($result['data']);
-        if ($decoded === false) {
-            throw new RuntimeException('Expected base64 data. Got instead: ' . json_encode($result));
-        }
-
-        return $decoded;
+        return base64_decode($result['data']);
     }
 
     /**
@@ -573,7 +567,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
      *
      * @return string JSON request
      */
-    private function renderApiCall($method, $options = null, ?string $sessionId = null): string
+    private function renderApiCall(string $method, ?array $options = null, ?string $sessionId = null): string
     {
         $payload = [
             'id'     => time(),
@@ -583,6 +577,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
         if ($sessionId !== null) {
             $payload['sessionId'] = $sessionId;
         }
+
         return json_encode($payload, JSON_FORCE_OBJECT);
     }
 
@@ -600,11 +595,13 @@ class HeadlessChromeBackend implements PfdPrintBackend
         $data = json_decode($payload, true);
         if (isset($data['method']) || isset($data['result'])) {
             return $data;
-        } elseif (isset($data['error'])) {
-            throw new Exception(sprintf('Error response (%s): %s', $data['error']['code'], $data['error']['message']));
-        } else {
-            throw new Exception(sprintf('Unknown response received: %s', $payload));
         }
+
+        if (isset($data['error'])) {
+            throw new Exception(sprintf('Error response (%s): %s', $data['error']['code'], $data['error']['message']));
+        }
+
+        throw new Exception(sprintf('Unknown response received: %s', $payload));
     }
 
     /**
@@ -635,16 +632,17 @@ class HeadlessChromeBackend implements PfdPrintBackend
      *
      * @return void
      */
-    private function registerEvent($method, $params): void
+    private function registerEvent(string $method, array $params): void
     {
         if (Logger::getInstance()->getLevel() === Logger::DEBUG) {
             $shortenedParams = static::shortenParams($params);
             Logger::debug(
                 'Received CDP event: %s(%s)',
                 $method,
-                join(',', array_map(function ($param) use ($shortenedParams) {
-                    return $param . '=' . json_encode($shortenedParams[$param]);
-                }, array_keys($shortenedParams))),
+                implode(',', array_map(
+                    fn(string $param): string => $param . '=' . json_encode($shortenedParams[$param]),
+                    array_keys($shortenedParams),
+                )),
             );
         }
 
@@ -674,14 +672,14 @@ class HeadlessChromeBackend implements PfdPrintBackend
      *
      * @return array<string, mixed> Protocol result
      */
-    private function communicate(Client $ws, $method, $params = null)
+    private function communicate(Client $ws, string $method, ?array $params = null)
     {
         // Include sessionId for page-level commands when using flatten sessions
         $sessionId = null;
         if ($this->sessionId !== null && $ws === $this->page && ! str_starts_with($method, 'Target.')) {
             $sessionId = $this->sessionId;
         }
-        Logger::debug('Transmitting CDP call: %s(%s)', $method, $params ? join(',', array_keys($params)) : '');
+        Logger::debug('Transmitting CDP call: %s(%s)', $method, $params ? implode(',', array_keys($params)) : '');
         $ws->text($this->renderApiCall($method, $params, $sessionId));
         do {
             $response = $this->parseApiResponse($ws->receive()->getContent());
@@ -694,7 +692,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
         Logger::debug('Received CDP result: %s', empty($response['result'])
             ? 'none'
-            : join(',', array_keys($response['result'])));
+            : implode(',', array_keys($response['result'])));
 
         return $response['result'];
     }
@@ -708,15 +706,15 @@ class HeadlessChromeBackend implements PfdPrintBackend
      *
      * @return ?array<string, mixed> Matching parameters, or null when no requests are pending
      */
-    private function waitFor(Client $ws, $eventName, ?array $expectedParams = null)
+    private function waitFor(Client $ws, string $eventName, ?array $expectedParams = null)
     {
         if ($eventName !== self::WAIT_FOR_NETWORK) {
             Logger::debug(
                 'Awaiting CDP event: %s(%s)',
                 $eventName,
-                $expectedParams ? join(',', array_keys($expectedParams)) : '',
+                $expectedParams ? implode(',', array_keys($expectedParams)) : '',
             );
-        } elseif (empty($this->interceptedRequests)) {
+        } elseif ($this->interceptedRequests === []) {
             return null;
         }
 
@@ -741,11 +739,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
                 }
 
                 if ($eventName === self::WAIT_FOR_NETWORK) {
-                    $wait = ! empty($this->interceptedRequests);
+                    $wait = $this->interceptedRequests !== [];
                 } elseif ($method === $eventName) {
                     if ($expectedParams !== null) {
                         $diff = array_intersect_assoc($params, $expectedParams);
-                        $wait = empty($diff);
+                        $wait = $diff === [];
                     } else {
                         $wait = false;
                     }
@@ -772,6 +770,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
         try {
             $client = new HttpClient(['timeout' => $timeout, 'connect_timeout' => $timeout]);
             $response = $client->request('GET', sprintf('http://%s/json/version', $this->socket));
+
             return $response->getStatusCode() === 200;
         } catch (Exception $e) {
             Logger::warning(
@@ -779,6 +778,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
                 $e->getMessage(),
                 IcingaException::getConfidentialTraceAsString($e),
             );
+
             return false;
         }
     }
@@ -842,6 +842,7 @@ class HeadlessChromeBackend implements PfdPrintBackend
             return $this->getVersion() >= self::MIN_SUPPORTED_CHROME_VERSION;
         } catch (Exception $e) {
             Logger::warning('Chrome version check failed: %s. Checking DevTools availability.', $e->getMessage());
+
             return $this->probeDevtools(2.0);
         }
     }

@@ -13,7 +13,7 @@ use Icinga\Module\Pdfexport\BackendLocator;
 use Icinga\Module\Pdfexport\Forms\BackendConfigForm;
 use Icinga\Module\Pdfexport\Forms\DeleteBackendForm;
 use ipl\Html\Contract\Form;
-use ipl\Web\Compat\CompatForm;
+use ipl\Html\FormElement\InputElement;
 use RuntimeException;
 use Tests\Icinga\Module\Pdfexport\Lib\ConfigTestCase;
 
@@ -60,9 +60,9 @@ class BackendConfigFormTest extends ConfigTestCase
         $this->assertTrue($submitted);
         $saved = Config::fromIni($config->getConfigFile());
         $this->assertSame([
-            'priority' => '100',
-            'enabled' => 'y',
-            'type' => 'local_chrome',
+            'priority'           => '100',
+            'enabled'            => 'y',
+            'type'               => 'local_chrome',
             'force_temp_storage' => '0',
         ], $saved->getSection('local')->toArray());
         $this->assertSame('1', $saved->get('_global', 'configured'));
@@ -96,14 +96,18 @@ class BackendConfigFormTest extends ConfigTestCase
         $this->assertSame('remote_chrome', $form->getValue('type'));
         $this->assertSame('http://chrome.internal', $form->getValue('host'));
         $this->assertSame('9333', $form->getValue('port'));
-        $this->assertSame('text', $form->getElement('host')->getType());
-        $this->assertSame('hidden', $form->getElement('binary')->getType());
+        $host = $form->getElement('host');
+        $binary = $form->getElement('binary');
+        $this->assertInstanceOf(InputElement::class, $host);
+        $this->assertInstanceOf(InputElement::class, $binary);
+        $this->assertSame('text', $host->getType());
+        $this->assertSame('hidden', $binary->getType());
     }
 
     public function testRenameUsesSubmittedTypeAndPreservesOtherSections(): void
     {
         $config = $this->createConfig([
-            'old' => ['type' => 'remote_chrome', 'host' => 'http://unreachable.invalid', 'priority' => '50'],
+            'old'   => ['type' => 'remote_chrome', 'host' => 'http://unreachable.invalid', 'priority' => '50'],
             'other' => ['type' => 'local_chrome', 'enabled' => 'n', 'binary' => '/keep/chrome'],
         ]);
         $form = new BackendConfigForm($config, 'old');
@@ -249,12 +253,12 @@ class BackendConfigFormTest extends ConfigTestCase
     }
 
     /**
-     * @param CompatForm $form
+     * @param BackendConfigForm|DeleteBackendForm $form
      * @param array<string, mixed> $values
      *
      * @return void
      */
-    protected function submit(CompatForm $form, array $values): void
+    protected function submit(BackendConfigForm|DeleteBackendForm $form, array $values): void
     {
         $form->setCsrfCounterMeasureId('test-backend');
         $form->handleRequest((new ServerRequest('POST', '/pdfexport/config/create'))->withParsedBody($values));
@@ -268,15 +272,15 @@ class BackendConfigFormTest extends ConfigTestCase
     protected function localValues(string $name): array
     {
         return [
-            'name' => $name,
-            'priority' => '100',
-            'enabled' => 'y',
-            'type' => 'local_chrome',
-            'binary' => '',
-            'host' => '',
-            'port' => '',
+            'name'               => $name,
+            'priority'           => '100',
+            'enabled'            => 'y',
+            'type'               => 'local_chrome',
+            'binary'             => '',
+            'host'               => '',
+            'port'               => '',
             'force_temp_storage' => '0',
-            'submit' => 'Save Changes',
+            'submit'             => 'Save Changes',
         ];
     }
 }

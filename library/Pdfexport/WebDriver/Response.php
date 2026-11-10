@@ -6,15 +6,16 @@
 namespace Icinga\Module\Pdfexport\WebDriver;
 
 /**
- * Represents a WebDriver response.
+ * WebDriver response
  */
 readonly class Response
 {
     /**
-     * Create a new response.
-     * @param string $sessionId the session ID of the response
-     * @param int $status a http status code for the response
-     * @param mixed|null $value the response value of the response
+     * Create a new Response
+     *
+     * @param string $sessionId The session ID of the response
+     * @param int $status Legacy WebDriver status code, or zero for success
+     * @param mixed|null $value Command-specific response value
      */
     public function __construct(
         public string $sessionId,

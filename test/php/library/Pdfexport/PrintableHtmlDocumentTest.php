@@ -16,7 +16,7 @@ class PrintableHtmlDocumentTest extends TestCase
 {
     public function testRenderedDocumentDeclaresUtf8BeforeLargeTitlesAndPreservesUnicode(): void
     {
-        $document = new class extends PrintableHtmlDocument {
+        $document = new class () extends PrintableHtmlDocument {
             protected function createStylesheet(): ValidHtml
             {
                 return HtmlString::create('');
@@ -43,17 +43,22 @@ class PrintableHtmlDocumentTest extends TestCase
         $this->assertSame([], (new PrintableHtmlDocument())->getPrintParametersForWebdriver());
     }
 
+    public function testDefaultCdpOptionsPrintAllPages(): void
+    {
+        $this->assertArrayNotHasKey('pageRanges', (new PrintableHtmlDocument())->getPrintParameters());
+    }
+
     public function testWebDriverDimensionsUseCentimetersAndNestedProtocolOptions(): void
     {
         $document = $this->createCustomDocument();
 
         $this->assertEqualsWithDelta([
             'orientation' => 'landscape',
-            'background' => true,
-            'scale' => 0.8,
-            'page' => ['width' => 21.59, 'height' => 27.94],
-            'margin' => ['top' => 1.27, 'bottom' => 0.635, 'left' => 1.905, 'right' => 2.54],
-            'pageRanges' => ['1-3', '5', '8-10'],
+            'background'  => true,
+            'scale'       => 0.8,
+            'page'        => ['width' => 21.59, 'height' => 27.94],
+            'margin'      => ['top' => 1.27, 'bottom' => 0.635, 'left' => 1.905, 'right' => 2.54],
+            'pageRanges'  => ['1-3', '5', '8-10'],
             'shrinkToFit' => false,
         ], $document->getPrintParametersForWebdriver(), 0.000001);
     }
@@ -81,7 +86,7 @@ class PrintableHtmlDocumentTest extends TestCase
 
     protected function createCustomDocument(): PrintableHtmlDocument
     {
-        return new class extends PrintableHtmlDocument {
+        return new class () extends PrintableHtmlDocument {
             public function __construct()
             {
                 $this->landscape = true;

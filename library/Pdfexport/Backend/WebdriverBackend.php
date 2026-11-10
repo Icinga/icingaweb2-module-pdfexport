@@ -8,9 +8,9 @@ namespace Icinga\Module\Pdfexport\Backend;
 use Exception;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\WebDriver\Capabilities;
+use Icinga\Module\Pdfexport\WebDriver\Command;
 use Icinga\Module\Pdfexport\WebDriver\ElementPresentCondition;
 use Icinga\Module\Pdfexport\WebDriver\WebDriver;
-use Icinga\Module\Pdfexport\WebDriver\Command;
 use Throwable;
 
 /**

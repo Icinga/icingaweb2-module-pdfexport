@@ -47,7 +47,7 @@ class ChromeDevToolsTest extends TestCase
         );
 
         $result = (new ChromeDevTools($driver))->execute(Command::printToPdf([
-            'landscape' => true,
+            'landscape'  => true,
             'paperWidth' => 8.5,
         ]));
 

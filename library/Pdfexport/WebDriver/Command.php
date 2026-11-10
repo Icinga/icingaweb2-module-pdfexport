@@ -6,14 +6,20 @@
 namespace Icinga\Module\Pdfexport\WebDriver;
 
 /**
- * Wrapper class for standard WebDriver commands.
+ * A standard WebDriver command
+ *
+ * Subclasses must accept the same constructor arguments so inherited factories
+ * can create them.
+ *
+ * @phpstan-consistent-constructor
  */
 class Command implements CommandInterface
 {
     /**
-     * Create a new command.
-     * @param CommandName $name the standardized command instance.
-     * @param array $parameters the parameters for the command
+     * Create a new Command
+     *
+     * @param CommandName $name The standardized command instance
+     * @param array<string, mixed> $parameters Named command parameters
      */
     public function __construct(
         protected CommandName $name,
@@ -22,9 +28,10 @@ class Command implements CommandInterface
     }
 
     /**
-     * Convenience method to create a new ExecuteScript command.
-     * @param string $script the raw JavaScript to execute in the browser
-     * @param array $arguments the arguments to pass to the script
+     * Create a command to execute a script
+     *
+     * @param string $script The raw JavaScript to execute in the browser
+     * @param array<mixed> $arguments The arguments to pass to the script
      *
      * @return static
      */
@@ -32,15 +39,17 @@ class Command implements CommandInterface
     {
         $params = [
             'script' => $script,
-            'args' => static::prepareScriptArguments($arguments),
+            'args'   => static::prepareScriptArguments($arguments),
         ];
 
         return new static(CommandName::ExecuteScript, $params);
     }
 
     /**
-     * Convenience method to create a new GetPageSource command.
+     * Create a command to get the page source
+     *
      * This command is useful for debugging purposes and will return the entire HTML source of the current page.
+     *
      * @return static
      */
     public static function getPageSource(): static
@@ -49,7 +58,8 @@ class Command implements CommandInterface
     }
 
     /**
-     * Find an element on the page using the specified method and value.
+     * Find an element on the page using the specified method and value
+     *
      * @param string $method
      * @param string $value
      *
@@ -64,30 +74,11 @@ class Command implements CommandInterface
     }
 
     /**
-     * Format script arguments for use in ExecuteScript commands.
-     * This method recursively converts nested arrays into JSON objects.
-     * @param array $arguments
+     * Print a page using the specified print parameters
      *
-     * @return array
-     */
-    protected static function prepareScriptArguments(array $arguments): array
-    {
-        $args = [];
-        foreach ($arguments as $key => $value) {
-            if (is_array($value)) {
-                $args[$key] = static::prepareScriptArguments($value);
-            } else {
-                $args[$key] = $value;
-            }
-        }
-
-        return $args;
-    }
-
-    /**
-     * Print a page using the specified print parameters.
      * The result of this command is a PDF file that is base64-encoded.
-     * @param array $printParameters
+     *
+     * @param array<string, mixed> $printParameters
      *
      * @return static
      */
@@ -112,11 +103,35 @@ class Command implements CommandInterface
     }
 
     /**
-     * Return the underlying standardized command name.
+     * Get the underlying standardized command name
+     *
      * @return CommandName
      */
     public function getName(): CommandName
     {
         return $this->name;
+    }
+
+    /**
+     * Format script arguments for use in ExecuteScript commands
+     *
+     * Nested arrays retain their keys and values for JSON serialization.
+     *
+     * @param array<mixed> $arguments
+     *
+     * @return array<mixed>
+     */
+    protected static function prepareScriptArguments(array $arguments): array
+    {
+        $args = [];
+        foreach ($arguments as $key => $value) {
+            if (is_array($value)) {
+                $args[$key] = static::prepareScriptArguments($value);
+            } else {
+                $args[$key] = $value;
+            }
+        }
+
+        return $args;
     }
 }

@@ -22,41 +22,41 @@ class PrintableHtmlDocument extends BaseHtmlElement
 {
     /** @var string */
     public const DEFAULT_HEADER_FOOTER_STYLE = <<<'CSS'
-@font-face {
-  font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-}
+        @font-face {
+          font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+        }
 
-header, footer {
-  width: 100%;
-  height: 21px;
-  font-size: 7px;
-  display: flex;
-  justify-content: space-between;
-  margin-left: 0.75cm;
-  margin-right: 0.75cm;
-}
+        header, footer {
+          width: 100%;
+          height: 21px;
+          font-size: 7px;
+          display: flex;
+          justify-content: space-between;
+          margin-left: 0.75cm;
+          margin-right: 0.75cm;
+        }
 
-header > *:not(:last-child),
-footer > *:not(:last-child) {
-  margin-right: 10px;
-}
+        header > *:not(:last-child),
+        footer > *:not(:last-child) {
+          margin-right: 10px;
+        }
 
-span {
-  line-height: 7px;
-  white-space: nowrap;
-}
+        span {
+          line-height: 7px;
+          white-space: nowrap;
+        }
 
-p {
-  margin: 0;
-  line-height: 7px;
-  word-break: break-word;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
-CSS;
+        p {
+          margin: 0;
+          line-height: 7px;
+          word-break: break-word;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-line-clamp: 3;
+          -webkit-box-orient: vertical;
+        }
+        CSS;
 
     /** Document title */
     protected ?string $title = null;
@@ -307,12 +307,11 @@ CSS;
             ),
         ));
 
-        $this->getAttributes()->registerAttributeCallback('data-content-height', function () {
-            return $this->pagePixelHeight;
-        });
-        $this->getAttributes()->registerAttributeCallback('style', function () {
-            return sprintf('width: %sin;', $this->paperWidth ?: 8.5);
-        });
+        $this->getAttributes()->registerAttributeCallback('data-content-height', fn(): int => $this->pagePixelHeight);
+        $this->getAttributes()->registerAttributeCallback(
+            'style',
+            fn(): string => sprintf('width: %sin;', $this->paperWidth ?: 8.5),
+        );
     }
 
     /**
@@ -334,40 +333,40 @@ CSS;
     {
         $parameters = [];
 
-        if (isset($this->landscape)) {
+        if ($this->landscape !== null) {
             $parameters['orientation'] = $this->landscape ? 'landscape' : 'portrait';
         }
 
-        if (isset($this->printBackground)) {
+        if ($this->printBackground !== null) {
             $parameters['background'] = $this->printBackground;
         }
 
-        if (isset($this->scale)) {
+        if ($this->scale !== null) {
             $parameters['scale'] = $this->scale;
         }
 
         // Document dimensions use inches. WebDriver print dimensions use centimeters.
-        if (isset($this->paperWidth)) {
+        if ($this->paperWidth !== null) {
             $parameters['page']['width'] = $this->paperWidth * 2.54;
         }
 
-        if (isset($this->paperHeight)) {
+        if ($this->paperHeight !== null) {
             $parameters['page']['height'] = $this->paperHeight * 2.54;
         }
 
-        if (isset($this->marginTop)) {
+        if ($this->marginTop !== null) {
             $parameters['margin']['top'] = $this->marginTop * 2.54;
         }
 
-        if (isset($this->marginBottom)) {
+        if ($this->marginBottom !== null) {
             $parameters['margin']['bottom'] = $this->marginBottom * 2.54;
         }
 
-        if (isset($this->marginLeft)) {
+        if ($this->marginLeft !== null) {
             $parameters['margin']['left'] = $this->marginLeft * 2.54;
         }
 
-        if (isset($this->marginRight)) {
+        if ($this->marginRight !== null) {
             $parameters['margin']['right'] = $this->marginRight * 2.54;
         }
 
@@ -375,7 +374,7 @@ CSS;
             $parameters['pageRanges'] = array_map(trim(...), explode(',', $this->pageRanges));
         }
 
-        if (isset($this->preferCSSPageSize)) {
+        if ($this->preferCSSPageSize !== null) {
             $parameters['shrinkToFit'] = ! $this->preferCSSPageSize;
         }
 
@@ -384,6 +383,8 @@ CSS;
 
     /**
      * Get the parameters for Page.printToPDF
+     *
+     * Omitting page ranges prints all pages.
      *
      * @return array{
      *   landscape?: bool,
@@ -406,69 +407,65 @@ CSS;
     {
         $parameters = [];
 
-        if (isset($this->landscape)) {
+        if ($this->landscape !== null) {
             $parameters['landscape'] = $this->landscape;
         }
 
-        if (isset($this->printBackground)) {
+        if ($this->printBackground !== null) {
             $parameters['printBackground'] = $this->printBackground;
         }
 
-        if (isset($this->scale)) {
+        if ($this->scale !== null) {
             $parameters['scale'] = $this->scale;
         }
 
-        if (isset($this->paperWidth)) {
+        if ($this->paperWidth !== null) {
             $parameters['paperWidth'] = $this->paperWidth;
         }
 
-        if (isset($this->paperHeight)) {
+        if ($this->paperHeight !== null) {
             $parameters['paperHeight'] = $this->paperHeight;
         }
 
-        if (isset($this->marginTop)) {
+        if ($this->marginTop !== null) {
             $parameters['marginTop'] = $this->marginTop;
         }
 
-        if (isset($this->marginBottom)) {
+        if ($this->marginBottom !== null) {
             $parameters['marginBottom'] = $this->marginBottom;
         }
 
-        if (isset($this->marginLeft)) {
+        if ($this->marginLeft !== null) {
             $parameters['marginLeft'] = $this->marginLeft;
         }
 
-        if (isset($this->marginRight)) {
+        if ($this->marginRight !== null) {
             $parameters['marginRight'] = $this->marginRight;
         }
 
-        if (isset($this->pageRanges)) {
+        if ($this->pageRanges !== '') {
             $parameters['pageRanges'] = $this->pageRanges;
         }
 
-        if (isset($this->headerTemplate)) {
+        if ($this->headerTemplate !== null) {
             $parameters['headerTemplate'] = $this->createHeader()->render();
             $parameters['displayHeaderFooter'] = true;
 
-            if (! isset($parameters['marginTop'])) {
-                $parameters['marginTop'] = 0.6;
-            }
+            $parameters['marginTop'] ??= 0.6;
         } else {
             $parameters['headerTemplate'] = ' ';  // An empty string is ignored
         }
 
-        if (isset($this->footerTemplate)) {
+        if ($this->footerTemplate !== null) {
             $parameters['footerTemplate'] = $this->createFooter()->render();
             $parameters['displayHeaderFooter'] = true;
 
-            if (! isset($parameters['marginBottom'])) {
-                $parameters['marginBottom'] = 0.6;
-            }
+            $parameters['marginBottom'] ??= 0.6;
         } else {
             $parameters['footerTemplate'] = ' ';  // An empty string is ignored
         }
 
-        if (isset($this->preferCSSPageSize)) {
+        if ($this->preferCSSPageSize !== null) {
             $parameters['preferCSSPageSize'] = $this->preferCSSPageSize;
         }
 
@@ -486,7 +483,7 @@ CSS;
 
         $css = preg_replace_callback(
             '~(?<=url\()[\'"]?([^(\'"]*)[\'"]?(?=\))~',
-            function ($matches) use ($app) {
+            function (array $matches) use ($app): string {
                 if (! str_starts_with($matches[1], '../')) {
                     return $matches[1];
                 }
