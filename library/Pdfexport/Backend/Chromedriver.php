@@ -14,15 +14,30 @@ use Icinga\Module\Pdfexport\PrintableHtmlDocument;
 use Icinga\Module\Pdfexport\WebDriver\Capabilities;
 use Icinga\Module\Pdfexport\WebDriver\ElementPresentCondition;
 
+/**
+ * Chrome PDF renderer with DevTools printing and document layout support
+ */
 class Chromedriver extends WebdriverBackend
 {
     protected ?ChromeDevTools $dcp = null;
 
+    /**
+     * Create a new Chromedriver
+     *
+     * @param string $url ChromeDriver server URL
+     */
     public function __construct(string $url)
     {
         parent::__construct($url, Capabilities::chrome());
     }
 
+    /**
+     * Replace the document and activate its layout scripts
+     *
+     * @param PrintableHtmlDocument $document Document to render
+     *
+     * @return void
+     */
     protected function setContent(PrintableHtmlDocument $document): void
     {
         parent::setContent($document);
@@ -32,17 +47,34 @@ class Chromedriver extends WebdriverBackend
         $this->driver->execute(Command::executeScript('new Layout().apply();'));
     }
 
+    /**
+     * Wait for the document layout to finish
+     *
+     * @return void
+     */
     protected function waitForPageLoad(): void
     {
         parent::waitForPageLoad();
         $this->driver->wait(ElementPresentCondition::byCssSelector('[data-layout-ready=yes]'));
     }
 
+    /**
+     * Get the DevTools connection for this browser session
+     *
+     * @return ChromeDevTools
+     */
     protected function getChromeDeveloperTools(): ChromeDevTools
     {
         return $this->dcp ??= new ChromeDevTools($this->driver);
     }
 
+    /**
+     * Get the DevTools print options with background printing enabled
+     *
+     * @param PrintableHtmlDocument $document Document with print settings
+     *
+     * @return array<string, mixed>
+     */
     protected function getPrintParameters(PrintableHtmlDocument $document): array
     {
         return array_merge([
@@ -51,6 +83,13 @@ class Chromedriver extends WebdriverBackend
         ], $document->getPrintParameters());
     }
 
+    /**
+     * Print the current page through DevTools
+     *
+     * @param array<string, mixed> $printParameters DevTools print options
+     *
+     * @return string PDF contents
+     */
     protected function printToPdf(array $printParameters): string
     {
         $devTools = $this->getChromeDeveloperTools();

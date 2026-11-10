@@ -6,19 +6,86 @@
 namespace Icinga\Module\Pdfexport\Forms;
 
 use Exception;
+use Icinga\Application\Config;
+use Icinga\Exception\NotFoundError;
 use Icinga\Module\Pdfexport\Backend\Chromedriver;
 use Icinga\Module\Pdfexport\Backend\Geckodriver;
 use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
-use Icinga\Web\Form\ConfigSectionForm;
+use Icinga\Module\Pdfexport\BackendLocator;
 use ipl\Validator\CallbackValidator;
 use ipl\Web\Common\CsrfCounterMeasure;
+use ipl\Web\Compat\CompatForm;
 
-class BackendConfigForm extends ConfigSectionForm
+/**
+ * Print backend configuration and persistence
+ */
+class BackendConfigForm extends CompatForm
 {
     use CsrfCounterMeasure;
 
+    /**
+     * Create a new BackendConfigForm
+     *
+     * Existing settings are populated before request handling so submitted values
+     * take precedence when the type-specific fields are assembled. Successful
+     * submission saves the section before the submit event is emitted.
+     *
+     * @param Config $config Configuration with its persistence path set
+     * @param ?string $originalName Existing section to edit, or null to create one
+     *
+     * @throws NotFoundError When the section to edit does not exist
+     */
+    public function __construct(protected readonly Config $config, protected readonly ?string $originalName = null)
+    {
+        if ($originalName !== null) {
+            if ($originalName === BackendLocator::GLOBAL_SECTION || ! $config->hasSection($originalName)) {
+                throw new NotFoundError($this->translate('Print backend "%s" does not exist'), $originalName);
+            }
+
+            $this->populate($config->getSection($originalName)->toArray());
+            $this->populate(['name' => $originalName]);
+        }
+    }
+
     public function assemble(): void
     {
+        $this->addCsrfCounterMeasure();
+
+        $this->addElement('text', 'name', [
+            'label' => $this->translate('Name'),
+            'required' => true,
+            'ignore' => true,
+            'validators' => [
+                new CallbackValidator(function ($value, CallbackValidator $validator): bool {
+                    if (
+                        ! is_string($value)
+                        || $value !== trim($value)
+                        || preg_match('/[\x00-\x1f\x7f\[\]]/', $value)
+                    ) {
+                        $validator->addMessage($this->translate(
+                            'Backend names must not contain brackets, control characters, or surrounding whitespace'
+                        ));
+
+                        return false;
+                    }
+
+                    if ($value === BackendLocator::GLOBAL_SECTION) {
+                        $validator->addMessage($this->translate('This name is reserved for module settings'));
+
+                        return false;
+                    }
+
+                    if ($value !== $this->originalName && $this->config->hasSection($value)) {
+                        $validator->addMessage($this->translate('A print backend with this name already exists'));
+
+                        return false;
+                    }
+
+                    return true;
+                }),
+            ],
+        ]);
+
         $this->addElement('number', 'priority', [
             'label'       => $this->translate('Priority'),
             'required'    => true,
@@ -71,9 +138,13 @@ class BackendConfigForm extends ConfigSectionForm
                             }
 
                             if ($version < HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION) {
-                                $validator->addMessage(t(
-                                    'Chrome/Chromium supporting headless mode required'
-                                    . ' which is provided since version %s. Version detected: %s',
+                                $validator->addMessage(sprintf(
+                                    $this->translate(
+                                        'Chrome/Chromium supporting headless mode required'
+                                        . ' which is provided since version %s. Version detected: %s'
+                                    ),
+                                    HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION,
+                                    $version
                                 ));
                                 return false;
                             }
@@ -115,10 +186,16 @@ class BackendConfigForm extends ConfigSectionForm
                             }
 
                             if ($version < HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION) {
-                                $validator->addMessage(t(
-                                    'Chrome/Chromium supporting headless mode required'
-                                    . ' which is provided since version %s. Version detected: %s',
+                                $validator->addMessage(sprintf(
+                                    $this->translate(
+                                        'Chrome/Chromium supporting headless mode required'
+                                        . ' which is provided since version %s. Version detected: %s'
+                                    ),
+                                    HeadlessChromeBackend::MIN_SUPPORTED_CHROME_VERSION,
+                                    $version
                                 ));
+
+                                return false;
                             }
 
                             return true;
@@ -184,6 +261,45 @@ class BackendConfigForm extends ConfigSectionForm
                 break;
         }
 
-        $this->addCsrfCounterMeasure();
+        $this->addElement('submit', 'submit', [
+            'label' => $this->translate('Save Changes'),
+        ]);
+    }
+
+    /**
+     * Save validated backend settings
+     *
+     * Empty optional values are omitted so runtime defaults remain active.
+     * Save errors are handled by the form and prevent the successful-submit event.
+     *
+     * @return void
+     *
+     * @throws NotFoundError When the original section no longer exists
+     */
+    protected function onSuccess(): void
+    {
+        if ($this->originalName !== null && ! $this->config->hasSection($this->originalName)) {
+            throw new NotFoundError($this->translate('Print backend "%s" does not exist'), $this->originalName);
+        }
+
+        $name = $this->getValue('name');
+        $settings = array_intersect_key($this->getValues(), array_flip([
+            'priority',
+            'enabled',
+            'type',
+            'binary',
+            'host',
+            'port',
+            'force_temp_storage',
+        ]));
+        $settings = array_filter($settings, static fn ($value): bool => $value !== null && $value !== '');
+
+        $this->config->setSection($name, $settings);
+        if ($this->originalName !== null && $this->originalName !== $name) {
+            $this->config->removeSection($this->originalName);
+        }
+
+        $this->config->setSection(BackendLocator::GLOBAL_SECTION, [BackendLocator::CONFIGURED_SETTING => '1']);
+        $this->config->saveIni();
     }
 }

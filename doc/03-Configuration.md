@@ -1,93 +1,100 @@
-# Configuration <a id="configuration"></a>
+# Configuration
 
-The module needs to have at least one backend configured.
-All module configuration can be done in `Configuration -> Modules -> pdfexport`.
+PDF export needs an available browser backend. Open
+`Configuration -> Modules -> pdfexport -> Backends` to manage backends.
 
-The priority of the backends is determined by their order in the list.
-The first backend (lowest priority number) that is able to handle the request is used.
+Select **Create a New Backend**, enter a unique name, and choose its type.
+Set **Enabled** and a numeric **Priority**, then enter the settings described
+below and save the backend. Select a backend's name in the list to edit or
+rename it. Use its delete action and confirm to remove it.
 
-## Using a Local Chrome/Chromium <a id="configuration-chrome-local"></a>
+Disabled backends are ignored. Enabled backends are tried in order of their
+numeric priority, with lower numbers first. The first backend that connects and
+supports PDF generation is used. Give backends different priorities to control
+which one is preferred.
 
-The module needs Google Chrome or Chromium supporting headless mode.
+## Default and existing configurations
 
-### RHEL <a id="configuration-chrome-setup-rhel"></a>
+Installations without an explicit backend configuration use a local Chrome
+installation at `/usr/bin/google-chrome` (default). Create a backend to use a
+different binary, a remote browser, or WebDriver.
 
-Add the Chrome repository from Google to yum, next to EPEL.
+Existing `[chrome]` settings remain supported. The module keeps the configured
+`binary`, `host`, `port`, and `force_temp_storage` values. A configured host
+selects a remote Chrome backend. Otherwise the backend uses local Chrome.
+Saving or deleting a backend through the UI makes the backend configuration
+explicit. Disabling or deleting all backends then keeps PDF export disabled
+until a backend is enabled or created. It does not restore the default browser.
 
-```
-yum -y install epel-release
+For a manually managed `config.ini`, set `configured = "1"` in `[_global]` to
+record an explicit configuration with no backends. The module manages this
+setting when you use the UI.
 
-cat >/etc/yum.repos.d/google-chrome-stable.repo <<EOF
-[google-chrome-stable]
-name=google-chrome-stable
-baseurl=http://dl.google.com/linux/chrome/rpm/stable/\$basearch
-enabled=1
-gpgcheck=1
-gpgkey=https://dl-ssl.google.com/linux/linux_signing_key.pub
-EOF
+## Using a local Chrome/Chromium
 
-yum makecache
-```
+Install a supported Google Chrome or Chromium package with headless support on
+the Icinga Web server. Use your distribution's packages or the browser vendor's
+installation instructions.
 
-Install Chrome and additional dependencies (optional).
+Choose **Headless Chrome (Local)**. Set **Binary** to the executable's absolute
+path, such as `/usr/bin/google-chrome` or `/usr/bin/chromium`.
+The default path is `/usr/bin/google-chrome`.
 
-```
-yum install google-chrome-stable
-yum install mesa-libOSMesa mesa-libOSMesa-devel gnu-free-sans-fonts ipa-gothic-fonts ipa-pgothic-fonts
-```
+The Icinga Web process must be able to execute the browser and write to its
+temporary storage directory. The module starts the browser and assigns a local
+DevTools port automatically. No fixed listening port needs to be configured.
 
-### Debian/Ubuntu <a id="configuration-chrome-setup-rhel"></a>
+Enable **Use temp storage** to transfer HTML through a local temporary file
+instead of sending it directly to the browser. This option applies to the
+selected local backend. The browser must be able to read that file.
 
-Add the Chrome repository from Google to apt.
+## Using a remote Chrome/Chromium
 
-```
-apt-get -y install apt-transport-https gnupg wget
+Install a supported Chrome or Chromium browser on the remote machine. Start it
+in headless mode with remote debugging enabled on an address reachable from
+Icinga Web. Use a dedicated browser profile directory.
 
-wget -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+Choose **Headless Chrome (Remote)**. Enter the browser's **Host** and DevTools
+**Port**. The module uses port `9222` when no port is specified. This is the
+browser's debugging endpoint, which is separate from a WebDriver server.
 
-echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list
+The debugging endpoint permits control of the browser without authentication.
+Restrict access to trusted hosts, such as the Icinga Web server, using network
+binding and firewall rules.
 
-apt-get update
-```
+## Using a Chrome WebDriver server
 
-Install Chrome.
+Install Chrome or Chromium and a compatible ChromeDriver on the machine that
+runs the WebDriver server. Follow the
+[ChromeDriver setup instructions][chromedriver-setup]
+and [version selection guidance][chromedriver-downloads].
+Start the server separately so Icinga Web can reach it.
 
-```
-apt-get install google-chrome-stable
-```
+Choose **Chrome WebDriver**. Set **Host** to the server address including the
+scheme, such as `http://127.0.0.1`, and set **Port** to its listening port.
+The module defaults to `4444`. Standalone ChromeDriver normally listens on
+`9515`, so enter `9515` when using that default.
 
-## Using a Remote Chrome/Chromium <a id="configuration-chrome-remote"></a>
+## Using a Firefox WebDriver server
 
-As an alternative to a local installation of Chrome/Chromium it is also possible
-to launch and use a remote instance.
+Install Firefox and a compatible geckodriver on the machine that runs the
+WebDriver server. Follow the
+[geckodriver usage instructions][geckodriver-usage].
+Start the server separately so Icinga Web can reach it.
 
-Install it as described above on a different machine.
+Choose **Firefox WebDriver**. Set **Host** to the server address including the
+scheme, such as `http://127.0.0.1`, and set **Port** to its listening port.
+The module and standalone geckodriver default to `4444`.
 
-To start a remote instance of Chrome/Chromium use the following commandline options:
+Firefox exports omit cover pages and custom print header and footer templates.
+Firefox also does not run the module's Chrome-specific layout scripts, so page
+layout can differ from Chrome exports. Use a Chrome backend when these features
+are required.
 
-> google-chrome --remote-debugging-address=0.0.0.0 --remote-debugging-port=9222 --headless --keep-alive-for-test --disable-gpu --disable-dev-shm-usage --no-sandbox --bwsi --no-first-run --user-data-dir=/tmp --homedir=/tmp
+Keep WebDriver servers accessible only to trusted hosts. The browser and driver
+must run on the server side. Installing a driver on the Icinga Web host alone
+does not start a WebDriver service.
 
-Note that the browser does accept any connection attempt without any authentication.
-Keep that in mind and let it listen on a public IP (or even on 0.0.0.0) only during tests or
-with a proper firewall in place.
-
-Create a new backend in `Configuration -> Modules -> pdfexport -> Backends`,
-give it a name and select `Headless Chrome (Remote)` as the backend type and configure its connection details.
-
-## Using a Chrome WebDriver Server <a id="configuration-chrome-webdriver"></a>
-
-Install your preferred Chrome WebDriver/Chromedriver server.
-See [Chromedriver Downloads Page](https://developer.chrome.com/docs/chromedriver/downloads)
-for instructions to download and install it.
-
-Create a new backend in `Configuration -> Modules -> pdfexport -> Backends`,
-give it a name and select `Chrome WebDriver` as the backend type and configure its connection details.
-
-## Using a Firefox WebDriver Server <a id="configuration-firefox-webdriver"></a>
-
-Install your preferred Firefox WebDriver/Geckodriver server.
-Check the [Geckodriver Releases Page](https://github.com/mozilla/geckodriver/releases)
-for the latest version.
-
-Create a new backend in `Configuration -> Modules -> pdfexport -> Backends`,
-give it a name and select `Firefox WebDriver` as the backend type and configure its connection details.
+[chromedriver-setup]: https://developer.chrome.com/docs/chromedriver/get-started
+[chromedriver-downloads]: https://developer.chrome.com/docs/chromedriver/downloads
+[geckodriver-usage]: https://firefox-source-docs.mozilla.org/testing/geckodriver/Usage.html

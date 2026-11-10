@@ -14,22 +14,65 @@ use Icinga\Module\Pdfexport\Backend\HeadlessChromeBackend;
 use Icinga\Module\Pdfexport\Backend\PfdPrintBackend;
 
 /**
- * Class implementing the traversal and fallback logic for the PDF backend selection.
+ * PDF backend selection with priority ordering and connection fallback
  */
 class BackendLocator
 {
+    /** @var string Reserved section for explicit backend configuration state. */
+    public const GLOBAL_SECTION = '_global';
+
+    /** @var string Setting that prevents implicit defaults after administrative saves. */
+    public const CONFIGURED_SETTING = 'configured';
+
     /**
-     * The currently connected backend.
-     * This is used to avoid re-connecting to the same backend multiple times.
-     * @var PfdPrintBackend|null
+     * The backend retained for subsequent support checks and exports
      */
     protected ?PfdPrintBackend $backend = null;
 
     /**
-     * Get the first supported backend from the configuration which responded with a successful connection.
-     * First, in this context means the backend with the lowest priority.
-     * Note: This method caches the first successful backend and reuses it for subsequent calls.
-     * @return PfdPrintBackend|null the first supported backend or null if none is available
+     * Get an independent backend configuration snapshot with legacy defaults
+     *
+     * Legacy Chrome sections without a type are enabled unless explicitly disabled.
+     * Empty configuration retains the implicit local Chrome backend unless an
+     * administrative save has marked backend configuration as explicit. Global
+     * metadata is excluded from the snapshot. Reading this snapshot never changes
+     * the registered configuration or its INI file.
+     * The original file path is retained for explicit administrative saves.
+     *
+     * @return Config
+     */
+    public static function getBackendConfig(): Config
+    {
+        $original = Config::module('pdfexport');
+        $config = Config::fromArray($original->toArray());
+        $config->setConfigFile($original->getConfigFile());
+
+        $config->removeSection(static::GLOBAL_SECTION);
+
+        if (
+            $config->isEmpty()
+            && $original->get(static::GLOBAL_SECTION, static::CONFIGURED_SETTING, '0') !== '1'
+        ) {
+            $config->setSection('chrome');
+        }
+
+        if ($config->hasSection('chrome') && $config->get('chrome', 'type') === null) {
+            $settings = $config->getSection('chrome')->toArray();
+            $settings['type'] = $config->get('chrome', 'host') !== null ? 'remote_chrome' : 'local_chrome';
+            $settings['enabled'] ??= 'y';
+            $settings['priority'] ??= '100';
+            $config->setSection('chrome', $settings);
+        }
+
+        return $config;
+    }
+
+    /**
+     * Get the supported backend with the lowest configured priority
+     *
+     * Cache the first successful backend for subsequent calls while it is supported.
+     *
+     * @return ?PfdPrintBackend The first supported backend, or null if none is available
      */
     public function getFirstSupportedBackend(): ?PfdPrintBackend
     {
@@ -39,7 +82,7 @@ class BackendLocator
 
         $this->backend = null;
         $sorted = [];
-        foreach (Config::module('pdfexport') as $section => $configs) {
+        foreach (static::getBackendConfig() as $section => $configs) {
             if ($configs->get('enabled', 'n') !== 'y') {
                 continue;
             }
@@ -61,15 +104,17 @@ class BackendLocator
     }
 
     /**
-     * Create and connect to a WebDriver backend.
-     * The backend is identified by the 'type' configuration option.
-     * @param string $section The configuration section to use for the backend.
+     * Create and connect to a WebDriver backend
      *
-     * @return PfdPrintBackend|null The created and connected backend or null if the backend could not be created.
+     * The backend is identified by the 'type' configuration option.
+     *
+     * @param string $section The configuration section to use for the backend
+     *
+     * @return ?PfdPrintBackend The connected backend, or null if it could not be created
      */
     protected function connectToWebDriver(string $section): ?PfdPrintBackend
     {
-        $config = Config::module('pdfexport');
+        $config = static::getBackendConfig();
         try {
             $host = $config->get($section, 'host');
             if ($host === null) {
@@ -83,7 +128,7 @@ class BackendLocator
                 'firefox_webdriver' => new Geckodriver($url),
                 default => throw new Exception("Invalid webdriver type $type"),
             };
-            Logger::info("Connected WebDriver Backend: $section");
+            Logger::info("Connected WebDriver backend: $section");
             return $backend;
         } catch (Exception $e) {
             Logger::warning("Webdriver connection failed! backend: $section, error: " . $e->getMessage());
@@ -92,14 +137,15 @@ class BackendLocator
     }
 
     /**
-     * Connect to a remote HeadlessChrome backend.
-     * @param string $section the configuration section to use for the backend
+     * Connect to a remote HeadlessChrome backend
      *
-     * @return PfdPrintBackend|null the created and connected backend or null if the backend could not be created
+     * @param string $section The configuration section to use for the backend
+     *
+     * @return ?PfdPrintBackend The connected backend, or null if it could not be created
      */
     protected function connectToRemoteChrome(string $section): ?PfdPrintBackend
     {
-        $config = Config::module('pdfexport');
+        $config = static::getBackendConfig();
         try {
             $host = $config->get($section, 'host');
             if ($host === null) {
@@ -111,7 +157,7 @@ class BackendLocator
                 $host,
                 $port,
             );
-            Logger::info("Connected WebDriver Backend: $section");
+            Logger::info("Connected remote Chrome backend: $section");
 
             return $backend;
         } catch (Exception $e) {
@@ -124,14 +170,15 @@ class BackendLocator
     }
 
     /**
-     * Connect to a local HeadlessChrome backend.
-     * @param string $section the configuration section to use for the backend
+     * Connect to a local HeadlessChrome backend
      *
-     * @return PfdPrintBackend|null the created and connected backend or null if the backend could not be created
+     * @param string $section The configuration section to use for the backend
+     *
+     * @return ?PfdPrintBackend The connected backend, or null if it could not be created
      */
     protected function connectToLocalChrome(string $section): ?PfdPrintBackend
     {
-        $config = Config::module('pdfexport');
+        $config = static::getBackendConfig();
         $binary = $config->get($section, 'binary', '/usr/bin/google-chrome');
         try {
             if ($binary === null) {
@@ -140,9 +187,9 @@ class BackendLocator
 
             $backend = HeadlessChromeBackend::createLocal(
                 $binary,
-                Config::module('pdfexport')->get('chrome', 'force_temp_storage', '0') === '1',
+                $config->get($section, 'force_temp_storage', '0') === '1',
             );
-            Logger::info("Connected local chrome Backend: $section");
+            Logger::info("Connected local Chrome backend: $section");
 
             return $backend;
         } catch (Exception $e) {
@@ -155,20 +202,22 @@ class BackendLocator
     }
 
     /**
-     * Create and connect to a single backend.
-     * The type of the backend is determined by the 'type' configuration option.
-     * @param $section string the configuration section to use for the backend
+     * Create and connect to a single backend
      *
-     * @return PfdPrintBackend|null the created and connected backend or null if the backend could not be created
+     * The type of the backend is determined by the 'type' configuration option.
+     *
+     * @param string $section The configuration section to use for the backend
+     *
+     * @return ?PfdPrintBackend The connected backend, or null if it could not be created
      */
     protected function getSingleBackend(string $section): ?PfdPrintBackend
     {
-        $config = Config::module('pdfexport');
+        $config = static::getBackendConfig();
         if (! $config->hasSection($section)) {
             return null;
         }
 
-        Logger::info("Connecting to backend $section.");
+        Logger::debug("Connecting to backend $section.");
 
         $type = $config->get($section, 'type');
         $backend = match ($type) {
@@ -183,7 +232,7 @@ class BackendLocator
         }
 
         if (! $backend->isSupported()) {
-            Logger::info("Connected backend $section reports that it doesn't support generating PDFs");
+            Logger::warning("Connected backend $section does not support generating PDFs");
             return null;
         }
 

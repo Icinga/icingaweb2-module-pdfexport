@@ -21,8 +21,7 @@ class ShellCommand
     /** @var ?resource Process resource */
     protected $resource;
 
-    /** @var object|null Named pipe resources */
-    protected ?object $namedPipes;
+    protected ?object $namedPipes = null;
 
     /** @var string collected stdout */
     protected string $stdout;

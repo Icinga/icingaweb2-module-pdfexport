@@ -7,16 +7,28 @@ namespace Icinga\Module\Pdfexport\Backend;
 
 use Icinga\Module\Pdfexport\WebDriver\Capabilities;
 
+/**
+ * Firefox PDF renderer using the WebDriver print command
+ */
 class Geckodriver extends WebdriverBackend
 {
+    /**
+     * Create a new Geckodriver
+     *
+     * @param string $rul GeckoDriver server URL
+     */
     public function __construct(string $rul)
     {
         parent::__construct($rul, Capabilities::firefox());
     }
 
+    /**
+     * Check whether the generated PDFs support merging with a cover page
+     *
+     * @return false Firefox PDFs use compression unsupported by the merger
+     */
     public function supportsCoverPage(): bool
     {
-        // Firefox generates compressed PDFs, which can't be merged by the `tcpi` library
         return false;
     }
 }

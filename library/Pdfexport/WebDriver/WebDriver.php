@@ -6,18 +6,23 @@
 namespace Icinga\Module\Pdfexport\WebDriver;
 
 use Exception;
+use Throwable;
 
 /**
- * Partial implementation of the WebDriver protocol.
- * @link https://www.w3.org/TR/webdriver/
+ * Partial implementation of the WebDriver protocol
+ *
+ * A session accepts commands until quit() is called. Closing is permanent,
+ * even when the remote server rejects session deletion.
+ *
+ * @see https://www.w3.org/TR/webdriver/
  */
 class WebDriver
 {
     /**
-     * Create a new WebDriver instance.
-     * @param CommandExecutor|null $executor a command executor instance which is responsible for sending commands to
-     * the webdriver server
-     * @param string|null $sessionId the session if for the connection from the server from the `newSession` command
+     * Create a new WebDriver
+     *
+     * @param ?CommandExecutor $executor Transport for commands to the server
+     * @param ?string $sessionId Session identifier returned by session creation
      */
     protected function __construct(
         protected ?CommandExecutor $executor,
@@ -25,18 +30,28 @@ class WebDriver
     ) {
     }
 
+    /**
+     * Release the session without propagating cleanup failures
+     *
+     * @return void
+     */
     public function __destruct()
     {
-        $this->quit();
+        try {
+            $this->quit();
+        } catch (Throwable) {
+            // A failed remote deletion must not interrupt object destruction.
+        }
     }
 
     /**
-     * Create a new WebDriver instance with a set of capabilities.
+     * Create a session with the requested browser capabilities
      *
-     * @param string $url the host and port of the webdriver server
-     * @param Capabilities $capabilities the capabilities to use for the session
+     * @param string $url WebDriver server URL
+     * @param Capabilities $capabilities Capabilities to use for the session
      *
      * @return static
+     *
      * @throws Exception
      */
     public static function create(string $url, Capabilities $capabilities): static
@@ -58,10 +73,12 @@ class WebDriver
     }
 
     /**
-     * Execute a command on the webdriver server.
-     * @param CommandInterface $command the command to execute
+     * Execute a command on the active session
      *
-     * @return mixed the result of the command, the specifics of which depend on the command being executed
+     * @param CommandInterface $command Command to execute
+     *
+     * @return mixed Command-specific result
+     *
      * @throws Exception
      */
     public function execute(CommandInterface $command): mixed
@@ -76,14 +93,17 @@ class WebDriver
     }
 
     /**
-     * Wait synchronously for a condition to be met.
-     * This function uses polling to check the condition.
+     * Wait synchronously for a condition by polling
      *
-     * @param ConditionInterface $condition the condition to wait for
-     * @param int $timeoutSeconds the maximum time to wait for the condition to be met
-     * @param int $intervalMs the time to wait between checks
+     * A condition succeeds when it returns anything except false. The last
+     * condition exception is rethrown if polling times out.
      *
-     * @return mixed
+     * @param ConditionInterface $condition Condition to wait for
+     * @param int $timeoutSeconds Maximum wait in seconds
+     * @param int $intervalMs Delay between checks in milliseconds
+     *
+     * @return mixed Condition result, or false when polling times out without an exception
+     *
      * @throws Exception
      */
     public function wait(
@@ -114,18 +134,24 @@ class WebDriver
     }
 
     /**
-     * Cleanly close the webdriver session.
+     * End the session permanently
+     *
+     * State is cleared even if the remote deletion fails. Repeated calls do
+     * nothing, and subsequent commands fail because the session is inactive.
      *
      * @return void
+     *
      * @throws Exception
      */
     public function quit(): void
     {
-        if ($this->executor !== null) {
-            $this->execute(new Command(CommandName::Quit));
+        try {
+            if ($this->executor !== null && $this->sessionId !== null) {
+                $this->execute(new Command(CommandName::Quit));
+            }
+        } finally {
             $this->executor = null;
+            $this->sessionId = null;
         }
-
-        $this->sessionId = null;
     }
 }

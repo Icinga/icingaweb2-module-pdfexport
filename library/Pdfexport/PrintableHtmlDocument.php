@@ -15,6 +15,9 @@ use ipl\Html\HtmlString;
 use ipl\Html\Text;
 use ipl\Html\ValidHtml;
 
+/**
+ * HTML document with page layout and browser print settings
+ */
 class PrintableHtmlDocument extends BaseHtmlElement
 {
     /** @var string */
@@ -244,7 +247,7 @@ CSS;
     /**
      * Get the cover page
      *
-     * @return ValidHtml|null
+     * @return ?ValidHtml
      */
     public function getCoverPage(): ?ValidHtml
     {
@@ -282,6 +285,8 @@ CSS;
 
     /**
      * Finalize document to be printed
+     *
+     * @return void
      */
     protected function assemble(): void
     {
@@ -291,6 +296,7 @@ CSS;
             new HtmlElement(
                 'head',
                 null,
+                HtmlElement::create('meta', ['charset' => 'UTF-8']),
                 new HtmlElement(
                     'title',
                     null,
@@ -310,16 +316,26 @@ CSS;
     }
 
     /**
-     * Get the parameters for Page.printToPDF
+     * Get W3C WebDriver print parameters with dimensions in centimeters
      *
-     * @return array
+     * Header and footer templates are unavailable in the W3C print command.
+     *
+     * @return array{
+     *   orientation?: 'landscape'|'portrait',
+     *   background?: bool,
+     *   scale?: float,
+     *   page?: array{width?: float, height?: float},
+     *   margin?: array{top?: float, bottom?: float, left?: float, right?: float},
+     *   pageRanges?: list<string>,
+     *   shrinkToFit?: bool
+     * }
      */
     public function getPrintParametersForWebdriver(): array
     {
         $parameters = [];
 
         if (isset($this->landscape)) {
-            $parameters['landscape'] = $this->landscape ? 'landscape' : 'portrait';
+            $parameters['orientation'] = $this->landscape ? 'landscape' : 'portrait';
         }
 
         if (isset($this->printBackground)) {
@@ -330,40 +346,37 @@ CSS;
             $parameters['scale'] = $this->scale;
         }
 
-        // TODO: Validate width & height
+        // Document dimensions use inches. WebDriver print dimensions use centimeters.
         if (isset($this->paperWidth)) {
-            $parameters['paperWidth'] = $this->paperWidth;
+            $parameters['page']['width'] = $this->paperWidth * 2.54;
         }
 
         if (isset($this->paperHeight)) {
-            $parameters['paperHeight'] = $this->paperHeight;
+            $parameters['page']['height'] = $this->paperHeight * 2.54;
         }
 
-        // TODO: Validate margins
         if (isset($this->marginTop)) {
-            $parameters['marginTop'] = $this->marginTop;
+            $parameters['margin']['top'] = $this->marginTop * 2.54;
         }
 
         if (isset($this->marginBottom)) {
-            $parameters['marginBottom'] = $this->marginBottom;
+            $parameters['margin']['bottom'] = $this->marginBottom * 2.54;
         }
 
         if (isset($this->marginLeft)) {
-            $parameters['marginLeft'] = $this->marginLeft;
+            $parameters['margin']['left'] = $this->marginLeft * 2.54;
         }
 
         if (isset($this->marginRight)) {
-            $parameters['marginRight'] = $this->marginRight;
+            $parameters['margin']['right'] = $this->marginRight * 2.54;
         }
 
-        if (isset($this->pageRanges)) {
-            $parameters['pageRanges'] = explode(',', $this->pageRanges);
+        if ($this->pageRanges !== '') {
+            $parameters['pageRanges'] = array_map(trim(...), explode(',', $this->pageRanges));
         }
-
-        // Note: Header and footer aren't supported for webdriver
 
         if (isset($this->preferCSSPageSize)) {
-            $parameters['preferCSSPageSize'] = $this->preferCSSPageSize;
+            $parameters['shrinkToFit'] = ! $this->preferCSSPageSize;
         }
 
         return $parameters;
@@ -372,7 +385,22 @@ CSS;
     /**
      * Get the parameters for Page.printToPDF
      *
-     * @return array
+     * @return array{
+     *   landscape?: bool,
+     *   printBackground?: bool,
+     *   scale?: float,
+     *   paperWidth?: float,
+     *   paperHeight?: float,
+     *   marginTop?: float,
+     *   marginBottom?: float,
+     *   marginLeft?: float,
+     *   marginRight?: float,
+     *   pageRanges?: string,
+     *   headerTemplate: string,
+     *   footerTemplate: string,
+     *   displayHeaderFooter?: bool,
+     *   preferCSSPageSize?: bool
+     * }
      */
     public function getPrintParameters(): array
     {

@@ -15,6 +15,7 @@ use Icinga\Exception\IcingaException;
 use Icinga\File\Storage\TemporaryLocalFileStorage;
 use Icinga\Module\Pdfexport\BackendLocator;
 use Icinga\Module\Pdfexport\PrintableHtmlDocument;
+use ipl\Html\HtmlString;
 use ipl\Html\ValidHtml;
 use Karriere\PdfMerge\PdfMerge;
 use RuntimeException;
@@ -29,12 +30,14 @@ class Pdfexport extends PdfexportHook
     protected ?BackendLocator $locator = null;
 
     /**
-     * Get the first hook.
-     * Note: This function is the exact same as the one if the base class.
-     * It can be removed after we decide to remove compatibility with current
-     * reporting (1.1) and icingaweb2 (2.13) versions.
+     * Get the first supported hook
+     *
+     * This compatibility implementation matches the one in the base class.
+     * Reporting 1.1 and Icinga Web 2.13 require it.
      *
      * @return static
+     *
+     * @throws RuntimeException If no supported PDF exporter is available
      *
      * @deprecated Use {@see PdfexportHook::first()} instead
      */
@@ -74,7 +77,7 @@ class Pdfexport extends PdfexportHook
             return $locator->getFirstSupportedBackend() !== null;
         } catch (Exception $e) {
             Logger::warning(
-                'No supported PDF backend available.',
+                "PDF backend support check failed: %s\n%s",
                 $e->getMessage(),
                 IcingaException::getConfidentialTraceAsString($e),
             );
@@ -82,20 +85,37 @@ class Pdfexport extends PdfexportHook
         }
     }
 
+    /**
+     * Render HTML to PDF and stream it to the client
+     *
+     * @param ValidHtml|string $html Trusted rendered HTML to export
+     * @param string $filename The filename for the generated PDF
+     *
+     * @return never
+     *
+     * @throws RuntimeException If no supported PDF backend is available
+     */
     public function streamPdfFromHtml($html, $filename)
     {
         $this->emit($this->htmlToPdf($html), basename($filename, '.pdf') . '.pdf');
     }
 
+    /**
+     * Render HTML to PDF
+     *
+     * @param ValidHtml|string $html Trusted rendered HTML to export
+     *
+     * @return string The generated PDF contents
+     *
+     * @throws RuntimeException If no supported PDF backend is available
+     */
     public function htmlToPdf($html)
     {
         $document = $this->getPrintableHtmlDocument($html);
 
         $backend = $this->getLocator()->getFirstSupportedBackend();
         if ($backend === null) {
-            Logger::warning('No supported PDF backend available.');
-
-            return null;
+            throw new RuntimeException('No supported PDF backend available.');
         }
 
         $pdf = $backend->toPdf($document);
@@ -140,31 +160,33 @@ class Pdfexport extends PdfexportHook
     }
 
     /**
-     * Converts a ValidHtml object into a PrintableHtmlDocument instance
+     * Get a printable document from trusted rendered HTML
      *
-     * If the provided ValidHtml is already an instance of PrintableHtmlDocument, it is returned as is.
-     * Otherwise, a new PrintableHtmlDocument is created with the given HTML content.
+     * Printable documents retain their print settings. Strings contain trusted markup
+     * from legacy export callers and are included without escaping.
      *
-     * @param ValidHtml $html The HTML content to convert
+     * @param ValidHtml|string $html The HTML content to convert
      *
      * @return PrintableHtmlDocument
      */
-    protected function getPrintableHtmlDocument(ValidHtml $html): PrintableHtmlDocument
+    protected function getPrintableHtmlDocument(ValidHtml|string $html): PrintableHtmlDocument
     {
         if ($html instanceof PrintableHtmlDocument) {
             return $html;
         }
 
         return (new PrintableHtmlDocument())
-            ->setContent($html);
+            ->setContent(is_string($html) ? HtmlString::create($html) : $html);
     }
 
     /**
-     * Merge multiple PDF files into a single one
+     * Merge PDF contents into a single document
      *
-     * @param string ...$pdfs The paths to the PDF files to merge
+     * @param string ...$pdfs The PDF contents to merge
      *
-     * @return string the resulting PDF content
+     * @return string The merged PDF contents
+     *
+     * @throws \Karriere\PdfMerge\Exceptions\NoFilesDefinedException If no PDF contents are provided
      */
     protected function mergePdfs(string ...$pdfs): string
     {

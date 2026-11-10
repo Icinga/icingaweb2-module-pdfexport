@@ -21,6 +21,13 @@ use RuntimeException;
 use Throwable;
 use WebSocket\Client;
 
+/**
+ * Reusable PDF renderer connected directly to Chrome DevTools
+ *
+ * Local instances own their browser process. Remote instances close their tab
+ * and connections while leaving the shared browser running. Callers must finish
+ * rendering before closing the backend.
+ */
 class HeadlessChromeBackend implements PfdPrintBackend
 {
     /** @var int */
@@ -47,8 +54,10 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     protected ?string $sessionId = null;
 
+    /** @var array<string, array<string, mixed>> */
     private array $interceptedRequests = [];
 
+    /** @var array<int, array{method: string, params: array<string, mixed>}> */
     private array $interceptedEvents = [];
 
     protected ?ShellCommand $process = null;
@@ -57,16 +66,25 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     protected ?string $browserId = null;
 
+    /**
+     * Release owned resources without propagating cleanup failures
+     *
+     * @return void
+     */
     public function __destruct()
     {
-        $this->close();
+        try {
+            $this->close();
+        } catch (Throwable) {
+            // Destruction must preserve render failures and backend fallback.
+        }
     }
 
     /**
-     * Create an instance of the backend by connecting to an already running chrome/chromium instance
+     * Connect to an existing Chrome or Chromium browser
      *
-     * @param string $host the hostname to connect to
-     * @param int $port the chrome devtools protocoll port
+     * @param string $host Hostname to connect to
+     * @param int $port Chrome DevTools protocol port
      *
      * @return self
      *
@@ -98,10 +116,12 @@ class HeadlessChromeBackend implements PfdPrintBackend
     }
 
     /**
-     * Spawn a new instance of the Chrome/Chromium browser and hands back a backend instance
+     * Start a local Chrome or Chromium browser
      *
-     * @param string $path the path to the executeable
-     * @param bool $useFile should the transfer of the html document use the filesystem
+     * @param string $path Path to the browser executable
+     * @param bool $useFile Whether to transfer HTML through temporary files
+     *
+     * @return self
      *
      * @throws RuntimeException
      */
@@ -190,6 +210,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return $instance;
     }
 
+    /**
+     * Stop the owned local browser and release temporary storage
+     *
+     * @return void
+     */
     protected function closeLocal(): void
     {
         Logger::debug('Closing local chrome instance');
@@ -211,7 +236,9 @@ class HeadlessChromeBackend implements PfdPrintBackend
     }
 
     /**
-     * Get the file storage
+     * Get the temporary storage owned by this backend
+     *
+     * @return StorageInterface
      */
     public function getFileStorage(): StorageInterface
     {
@@ -219,7 +246,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
     }
 
     /**
-     * Render the given argument name-value pairs as shell-escaped string
+     * Render shell arguments while omitting null values
+     *
+     * @param array<int|string, string|int|float|null> $arguments Positional and named arguments
+     *
+     * @return string Shell-escaped argument list
      */
     protected static function renderArgumentList(array $arguments): string
     {
@@ -242,6 +273,13 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return implode(' ', $list);
     }
 
+    /**
+     * Get the DevTools print options
+     *
+     * @param PrintableHtmlDocument $document Document with print settings
+     *
+     * @return array<string, mixed>
+     */
     protected function getPrintParameters(PrintableHtmlDocument $document): array
     {
         return array_merge([
@@ -256,11 +294,21 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return $this->printToPdf($this->getPrintParameters($document));
     }
 
+    /**
+     * Get the browser WebSocket connection
+     *
+     * @return Client
+     */
     protected function getBrowser(): Client
     {
         return $this->browser ??= new Client(sprintf('ws://%s/devtools/browser/%s', $this->socket, $this->browserId));
     }
 
+    /**
+     * Close the owned tab and browser connection
+     *
+     * @return void
+     */
     protected function closeBrowser(): void
     {
         if ($this->browser === null) {
@@ -290,6 +338,13 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
     }
 
+    /**
+     * Get the initialized browser tab connection
+     *
+     * @return Client
+     *
+     * @throws RuntimeException If the browser cannot create or attach to a tab
+     */
     public function getPage(): Client
     {
         if ($this->page === null) {
@@ -350,6 +405,13 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return $this->page;
     }
 
+    /**
+     * Close the owned tab
+     *
+     * @return void
+     *
+     * @throws RuntimeException If the browser does not confirm tab closure
+     */
     public function closePage(): void
     {
         if ($this->browser === null || $this->page === null) {
@@ -383,6 +445,15 @@ class HeadlessChromeBackend implements PfdPrintBackend
         $this->sessionId = null;
     }
 
+    /**
+     * Replace the document and wait for network and layout completion
+     *
+     * @param PrintableHtmlDocument $document Nonempty HTML document
+     *
+     * @return void
+     *
+     * @throws LogicException If the document is empty
+     */
     protected function setContent(PrintableHtmlDocument $document): void
     {
         $page = $this->getPage();
@@ -464,6 +535,15 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
     }
 
+    /**
+     * Print the current tab through DevTools
+     *
+     * @param array<string, mixed> $printParameters DevTools print options
+     *
+     * @return string PDF contents
+     *
+     * @throws RuntimeException If the browser does not return PDF data
+     */
     protected function printToPdf(array $printParameters): string
     {
         $page = $this->getPage();
@@ -484,6 +564,15 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return $decoded;
     }
 
+    /**
+     * Encode a DevTools request
+     *
+     * @param string $method Protocol method name
+     * @param ?array<string, mixed> $options Protocol parameters
+     * @param ?string $sessionId Flattened page session identifier
+     *
+     * @return string JSON request
+     */
     private function renderApiCall($method, $options = null, ?string $sessionId = null): string
     {
         $payload = [
@@ -497,6 +586,15 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return json_encode($payload, JSON_FORCE_OBJECT);
     }
 
+    /**
+     * Decode a DevTools response or event
+     *
+     * @param string $payload JSON response
+     *
+     * @return array<string, mixed>
+     *
+     * @throws Exception If the response is an error or has an unknown format
+     */
     private function parseApiResponse(string $payload)
     {
         $data = json_decode($payload, true);
@@ -509,6 +607,13 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
     }
 
+    /**
+     * Shorten long strings in diagnostic parameters
+     *
+     * @param array<string, mixed> $params Protocol parameters
+     *
+     * @return array<string, mixed>
+     */
     protected static function shortenParams(array $params): array
     {
         foreach ($params as &$value) {
@@ -522,6 +627,14 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return $params;
     }
 
+    /**
+     * Track DevTools events and pending network requests
+     *
+     * @param string $method Protocol event name
+     * @param array<string, mixed> $params Event parameters
+     *
+     * @return void
+     */
     private function registerEvent($method, $params): void
     {
         if (Logger::getInstance()->getLevel() === Logger::DEBUG) {
@@ -552,6 +665,15 @@ class HeadlessChromeBackend implements PfdPrintBackend
         }
     }
 
+    /**
+     * Send a DevTools request and consume intervening events
+     *
+     * @param Client $ws Browser or page connection
+     * @param string $method Protocol method name
+     * @param ?array<string, mixed> $params Protocol parameters
+     *
+     * @return array<string, mixed> Protocol result
+     */
     private function communicate(Client $ws, $method, $params = null)
     {
         // Include sessionId for page-level commands when using flatten sessions
@@ -577,6 +699,15 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return $response['result'];
     }
 
+    /**
+     * Wait for a matching event or pending network requests to finish
+     *
+     * @param Client $ws Browser or page connection
+     * @param string $eventName Event name or WAIT_FOR_NETWORK
+     * @param ?array<string, mixed> $expectedParams Expected event parameters
+     *
+     * @return ?array<string, mixed> Matching parameters, or null when no requests are pending
+     */
     private function waitFor(Client $ws, $eventName, ?array $expectedParams = null)
     {
         if ($eventName !== self::WAIT_FOR_NETWORK) {
@@ -630,7 +761,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
     }
 
     /**
-     * Return true if the DevTools HTTP server responds within $timeout seconds.
+     * Check whether the DevTools HTTP server responds successfully
+     *
+     * @param float $timeout Request timeout in seconds
+     *
+     * @return bool
      */
     protected function probeDevtools(float $timeout): bool
     {
@@ -649,7 +784,9 @@ class HeadlessChromeBackend implements PfdPrintBackend
     }
 
     /**
-     * Fetch result from the /json/version API endpoint
+     * Get the browser version endpoint response
+     *
+     * @return array<string, mixed>|false Response data, or false for a non-200 response
      */
     protected function getJsonVersion(): bool|array
     {
@@ -677,6 +814,13 @@ class HeadlessChromeBackend implements PfdPrintBackend
         return json_decode($response->getBody(), true);
     }
 
+    /**
+     * Get the Chrome or Chromium major version
+     *
+     * @return int
+     *
+     * @throws Exception If the version response is invalid or unrecognized
+     */
     public function getVersion(): int
     {
         $version = $this->getJsonVersion();
@@ -704,8 +848,11 @@ class HeadlessChromeBackend implements PfdPrintBackend
 
     public function close(): void
     {
-        $this->closeBrowser();
-        $this->closeLocal();
+        try {
+            $this->closeBrowser();
+        } finally {
+            $this->closeLocal();
+        }
     }
 
     public function supportsCoverPage(): bool

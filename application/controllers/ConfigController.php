@@ -5,21 +5,24 @@
 
 namespace Icinga\Module\Pdfexport\Controllers;
 
-use Icinga\Application\Config;
+use Icinga\Module\Pdfexport\BackendLocator;
 use Icinga\Module\Pdfexport\Forms\BackendConfigForm;
-use Icinga\Web\Form\ConfigSectionForm;
+use Icinga\Module\Pdfexport\Forms\DeleteBackendForm;
 use Icinga\Web\Notification;
 use Icinga\Web\Session;
+use Icinga\Web\Widget\Tabs;
 use ipl\Html\Attributes;
 use ipl\Html\Contract\Form;
-use ipl\Html\HtmlString;
 use ipl\Html\Table;
 use ipl\Web\Compat\CompatController;
-use Icinga\Web\Widget\Tabs;
+use ipl\Web\Url;
 use ipl\Web\Widget\ButtonLink;
 use ipl\Web\Widget\Icon;
 use ipl\Web\Widget\Link;
 
+/**
+ * Print backend configuration UI
+ */
 class ConfigController extends CompatController
 {
     public function init()
@@ -29,6 +32,11 @@ class ConfigController extends CompatController
         parent::init();
     }
 
+    /**
+     * List configured print backends by priority
+     *
+     * @return void
+     */
     public function backendsAction(): void
     {
         $button = new ButtonLink(
@@ -50,7 +58,7 @@ class ConfigController extends CompatController
             Table::th($this->translate('Priority')),
         ]));
 
-        $config = Config::module('pdfexport');
+        $config = BackendLocator::getBackendConfig();
 
         $sections = [];
         foreach ($config as $name => $data) {
@@ -65,7 +73,7 @@ class ConfigController extends CompatController
             $table->add(Table::tr([
                 Table::td([
                     new Icon('print'),
-                    new Link($name, 'pdfexport/config/backend?backend=' . $name),
+                    new Link($name, Url::fromPath('pdfexport/config/backend', ['backend' => $name])),
                 ]),
                 Table::td($data->get('priority')),
             ], [
@@ -77,35 +85,45 @@ class ConfigController extends CompatController
         $this->addContent($table);
     }
 
+    /**
+     * Edit or rename an existing print backend
+     *
+     * @return void
+     */
     public function backendAction(): void
     {
         $name = $this->params->shiftRequired('backend');
-        $this->addTitleTab($this->translate(sprintf('Edit %s', $name)));
+        $this->addTitleTab(sprintf($this->translate('Edit %s'), $name));
 
-        $form = (new BackendConfigForm(Config::module('pdfexport'), $name))
+        $form = (new BackendConfigForm(BackendLocator::getBackendConfig(), $name))
             ->setCsrfCounterMeasureId(Session::getSession()->getId())
-            ->on(Form::ON_SUBMIT, function () {
-                Notification::success($this->translate('Updated print backend'));
-                $this->redirectNow('__CLOSE__');
-            })
-            ->on(ConfigSectionForm::ON_DELETE, function () {
-                Notification::success($this->translate('Print backend deleted'));
-                $this->redirectNow('__CLOSE__');
-            })
-            ->on(ConfigSectionForm::ON_RENAME, function () {
-                Notification::success($this->translate('Print backend renamed'));
+            ->on(Form::ON_SUBMIT, function (BackendConfigForm $form) use ($name) {
+                Notification::success($form->getValue('name') === $name
+                    ? $this->translate('Updated print backend')
+                    : $this->translate('Print backend renamed'));
                 $this->redirectNow('__CLOSE__');
             })
             ->handleRequest($this->getServerRequest());
 
-        $this->addContent(HtmlString::create($form->render()));
+        $this->addContent((new ButtonLink(
+            $this->translate('Delete'),
+            Url::fromPath('pdfexport/config/deletebackend', ['backend' => $name]),
+            'trash',
+            ['class' => 'btn-remove']
+        ))->openInModal());
+        $this->addContent($form);
     }
 
+    /**
+     * Create a print backend
+     *
+     * @return void
+     */
     public function createbackendAction(): void
     {
         $this->addTitleTab($this->translate('Create Print Backend'));
 
-        $form = (new BackendConfigForm(Config::module('pdfexport'), null))
+        $form = (new BackendConfigForm(BackendLocator::getBackendConfig()))
             ->setCsrfCounterMeasureId(Session::getSession()->getId())
             ->on(Form::ON_SUBMIT, function () {
                 Notification::success($this->translate('Created new print backend'));
@@ -116,6 +134,35 @@ class ConfigController extends CompatController
         $this->addContent($form);
     }
 
+    /**
+     * Confirm and delete a print backend without validating its settings
+     *
+     * @return void
+     */
+    public function deletebackendAction(): void
+    {
+        $name = $this->params->shiftRequired('backend');
+        $this->addTitleTab(sprintf($this->translate('Delete %s'), $name));
+
+        $form = (new DeleteBackendForm(BackendLocator::getBackendConfig(), $name))
+            ->setAction(Url::fromPath('pdfexport/config/deletebackend', ['backend' => $name])->getAbsoluteUrl())
+            ->setCsrfCounterMeasureId(Session::getSession()->getId())
+            ->on(Form::ON_SUBMIT, function () {
+                Notification::success($this->translate('Print backend deleted'));
+                $this->redirectNow('__CLOSE__');
+            })
+            ->handleRequest($this->getServerRequest());
+
+        $this->addContent($form);
+    }
+
+    /**
+     * Add module configuration tabs to the controller
+     *
+     * @param Tabs $tabs Module configuration tabs
+     *
+     * @return void
+     */
     protected function mergeTabs(Tabs $tabs): void
     {
         foreach ($tabs->getTabs() as $tab) {
