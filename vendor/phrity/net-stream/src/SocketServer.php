@@ -166,7 +166,7 @@ class SocketServer extends Stream
             if ($this->getMetadata('blocked') === false && substr_count($e->getMessage(), 'timed out') > 0) {
                 return null;
             }
-            throw new StreamException(StreamException::SERVER_ACCEPT_ERR);
+            throw new StreamException(StreamException::SERVER_ACCEPT_ERR, [], $e);
         });
         return $stream ? new SocketStream($stream) : null;
     }

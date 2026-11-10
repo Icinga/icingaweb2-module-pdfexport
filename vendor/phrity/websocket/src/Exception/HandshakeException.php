@@ -1,30 +1,31 @@
 <?php
 
 /**
- * Copyright (C) 2014-2025 Textalk and contributors.
+ * Copyright (C) 2014-2026 Textalk and contributors.
  * This file is part of Websocket PHP and is free software under the ISC License.
  */
 
 namespace WebSocket\Exception;
 
-use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\{
+    RequestInterface,
+    ResponseInterface,
+};
 
 /**
  * WebSocket\Exception\HandshakeException class.
  * Exception during handshake
  */
-class HandshakeException extends Exception implements ConnectionLevelInterface
+class HandshakeException extends AbstractException implements ConnectionLevelInterface
 {
-    private ResponseInterface $response;
+    protected static string $defaultMessage = 'Handshake failed';
+    protected static array $defaultContext = [
+        'request' => null,
+        'response' => null,
+    ];
 
-    public function __construct(string $message, ResponseInterface $response)
+    public function getResponse(): ResponseInterface|null
     {
-        parent::__construct($message);
-        $this->response = $response;
-    }
-
-    public function getResponse(): ResponseInterface
-    {
-        return $this->response;
+        return $this->getContext('response');
     }
 }

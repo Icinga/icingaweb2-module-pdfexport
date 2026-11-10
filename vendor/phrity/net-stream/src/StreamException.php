@@ -2,6 +2,7 @@
 
 namespace Phrity\Net;
 
+use Phrity\Util\Interpolator\InterpolatorTrait;
 use RuntimeException;
 use Throwable;
 
@@ -10,6 +11,8 @@ use Throwable;
  */
 class StreamException extends RuntimeException
 {
+    use InterpolatorTrait;
+
     // Stream errors
     public const STREAM_DETACHED = 1000;
     public const NOT_READABLE = 1010;
@@ -73,9 +76,7 @@ class StreamException extends RuntimeException
     public function __construct(int $code, array $data = [], Throwable|null $previous = null)
     {
         $message = self::$messages[$code];
-        foreach ($data as $key => $content) {
-            $message = str_replace('{' . $key . '}', $content, $message);
-        }
+        $message = $this->interpolate($message, $data);
         if ($previous) {
             $message .= " ({$previous->getMessage()})";
         }

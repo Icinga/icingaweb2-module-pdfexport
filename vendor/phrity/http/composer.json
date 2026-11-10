@@ -3,7 +3,7 @@
     "type": "library",
     "description": "Utilities and interfaces for handling HTTP.",
     "homepage": "https://phrity.sirn.se/http",
-    "keywords": ["HTTP", "HTTP Factories", "PSR-17"],
+    "keywords": ["HTTP", "HTTP Factories", "HTTP Serializer", "PSR-7", "PSR-17"],
     "license": "MIT",
     "authors": [
         {

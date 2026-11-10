@@ -15,7 +15,7 @@ use Phrity\Util\ErrorHandler;
 class StreamCollection implements Countable, Iterator
 {
     protected ErrorHandler $handler;
-    /** @var array<string, Stream> */
+    /** @var array<string, StreamInterface|StreamContainerInterface> */
     private array $streams = [];
 
     /**
@@ -31,12 +31,12 @@ class StreamCollection implements Countable, Iterator
 
     /**
      * Attach stream to collection.
-     * @param Stream $attach Stream to attach.
+     * @param StreamInterface|StreamContainerInterface $attach Stream to attach.
      * @param string|null $key Definable name of stream.
      * @return string Name of stream.
      * @throws StreamException If already attached.
      */
-    public function attach(Stream $attach, string|null $key = null): string
+    public function attach(StreamInterface|StreamContainerInterface $attach, string|null $key = null): string
     {
         if ($key && array_key_exists($key, $this->streams)) {
             throw new StreamException(StreamException::COLLECT_KEY_CONFLICT, ['key' => $key]);
@@ -48,10 +48,10 @@ class StreamCollection implements Countable, Iterator
 
     /**
      * Detach stream from collection.
-     * @param Stream|string $detach Stream or name of stream  to detach.
+     * @param StreamInterface|StreamContainerInterface|string $detach Stream or name of stream to detach.
      * @return bool If a stream was detached.
      */
-    public function detach(Stream|string $detach): bool
+    public function detach(StreamInterface|StreamContainerInterface|string $detach): bool
     {
         if (is_string($detach)) {
             if (array_key_exists($detach, $this->streams)) {
@@ -78,7 +78,7 @@ class StreamCollection implements Countable, Iterator
     {
         $readables = new self();
         foreach ($this->streams as $key => $stream) {
-            if ($stream->isReadable()) {
+            if ($this->getStream($stream)->isReadable()) {
                 $readables->attach($stream, $key);
             }
         }
@@ -93,7 +93,7 @@ class StreamCollection implements Countable, Iterator
     {
         $writables = new self();
         foreach ($this->streams as $key => $stream) {
-            if ($stream->isWritable()) {
+            if ($this->getStream($stream)->isWritable()) {
                 $writables->attach($stream, $key);
             }
         }
@@ -116,8 +116,8 @@ class StreamCollection implements Countable, Iterator
 
         $read = [];
         foreach ($this->streams as $key => $stream) {
-            if ($stream->isReadable()) {
-                $read[$key] = $stream->getResource();
+            if ($this->getStream($stream)->isReadable()) {
+                $read[$key] = $this->getStream($stream)->getResource();
             }
         }
         if (empty($read)) {
@@ -157,9 +157,9 @@ class StreamCollection implements Countable, Iterator
 
     /**
      * Return the current stream.
-     * @return Stream|null Current stream.
+     * @return StreamInterface|StreamContainerInterface|null Current stream.
      */
-    public function current(): Stream|null
+    public function current(): StreamInterface|StreamContainerInterface|null
     {
         return current($this->streams) ?: null;
     }
@@ -211,5 +211,10 @@ class StreamCollection implements Countable, Iterator
             $key = bin2hex(random_bytes(16));
         } while (array_key_exists($key, $this->streams));
         return $key;
+    }
+
+    protected function getStream(StreamInterface|StreamContainerInterface $stream): StreamInterface
+    {
+        return $stream instanceof StreamInterface ? $stream : $stream->getStream();
     }
 }
