@@ -10,6 +10,11 @@
     "karriere/pdf-merge": "dev-master",
     "phrity/websocket": "^4.0"
   },
+  "replace": {
+    "psr/http-factory": "*",
+    "psr/http-message": "*",
+    "psr/log": "*"
+  },
   "config": {
     "sort-packages": true
   }
