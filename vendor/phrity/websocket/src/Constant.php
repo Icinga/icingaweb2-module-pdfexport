@@ -1,15 +1,15 @@
 <?php
 
 /**
- * Copyright (C) 2014-2025 Textalk and contributors.
+ * Copyright (C) 2014-2026 Textalk and contributors.
  * This file is part of Websocket PHP and is free software under the ISC License.
  */
 
 namespace WebSocket;
 
 /**
- * WebSocket\Connection class.
- * A client/server connection, wrapping socket stream.
+ * WebSocket\Constant class.
+ * Defines global constants.
  */
 interface Constant
 {

@@ -9,9 +9,12 @@ return array(
     'WebSocket\\' => array($vendorDir . '/phrity/websocket/src'),
     'Psr\\Log\\' => array($vendorDir . '/psr/log/src'),
     'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-factory/src', $vendorDir . '/psr/http-message/src'),
-    'Phrity\\Util\\' => array($vendorDir . '/phrity/util-errorhandler/src'),
+    'Phrity\\Util\\Transformer\\' => array($vendorDir . '/phrity/util-transformer/src'),
+    'Phrity\\Util\\Interpolator\\' => array($vendorDir . '/phrity/util-interpolator/src'),
+    'Phrity\\Util\\' => array($vendorDir . '/phrity/util-errorhandler/src', $vendorDir . '/phrity/util-accessor/src'),
     'Phrity\\Net\\' => array($vendorDir . '/phrity/net-uri/src', $vendorDir . '/phrity/net-stream/src'),
     'Phrity\\Http\\' => array($vendorDir . '/phrity/http/src'),
     'Phrity\\Comparison\\' => array($vendorDir . '/phrity/comparison/src'),
+    'Nyholm\\Psr7\\' => array($vendorDir . '/nyholm/psr7/src'),
     'Karriere\\PdfMerge\\' => array($vendorDir . '/karriere/pdf-merge/src'),
 );

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2014-2025 Textalk and contributors.
+ * Copyright (C) 2014-2026 Textalk and contributors.
  *
  * This file is part of Websocket PHP and is free software under the ISC License.
  * License text: https://raw.githubusercontent.com/sirn-se/websocket-php/master/COPYING.md
@@ -15,12 +15,14 @@ use Psr\Http\Message\{
     ResponseInterface,
     ServerRequestInterface,
 };
-use Psr\Log\LoggerAwareInterface;
 use Stringable;
-use WebSocket\Connection;
+use WebSocket\{
+    Configuration,
+    Connection,
+};
 use WebSocket\Exception\HandshakeException;
 use WebSocket\Trait\{
-    LoggerAwareTrait,
+    ConfigurationTrait,
     StringableTrait,
 };
 
@@ -29,13 +31,14 @@ use WebSocket\Trait\{
  * Handles close procedure.
  */
 class SubprotocolNegotiation implements
-    LoggerAwareInterface,
     ProcessHttpOutgoingInterface,
     ProcessHttpIncomingInterface,
     Stringable
 {
-    use LoggerAwareTrait;
+    use ConfigurationTrait;
     use StringableTrait;
+
+    private const SCOPE = 'subprotocol-negotiation';
 
     /** @var array<string> $subprotocols */
     private array $subprotocols;
@@ -46,7 +49,7 @@ class SubprotocolNegotiation implements
     {
         $this->subprotocols = $subprotocols;
         $this->require = $require;
-        $this->initLogger();
+        $this->initConfiguration();
     }
 
     public function processHttpOutgoing(
@@ -59,14 +62,22 @@ class SubprotocolNegotiation implements
             foreach ($this->subprotocols as $subprotocol) {
                 $message = $message->withAddedHeader('Sec-WebSocket-Protocol', $subprotocol);
             }
-            if ($supported = implode(', ', $this->subprotocols)) {
-                $this->logger->debug("[subprotocol-negotiation] Requested subprotocols: {$supported}");
+            if ($requested = implode(', ', $this->subprotocols)) {
+                $this->configuration->getLogger()->debug("[{scope}] Requested subprotocols: {requested}", [
+                    'scope' => self::SCOPE,
+                    'connection' => $connection->getIdentity(),
+                    'requested' => $requested,
+                ]);
             }
         } elseif ($message instanceof ResponseInterface) {
             // Outgoing Response on Server
             if ($selected = $connection->getMeta('subprotocolNegotiation.selected')) {
                 $message = $message->withHeader('Sec-WebSocket-Protocol', $selected);
-                $this->logger->info("[subprotocol-negotiation] Selected subprotocol: {$selected}");
+                $this->configuration->getLogger()->info("[{scope}] Selected subprotocol: {selected}", [
+                    'scope' => self::SCOPE,
+                    'connection' => $connection->getIdentity(),
+                    'selected' => $selected,
+                ]);
             } elseif ($this->require) {
                 // No matching subprotocol, fail handshake
                 $message = $message->withStatus(426);
@@ -86,10 +97,18 @@ class SubprotocolNegotiation implements
         if ($message instanceof ServerRequestInterface) {
             // Incoming requests on Server
             if ($requested = $message->getHeaderLine('Sec-WebSocket-Protocol')) {
-                $this->logger->debug("[subprotocol-negotiation] Requested subprotocols: {$requested}");
+                $this->configuration->getLogger()->debug("[{scope}] Requested subprotocols: {requested}", [
+                    'scope' => self::SCOPE,
+                    'connection' => $connection->getIdentity(),
+                    'requested' => $requested,
+                ]);
             }
             if ($supported = implode(', ', $this->subprotocols)) {
-                $this->logger->debug("[subprotocol-negotiation] Supported subprotocols: {$supported}");
+                $this->configuration->getLogger()->debug("[{scope}] Supported subprotocols: {supported}", [
+                    'scope' => self::SCOPE,
+                    'connection' => $connection->getIdentity(),
+                    'supported' => $supported,
+                ]);
             }
             foreach ($message->getHeader('Sec-WebSocket-Protocol') as $subprotocol) {
                 if (in_array($subprotocol, $this->subprotocols)) {
@@ -101,11 +120,15 @@ class SubprotocolNegotiation implements
             // Incoming Response on Client
             if ($selected = $message->getHeaderLine('Sec-WebSocket-Protocol')) {
                 $connection->setMeta('subprotocolNegotiation.selected', $selected);
-                $this->logger->info("[subprotocol-negotiation] Selected subprotocol: {$selected}");
+                $this->configuration->getLogger()->info("[{scope}] Selected subprotocol: {selected}", [
+                    'scope' => self::SCOPE,
+                    'connection' => $connection->getIdentity(),
+                    'selected' => $selected,
+                ]);
             } elseif ($this->require) {
                 // No matching subprotocol, close and fail
                 $connection->close();
-                throw new HandshakeException("Could not resolve subprotocol.", $message);
+                throw new HandshakeException('Could not resolve subprotocol', response: $message);
             }
         }
         return $message;

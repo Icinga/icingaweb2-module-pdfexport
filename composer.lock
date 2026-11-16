@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5c3df7bceb770cd13e1f582b6dcc2ff5",
+    "content-hash": "8756b5879916c3721e5aadca46180747",
     "packages": [
         {
             "name": "karriere/pdf-merge",
@@ -568,24 +568,26 @@
         },
         {
             "name": "phrity/util-transformer",
-            "version": "1.3.1",
+            "version": "1.4.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sirn-se/phrity-util-transformer.git",
-                "reference": "3fd4d7fa4077deafe5130c4b9ee8146b5488abe3"
+                "reference": "4bda68d36d06e36c80ca8ece20651b715bf99c7d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sirn-se/phrity-util-transformer/zipball/3fd4d7fa4077deafe5130c4b9ee8146b5488abe3",
-                "reference": "3fd4d7fa4077deafe5130c4b9ee8146b5488abe3",
+                "url": "https://api.github.com/repos/sirn-se/phrity-util-transformer/zipball/4bda68d36d06e36c80ca8ece20651b715bf99c7d",
+                "reference": "4bda68d36d06e36c80ca8ece20651b715bf99c7d",
                 "shasum": ""
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
+                "nyholm/psr7": "^1.0",
                 "phpstan/phpstan": "^2.0",
-                "phpunit/phpunit": "^10.0 || ^11.0 || ^12.0",
+                "phpunit/phpunit": "^10.0 || ^11.0 || ^12.0  || ^13.0",
+                "psr/http-message": "^1.0 || ^2.0",
                 "robiningelbrecht/phpunit-coverage-tools": "^1.9",
                 "squizlabs/php_codesniffer": "^3.5 || ^4.0",
                 "symfony/property-access": "^6.0 || ^7.0 || ^8.0",
@@ -620,30 +622,32 @@
             ],
             "support": {
                 "issues": "https://github.com/sirn-se/phrity-util-transformer/issues",
-                "source": "https://github.com/sirn-se/phrity-util-transformer/tree/1.3.1"
+                "source": "https://github.com/sirn-se/phrity-util-transformer/tree/1.4.0"
             },
-            "time": "2025-12-05T22:07:04+00:00"
+            "time": "2026-09-02T17:56:17+00:00"
         },
         {
             "name": "phrity/websocket",
-            "version": "3.7.2",
+            "version": "4.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sirn-se/websocket-php.git",
-                "reference": "a8edb30395d45edd83452f54dfbb0905c3115a95"
+                "reference": "1a392a7e858f6bf67dae98f9328d931cf45b893c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sirn-se/websocket-php/zipball/a8edb30395d45edd83452f54dfbb0905c3115a95",
-                "reference": "a8edb30395d45edd83452f54dfbb0905c3115a95",
+                "url": "https://api.github.com/repos/sirn-se/websocket-php/zipball/1a392a7e858f6bf67dae98f9328d931cf45b893c",
+                "reference": "1a392a7e858f6bf67dae98f9328d931cf45b893c",
                 "shasum": ""
             },
             "require": {
                 "nyholm/psr7": "^1.4",
-                "php": "^8.1",
+                "php": "^8.2",
                 "phrity/http": "^1.1",
                 "phrity/net-stream": "^2.4",
                 "phrity/net-uri": "^2.1",
+                "phrity/util-interpolator": "^1.0",
+                "phrity/util-transformer": "^1.4",
                 "psr/http-factory": "^1.0",
                 "psr/http-message": "^1.1 || ^2.0",
                 "psr/log": "^1.0 || ^2.0 || ^3.0"
@@ -686,9 +690,9 @@
             ],
             "support": {
                 "issues": "https://github.com/sirn-se/websocket-php/issues",
-                "source": "https://github.com/sirn-se/websocket-php/tree/3.7.2"
+                "source": "https://github.com/sirn-se/websocket-php/tree/4.0.0"
             },
-            "time": "2026-06-15T08:13:51+00:00"
+            "time": "2026-09-19T11:07:09+00:00"
         },
         {
             "name": "psr/http-factory",

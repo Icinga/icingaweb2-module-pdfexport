@@ -15,10 +15,16 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
         array (
             'Psr\\Log\\' => 8,
             'Psr\\Http\\Message\\' => 17,
+            'Phrity\\Util\\Transformer\\' => 24,
+            'Phrity\\Util\\Interpolator\\' => 25,
             'Phrity\\Util\\' => 12,
             'Phrity\\Net\\' => 11,
             'Phrity\\Http\\' => 12,
             'Phrity\\Comparison\\' => 18,
+        ),
+        'N' =>
+        array (
+            'Nyholm\\Psr7\\' => 12,
         ),
         'K' =>
         array (
@@ -40,9 +46,18 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
             0 => __DIR__ . '/..' . '/psr/http-factory/src',
             1 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
+        'Phrity\\Util\\Transformer\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/phrity/util-transformer/src',
+        ),
+        'Phrity\\Util\\Interpolator\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/phrity/util-interpolator/src',
+        ),
         'Phrity\\Util\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/util-errorhandler/src',
+            1 => __DIR__ . '/..' . '/phrity/util-accessor/src',
         ),
         'Phrity\\Net\\' =>
         array (
@@ -56,6 +71,10 @@ class ComposerStaticInitff8ca5c94912b5ce3ac82b5c9f2b4776
         'Phrity\\Comparison\\' =>
         array (
             0 => __DIR__ . '/..' . '/phrity/comparison/src',
+        ),
+        'Nyholm\\Psr7\\' =>
+        array (
+            0 => __DIR__ . '/..' . '/nyholm/psr7/src',
         ),
         'Karriere\\PdfMerge\\' =>
         array (

@@ -1,20 +1,19 @@
 <?php
 
 /**
- * Copyright (C) 2014-2025 Textalk and contributors.
+ * Copyright (C) 2014-2026 Textalk and contributors.
  * This file is part of Websocket PHP and is free software under the ISC License.
  */
 
 namespace WebSocket\Frame;
 
 use Phrity\Net\SocketStream;
-use Psr\Log\LoggerAwareInterface;
 use RuntimeException;
 use Stringable;
+use WebSocket\Configuration;
 use WebSocket\Exception\CloseException;
 use WebSocket\Trait\{
-    LoggerAwareTrait,
-    OpcodeTrait,
+    ConfigurationTrait,
     StringableTrait
 };
 
@@ -22,22 +21,27 @@ use WebSocket\Trait\{
  * WebSocket\Frame\FrameHandler class.
  * Reads and writes Frames on stream.
  */
-class FrameHandler implements LoggerAwareInterface, Stringable
+class FrameHandler implements Stringable
 {
-    use LoggerAwareTrait;
-    use OpcodeTrait;
+    use ConfigurationTrait;
     use StringableTrait;
+
+    private const SCOPE = 'frame-handler';
 
     private SocketStream $stream;
     private bool $pushMasked;
     private bool $pullMaskedRequired;
 
-    public function __construct(SocketStream $stream, bool $pushMasked, bool $pullMaskedRequired)
-    {
+    public function __construct(
+        SocketStream $stream,
+        bool $pushMasked,
+        bool $pullMaskedRequired,
+        Configuration|null $configuration = null,
+    ) {
         $this->stream = $stream;
         $this->pushMasked = $pushMasked;
         $this->pullMaskedRequired = $pullMaskedRequired;
-        $this->initLogger();
+        $this->initConfiguration($configuration);
     }
 
     /**
@@ -55,9 +59,7 @@ class FrameHandler implements LoggerAwareInterface, Stringable
         $rsv3 = (bool)($byte1 & 0b00010000);
 
         // Parse opcode
-        $opcodeInt = $byte1 & 0b00001111;
-        $opcodeInts = array_flip(self::$opcodes);
-        $opcode = array_key_exists($opcodeInt, $opcodeInts) ? $opcodeInts[$opcodeInt] : strval($opcodeInt);
+        $opcode = $byte1 & 0b00001111;
 
         // Masking bit
         $masked = (bool)($byte2 & 0b10000000);
@@ -79,7 +81,7 @@ class FrameHandler implements LoggerAwareInterface, Stringable
 
         // Get masking key.
         if ($masked) {
-            $maskingKey = $this->stream->read(4);
+            $maskingKey = $this->read(4);
         }
 
         // Get the actual payload, if any (might not be for e.g. close frames).
@@ -96,15 +98,18 @@ class FrameHandler implements LoggerAwareInterface, Stringable
         }
 
         $frame = new Frame($opcode, $payload, $final, $rsv1, $rsv2, $rsv3);
-        $this->logger->debug("[frame-handler] Pulled '{$opcode}' frame", [
+        $this->configuration->getLogger()->debug("[{scope}] Pulled '{opcode}' frame", [
+            'scope' => self::SCOPE,
             'opcode' => $frame->getOpcode(),
             'final' => $frame->isFinal(),
             'content-length' => $frame->getPayloadLength(),
         ]);
-
         if ($this->pullMaskedRequired && !$masked) {
-            $this->logger->error("[frame-handler] Masking required, but frame was unmasked");
-            throw new CloseException(1002, 'Masking required');
+            $this->configuration->getLogger()->error("[{scope}] Masking required, but frame was unmasked", [
+                'scope' => self::SCOPE,
+                'opcode' => $frame->getOpcode(),
+            ]);
+            throw new CloseException('Masking required', status: 1002);
         }
 
         return $frame;
@@ -121,7 +126,7 @@ class FrameHandler implements LoggerAwareInterface, Stringable
         $byte1 |= $frame->getRsv1() ? 0b01000000 : 0b00000000; // RSV1 bit.
         $byte1 |= $frame->getRsv2() ? 0b00100000 : 0b00000000; // RSV2 bit.
         $byte1 |= $frame->getRsv3() ? 0b00010000 : 0b00000000; // RSV3 bit.
-        $byte1 |= self::$opcodes[$frame->getOpcode()]; // Set opcode.
+        $byte1 |= $frame->getOpcode(); // Set opcode.
         $data .= pack('C', $byte1);
 
         $byte2 = $this->pushMasked ? 0b10000000 : 0b00000000; // Masking bit marker.
@@ -158,7 +163,8 @@ class FrameHandler implements LoggerAwareInterface, Stringable
         // Write to stream.
         $written = $this->write($data);
 
-        $this->logger->debug("[frame-handler] Pushed '{opcode}' frame", [
+        $this->configuration->getLogger()->debug("[{scope}] Pushed '{opcode}' frame", [
+            'scope' => self::SCOPE,
             'opcode' => $frame->getOpcode(),
             'final' => $frame->isFinal(),
             'content-length' => $frame->getPayloadLength(),

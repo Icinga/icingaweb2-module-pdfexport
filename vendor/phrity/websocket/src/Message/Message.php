@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Copyright (C) 2014-2025 Textalk and contributors.
+ * Copyright (C) 2014-2026 Textalk and contributors.
  * This file is part of Websocket PHP and is free software under the ISC License.
  */
 
@@ -10,7 +10,7 @@ namespace WebSocket\Message;
 use DateTimeImmutable;
 use DateTimeInterface;
 use Stringable;
-use WebSocket\Exception\ConnectionFailureException;
+use WebSocket\Exception\MessageEncodingException;
 use WebSocket\Frame\Frame;
 use WebSocket\Trait\StringableTrait;
 
@@ -18,7 +18,7 @@ use WebSocket\Trait\StringableTrait;
  * WebSocket\Message\Message class.
  * Abstract superclass for WebSocket messages.
  */
-abstract class Message implements Stringable
+abstract class Message implements MessageInterface, Stringable
 {
     use StringableTrait;
 
@@ -78,21 +78,23 @@ abstract class Message implements Stringable
         return false;
     }
 
-    /** @throws ConnectionFailureException */
+    /** @throws MessageEncodingException */
     public function setCompress(bool $compress): void
     {
         if ($compress) {
-            throw new ConnectionFailureException('Must not compress control message.');
+            throw new MessageEncodingException('Must not compress control message');
         }
     }
 
     /**
      * Split messages into frames
      * @param int<1, max> $frameSize
+     * @param OpcodeRegistry|null $opcodeRegistry
      * @return array<Frame>
      */
-    public function getFrames(int $frameSize = 4096): array
+    public function getFrames(int $frameSize = 4096, OpcodeRegistry|null $opcodeRegistry = null): array
     {
+        $opcodeRegistry = $opcodeRegistry ?? new OpcodeRegistry();
         $frames = [];
         $split = str_split($this->getPayload(), $frameSize);
         if (empty($split)) {
@@ -100,7 +102,7 @@ abstract class Message implements Stringable
         }
         foreach ($split as $i => $payload) {
             $frames[] = new Frame(
-                $i === 0 ? $this->opcode : 'continuation',
+                $i === 0 ? $opcodeRegistry->getOpcode(static::class) : 0,
                 $payload,
                 $i === array_key_last($split)
             );
