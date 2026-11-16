@@ -5,6 +5,7 @@
 
 /** @var \Icinga\Application\Modules\Module $this */
 
-$this->provideHook('Pdfexport');
+// Module::includeScript() includes this file in Module scope, where protected methods are accessible.
+$this->provideHook('Pdfexport'); // @phpstan-ignore method.protected
 
-require_once 'vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
